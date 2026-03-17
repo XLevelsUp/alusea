@@ -1,83 +1,98 @@
 import Link from "next/link";
 
 const Footer = () => {
-  const currentYear = new Date().getFullYear();
-
   return (
-    <footer className="bg-matte-black text-aluminum-light pt-32 pb-12 border-t border-white/5">
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-16">
-        {/* Brand Section */}
-        <div className="space-y-8">
-          <Link href="/" className="text-3xl font-bold tracking-tighter">
-            ALUSEA<span className="text-brushed-bronze">.</span>
-          </Link>
-          <p className="text-steel-gray text-base leading-relaxed font-light">
-            Defining modern architectural excellence through precision-engineered aluminium solutions. Forged for durability, designed for life.
-          </p>
-          <div className="flex space-x-5">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-brushed-bronze hover:border-brushed-bronze transition-all duration-300 cursor-pointer text-white/40 hover:text-white">
-                <div className="w-4 h-4 border border-current rounded-[1px]" />
-              </div>
-            ))}
+    <footer className="bg-alusea-gold text-white pt-20 pb-10">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 items-start mb-16">
+          {/* Brand Section */}
+          <div className="space-y-8">
+            <h2 className="text-[32px] md:text-[42px] font-bold tracking-tight">
+              ALU - SEA
+            </h2>
+            <div className="flex gap-4">
+              {[
+                {
+                  icon: (
+                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                    </svg>
+                  )
+                },
+                {
+                  icon: (
+                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 2.04c-5.5 0-10 4.49-10 10.02 0 5 3.66 9.15 8.44 9.9v-7h-2.54V12.02h2.54V9.41c0-2.51 1.49-3.89 3.77-3.89 1.09 0 2.23.19 2.23.19v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.89h-2.33v7a10 10 0 008.44-9.9c0-5.53-4.5-10.02-10-10.02z" />
+                    </svg>
+                  )
+                },
+                {
+                  icon: (
+                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                      <path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 01-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 017.8 2m-.2 2A3.6 3.6 0 004 7.6v8.8A3.6 3.6 0 007.6 20h8.8a3.6 3.6 0 003.6-3.6V7.6A3.6 3.6 0 0016.4 4H7.6m9.65 1.5a1.25 1.25 0 011.25 1.25A1.25 1.25 0 0117.25 8 1.25 1.25 0 0116 6.75a1.25 1.25 0 011.25-1.25M12 7a5 5 0 015 5 5 5 0 01-5 5 5 5 0 01-5-5 5 5 0 015-5m0 2a3 3 0 00-3 3 3 3 0 003 3 3 3 0 003-3 3 3 0 00-3-3z" />
+                    </svg>
+                  )
+                },
+                {
+                  icon: (
+                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                      <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                    </svg>
+                  )
+                }
+              ].map((social, idx) => (
+                <div
+                  key={idx}
+                  className="w-12 h-12 rounded-full border border-white flex items-center justify-center hover:bg-white hover:text-alusea-gold transition-all duration-300 cursor-pointer"
+                >
+                  {social.icon}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Our Links */}
+          <div className="pt-2">
+            <h4 className="font-bold mb-8 text-[18px]">Our Links</h4>
+            <ul className="space-y-4 text-[15px] font-medium opacity-90">
+              <li><Link href="#" className="hover:opacity-100 transition-opacity">Features</Link></li>
+              <li><Link href="#" className="hover:opacity-100 transition-opacity">Team Member</Link></li>
+              <li><Link href="#" className="hover:opacity-100 transition-opacity">Our Careers</Link></li>
+              <li><Link href="#" className="hover:opacity-100 transition-opacity">Login Here</Link></li>
+            </ul>
+          </div>
+
+          {/* Find It Fast */}
+          <div className="pt-2">
+            <h4 className="font-bold mb-8 text-[18px]">Find It Fast</h4>
+            <ul className="space-y-4 text-[15px] font-medium opacity-90">
+              <li><Link href="#" className="hover:opacity-100 transition-opacity">Home</Link></li>
+              <li><Link href="#" className="hover:opacity-100 transition-opacity">Services</Link></li>
+              <li><Link href="#" className="hover:opacity-100 transition-opacity">About Us</Link></li>
+              <li><Link href="#" className="hover:opacity-100 transition-opacity">Features</Link></li>
+            </ul>
+          </div>
+
+          {/* Contact Details */}
+          <div className="pt-2 space-y-4 text-[16px] md:text-[18px] font-medium opacity-90">
+            <p>aluseacbe@gmail.com</p>
+            <p>93601 96471</p>
+            <p className="leading-tight">
+              No 178, A Ramachandra Road<br />
+              RS Puram, Near Flower Market<br />
+              Coimbatore, Tamil Nadu - 641002
+            </p>
           </div>
         </div>
 
-        {/* Quick Links */}
-        <div className="pt-2">
-          <h4 className="text-white font-bold mb-10 uppercase tracking-[0.2em] text-[11px]">Navigation</h4>
-          <ul className="space-y-5 text-[14px] text-steel-gray font-medium">
-            <li><Link href="/" className="hover:text-brushed-bronze transition-colors flex items-center gap-2 group"><span className="w-0 group-hover:w-4 h-[1px] bg-brushed-bronze transition-all" /> Home</Link></li>
-            <li><Link href="#about" className="hover:text-brushed-bronze transition-colors flex items-center gap-2 group"><span className="w-0 group-hover:w-4 h-[1px] bg-brushed-bronze transition-all" /> About Us</Link></li>
-            <li><Link href="#services" className="hover:text-brushed-bronze transition-colors flex items-center gap-2 group"><span className="w-0 group-hover:w-4 h-[1px] bg-brushed-bronze transition-all" /> Services</Link></li>
-            <li><Link href="#contact" className="hover:text-brushed-bronze transition-colors flex items-center gap-2 group"><span className="w-0 group-hover:w-4 h-[1px] bg-brushed-bronze transition-all" /> Contact</Link></li>
-          </ul>
-        </div>
-
-        {/* Products */}
-        <div className="pt-2">
-          <h4 className="text-white font-bold mb-10 uppercase tracking-[0.2em] text-[11px]">Solutions</h4>
-          <ul className="space-y-5 text-[14px] text-steel-gray font-medium">
-            <li><Link href="#" className="hover:text-white transition-colors">Sliding Systems</Link></li>
-            <li><Link href="#" className="hover:text-white transition-colors">Bi-Fold Enclosures</Link></li>
-            <li><Link href="#" className="hover:text-white transition-colors">Thermal Windows</Link></li>
-            <li><Link href="#" className="hover:text-white transition-colors">Curtain Walls</Link></li>
-          </ul>
-        </div>
-
-        {/* Contact info */}
-        <div className="pt-2">
-          <h4 className="text-white font-bold mb-10 uppercase tracking-[0.2em] text-[11px]">Contact Us</h4>
-          <ul className="space-y-6 text-[14px] text-steel-gray font-light">
-            <li className="flex items-start space-x-4">
-              <svg className="w-5 h-5 text-brushed-bronze shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span>123 Architectural District,<br />Business Bay, Dubai, UAE</span>
-            </li>
-            <li className="flex items-center space-x-4">
-              <svg className="w-5 h-5 text-brushed-bronze shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
-              <span>+971 4 123 4567</span>
-            </li>
-            <li className="flex items-center space-x-4">
-              <svg className="w-5 h-5 text-brushed-bronze shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              <span>contact@alusea.com</span>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 mt-32 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0 text-[12px] text-steel-gray uppercase tracking-widest font-bold">
-        <p>© {currentYear} Alusea Global. All rights reserved.</p>
-        <div className="flex space-x-10">
-          <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
-          <Link href="#" className="hover:text-white transition-colors">Terms</Link>
-          <Link href="#" className="hover:text-white transition-colors">Cookie Policy</Link>
+        {/* Bottom Bar */}
+        <div className="pt-8 border-t border-white/30 flex flex-col md:flex-row justify-between items-center gap-6 text-[14px] md:text-[15px] font-medium">
+          <p>With Love - XLEVELSUP ❤️ </p>
+          <div className="flex gap-8">
+            <Link href="#" className="hover:underline">Style Guide</Link>
+            <Link href="#" className="hover:underline">Licensing</Link>
+            <Link href="#" className="hover:underline">Instruction</Link>
+          </div>
         </div>
       </div>
     </footer>

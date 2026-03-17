@@ -19,8 +19,8 @@ const Hero = () => {
         <div className="absolute inset-0 bg-matte-black/20 z-10" />
       </div>
 
-      <div className="max-container relative z-20 w-full">
-        <div className="max-w-3xl space-y-8 px-6 md:px-0">
+      <div className="w-full max-w-[1440px] mx-auto relative z-20">
+        <div className="max-w-3xl space-y-8 px-6 md:px-12">
           {/* Tagline */}
           <div className="flex items-center space-x-3 mb-6 animate-in slide-in-from-left duration-700">
             <span className="inline-block w-2 h-2 rounded-full bg-brushed-bronze" />
