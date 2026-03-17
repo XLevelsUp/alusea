@@ -94,7 +94,7 @@ const ContactCTA = () => {
                       <path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 01-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 017.8 2m-.2 2A3.6 3.6 0 004 7.6v8.8A3.6 3.6 0 007.6 20h8.8a3.6 3.6 0 003.6-3.6V7.6A3.6 3.6 0 0016.4 4H7.6m9.65 1.5a1.25 1.25 0 011.25 1.25A1.25 1.25 0 0117.25 8 1.25 1.25 0 0116 6.75a1.25 1.25 0 011.25-1.25M12 7a5 5 0 015 5 5 5 0 01-5 5 5 5 0 01-5-5 5 5 0 015-5m0 2a3 3 0 00-3 3 3 3 0 003 3 3 3 0 003-3 3 3 0 00-3-3z" />
                     </svg>
                   ),
-                  url: '#'
+                  url: 'https://www.instagram.com/alusea_aluminum/'
                 },
                 {
                   icon: (
@@ -108,6 +108,8 @@ const ContactCTA = () => {
                 <a
                   key={idx}
                   href={social.url}
+                  target={social.url !== "#" ? "_blank" : undefined}
+                  rel={social.url !== "#" ? "noopener noreferrer" : undefined}
                   className="w-20 h-20 md:w-28 md:h-28 bg-white rounded-full flex items-center justify-center text-alusea-gold hover:bg-alusea-gold hover:text-white transition-all duration-300 shadow-2xl hover:-translate-y-2"
                 >
                   {social.icon}
