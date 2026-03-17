@@ -7,6 +7,10 @@
   --color-aluminum-light: #F5F5F7;
   --color-architectural-blue: #1A365D; /* Deep Blue */
   --color-brushed-bronze: #A67C52; /* Accent */
+  --color-bronze-light: #D4AF37;
+  --color-bronze-dark: #8B4513;
+  --color-alusea-gold: #B68B4C;
+  --color-alusea-light-gray: #F1EFF0;
   
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -48,3 +52,34 @@ h1, h2, h3, h4, h5, h6 {
   background: rgba(17, 17, 17, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+.glass-nav {
+  background: rgba(17, 17, 17, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.text-gradient {
+  background: linear-gradient(to right, #A67C52, #D4AF37);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.section-padding {
+  @apply py-24 px-6;
+}
+
+.max-container {
+  @apply max-w-7xl mx-auto;
+}
+
+@keyframes slow-zoom {
+  from { transform: scale(1); }
+  to { transform: scale(1.1); }
+}
+
+.animate-slow-zoom {
+  animation: slow-zoom 20s linear infinite alternate;
+}
+
