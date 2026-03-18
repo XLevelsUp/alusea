@@ -83,7 +83,7 @@ const Footer = () => {
           {/* Contact Details */}
           <div className="pt-2 space-y-4 text-[16px] md:text-[18px] font-medium opacity-90">
             <p>aluseacbe@gmail.com</p>
-            <p>93601 96471</p>
+            <a href="https://wa.me/919626022722" target="_blank" rel="noopener noreferrer" className="hover:underline">96260 22722</a>
             <p className="leading-tight">
               No 178, A Ramachandra Road<br />
               RS Puram, Near Flower Market<br />

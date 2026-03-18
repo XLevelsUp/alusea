@@ -1,70 +1,182 @@
 "use client";
 
-const products = [
+import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
+
+const slides = [
   {
-    title: "Sliding Door Systems",
-    description: "Ultra-slim profiles for panoramic views and seamless indoor-outdoor living.",
-    image: "https://images.unsplash.com/photo-1600607687940-4e2a09695d51?auto=format&fit=crop&q=80&w=800",
-    category: "Doors"
+    id: 1,
+    src: "/images/Interior 1.JPG",
+    alt: "Interior showcase 1",
   },
   {
-    title: "Thermal Casement Windows",
-    description: "High-performance aluminium windows with superior insulation and security.",
-    image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&q=80&w=800",
-    category: "Windows"
+    id: 2,
+    src: "/images/Interior 2.JPG",
+    alt: "Interior showcase 2",
   },
   {
-    title: "Bi-Fold Enclosures",
-    description: "Elegant folding systems that transform your living space with maximum flexibility.",
-    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=800",
-    category: "Doors"
-  }
+    id: 3,
+    src: "/images/Interior 3 (1).JPG",
+    alt: "Interior showcase 3",
+  },
+  {
+    id: 4,
+    src: "/images/Interior 3.JPG",
+    alt: "Interior showcase 4",
+  },
+  {
+    id: 5,
+    src: "/images/Interior-Master-Line-Multi-Panel-Pivot-Glass-Revolving-Door-Aluminium-Internal-Aluminum-Center-Glass-Pivot-Doors.jpg",
+    alt: "Multi-panel pivot glass revolving door",
+  },
+  {
+    id: 6,
+    src: "/images/glass entrance door.JPG",
+    alt: "Glass entrance door",
+  },
+  {
+    id: 7,
+    src: "/images/Rectangle 87.jpg",
+    alt: "Premium aluminium product",
+  },
+  {
+    id: 8,
+    src: "/images/ChatGPT Image Mar 13, 2026, 04_53_24 PM.png",
+    alt: "Architectural aluminium design",
+  },
+  {
+    id: 9,
+    src: "/images/ChatGPT Image Mar 13, 2026, 04_56_24 PM.png",
+    alt: "Architectural aluminium design 2",
+  },
 ];
 
 const ProductShowcase = () => {
+  const [current, setCurrent] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const goTo = useCallback(
+    (index: number) => {
+      if (isTransitioning) return;
+      setIsTransitioning(true);
+      setCurrent((index + slides.length) % slides.length);
+      setTimeout(() => setIsTransitioning(false), 500);
+    },
+    [isTransitioning]
+  );
+
+  const prev = () => goTo(current - 1);
+  const next = useCallback(() => goTo(current + 1), [current, goTo]);
+
+  // Auto-play
+  useEffect(() => {
+    const timer = setInterval(next, 4000);
+    return () => clearInterval(timer);
+  }, [next]);
+
   return (
-    <section id="services" className="section-padding bg-aluminum-light">
-      <div className="max-container">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
-          <div className="max-w-2xl space-y-4">
-            <h2 className="text-matte-black text-sm uppercase tracking-[0.3em] font-bold">Our Collection</h2>
-            <p className="text-4xl md:text-5xl font-bold text-matte-black leading-tight">
-              Precision Engineered <br />
-              <span className="text-brushed-bronze italic">Architectural Solutions</span>
-            </p>
+    <section id="collection" className="relative bg-matte-black overflow-hidden">
+      {/* Section header */}
+      <div className="max-w-7xl mx-auto px-6 py-16 flex items-end justify-between">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-brushed-bronze" />
+            <span className="text-brushed-bronze text-xs uppercase tracking-[0.2em] font-bold">
+              Our Collection
+            </span>
           </div>
-          <button className="text-sm font-bold uppercase tracking-widest border-b-2 border-brushed-bronze pb-1 hover:text-brushed-bronze transition-colors">
-            View All Products
-          </button>
+          <h2 className="text-4xl md:text-5xl font-bold text-white leading-tight">
+            Precision Engineered <br />
+            <span className="text-brushed-bronze italic">Architectural Solutions</span>
+          </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          {products.map((product, index) => (
-            <div 
-              key={index} 
-              className="group cursor-pointer"
+        {/* Slide counter + navigation */}
+        <div className="hidden md:flex items-center gap-4">
+          <span className="text-white/40 text-sm tabular-nums">
+            {String(current + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
+          </span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={prev}
+              aria-label="Previous slide"
+              className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-white hover:border-brushed-bronze hover:text-brushed-bronze transition-all duration-300"
             >
-              <div className="relative h-[500px] overflow-hidden rounded-sm mb-6">
-                <img 
-                  src={product.image} 
-                  alt={product.title}
-                  className="w-full h-full object-cover grayscale-[0.2] transition-transform duration-700 group-hover:scale-110 group-hover:grayscale-0"
-                />
-                <div className="absolute top-6 left-6">
-                   <span className="px-4 py-1 bg-white/90 backdrop-blur-sm text-[10px] uppercase tracking-widest font-bold text-matte-black">
-                     {product.category}
-                   </span>
-                </div>
-              </div>
-              <h3 className="text-2xl font-bold text-matte-black mb-2 group-hover:text-brushed-bronze transition-colors">
-                {product.title}
-              </h3>
-              <p className="text-steel-gray text-sm leading-relaxed max-w-xs">
-                {product.description}
-              </p>
-            </div>
-          ))}
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth="2">
+                <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <button
+              onClick={next}
+              aria-label="Next slide"
+              className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-white hover:border-brushed-bronze hover:text-brushed-bronze transition-all duration-300"
+            >
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth="2">
+                <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
         </div>
+      </div>
+
+      {/* Carousel track */}
+      <div className="relative w-full h-[60vh] md:h-[75vh] overflow-hidden">
+        {slides.map((slide, idx) => (
+          <div
+            key={slide.id}
+            className={`absolute inset-0 transition-opacity duration-500 ${
+              idx === current ? "opacity-100 z-10" : "opacity-0 z-0"
+            }`}
+          >
+            <Image
+              src={slide.src}
+              alt={slide.alt}
+              fill
+              className="object-cover"
+              sizes="100vw"
+              priority={idx === 0}
+            />
+
+            {/* Subtle gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-matte-black/60 via-transparent to-transparent" />
+          </div>
+        ))}
+
+        {/* Mobile arrow buttons */}
+        <button
+          onClick={prev}
+          aria-label="Previous slide"
+          className="md:hidden absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/40 backdrop-blur flex items-center justify-center text-white border border-white/20"
+        >
+          <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth="2">
+            <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        <button
+          onClick={next}
+          aria-label="Next slide"
+          className="md:hidden absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/40 backdrop-blur flex items-center justify-center text-white border border-white/20"
+        >
+          <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth="2">
+            <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Dot indicators */}
+      <div className="flex items-center justify-center gap-3 py-8">
+        {slides.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => goTo(idx)}
+            aria-label={`Go to slide ${idx + 1}`}
+            className={`transition-all duration-300 rounded-full ${
+              idx === current
+                ? "w-8 h-2 bg-brushed-bronze"
+                : "w-2 h-2 bg-white/30 hover:bg-white/60"
+            }`}
+          />
+        ))}
       </div>
     </section>
   );

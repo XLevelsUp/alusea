@@ -45,21 +45,39 @@ const Testimonials = () => {
                 Testimonial
               </span>
               <h2 className="text-[42px] md:text-[52px] font-bold text-matte-black leading-tight max-w-sm">
-                Client’s Success Stories
+                Client&apos;s Success Stories
               </h2>
             </div>
-            
-            <div className="flex gap-4 pt-4">
-              <button 
+
+            {/* Dot indicators */}
+            <div className="flex gap-2 pt-2">
+              {testimonials.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentIndex(idx)}
+                  aria-label={`Go to testimonial ${idx + 1}`}
+                  className={`transition-all duration-300 rounded-full ${
+                    idx === currentIndex
+                      ? "w-8 h-2 bg-brushed-bronze"
+                      : "w-2 h-2 bg-brushed-bronze/30 hover:bg-brushed-bronze/60"
+                  }`}
+                />
+              ))}
+            </div>
+
+            <div className="flex gap-4 pt-2">
+              <button
                 onClick={prevSlide}
+                aria-label="Previous testimonial"
                 className="w-12 h-12 rounded-full border border-brushed-bronze/30 flex items-center justify-center text-brushed-bronze hover:bg-brushed-bronze hover:text-white transition-all duration-300"
               >
                 <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth="2.5">
                   <path d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <button 
+              <button
                 onClick={nextSlide}
+                aria-label="Next testimonial"
                 className="w-12 h-12 rounded-full border border-brushed-bronze/30 flex items-center justify-center text-brushed-bronze hover:bg-brushed-bronze hover:text-white transition-all duration-300"
               >
                 <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth="2.5">
@@ -69,42 +87,40 @@ const Testimonials = () => {
             </div>
           </div>
 
-          {/* Right: Carousel Area */}
-          <div className="relative h-[500px] lg:h-[600px] flex items-center">
+          {/* Right: Fade Carousel */}
+          <div className="relative h-[420px] lg:h-[480px] flex items-center">
             {/* Decorative Gold Arc */}
             <div className="absolute top-0 right-[-10%] w-[120%] h-[100%] bg-alusea-gold rounded-l-full -z-0 opacity-100 transform translate-x-1/4" />
-            
-            {/* Carousel Container */}
-            <div className="relative w-full z-10 overflow-visible">
-              <div 
-                className="flex transition-transform duration-700 ease-in-out"
-                style={{ transform: `translateX(-${currentIndex * 85}%)` }}
-              >
-                {testimonials.map((t, index) => (
-                  <div 
-                    key={index}
-                    className={`min-w-[85%] px-4 transition-all duration-700 ${index === currentIndex ? 'opacity-100 scale-100' : 'opacity-40 scale-90'}`}
-                  >
-                    <div className="bg-white p-10 md:p-12 rounded-[2.5rem] shadow-2xl space-y-8">
-                      <div className="flex items-center gap-6">
-                        <img 
-                          src={t.image} 
-                          alt={t.author}
-                          className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg"
-                        />
-                        <div>
-                          <h4 className="text-xl font-bold text-matte-black">{t.author}</h4>
-                          <p className="text-steel-gray text-sm">{t.role}</p>
-                        </div>
+
+            {/* Cards — stacked, faded in/out */}
+            <div className="relative w-full z-10 h-full">
+              {testimonials.map((t, index) => (
+                <div
+                  key={index}
+                  className={`absolute inset-0 flex items-center transition-opacity duration-700 ${
+                    index === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+                  }`}
+                >
+                  <div className="bg-white p-10 md:p-12 rounded-[2.5rem] shadow-2xl space-y-8 w-full">
+                    <div className="flex items-center gap-6">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={t.image}
+                        alt={t.author}
+                        className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg"
+                      />
+                      <div>
+                        <h4 className="text-xl font-bold text-matte-black">{t.author}</h4>
+                        <p className="text-steel-gray text-sm">{t.role}</p>
                       </div>
-                      
-                      <p className="text-steel-gray text-lg md:text-xl leading-relaxed font-medium italic">
-                        &ldquo;{t.quote}&rdquo;
-                      </p>
                     </div>
+
+                    <p className="text-steel-gray text-lg md:text-xl leading-relaxed font-medium italic">
+                      &ldquo;{t.quote}&rdquo;
+                    </p>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

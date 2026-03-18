@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Image from 'next/image';
 
 const ServicesSection = () => {
   const leftServices = [
@@ -110,11 +111,14 @@ const ServicesSection = () => {
           {/* Center Image */}
           <div className="relative z-10">
             <div className="bg-white p-4 shadow-2xl rounded-sm">
-              <img
-                src="https://images.unsplash.com/photo-1503708928676-1cb796a0891e?auto=format&fit=crop&q=80&w=1000"
-                alt="High-quality window system"
-                className="w-full h-auto object-contain"
-              />
+              <div className="relative w-full aspect-[3/4]">
+                <Image
+                  src="/images/ourservice.jpg"
+                  alt="Our services – premium windows and doors"
+                  fill
+                  className="object-cover"
+                />
+              </div>
             </div>
             {/* Background decorative element */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[80%] bg-slate-50 -z-10 rounded-full blur-3xl opacity-50" />
