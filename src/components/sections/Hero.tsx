@@ -37,9 +37,12 @@ const Hero = () => {
 
           {/* Button */}
           <div className="pt-8 animate-in fade-in duration-1000 delay-500">
-            <button className="px-10 py-5 bg-brushed-bronze text-white text-sm uppercase tracking-widest font-bold rounded-sm hover:bg-bronze-light hover:translate-y-[-4px] transition-all duration-300 shadow-2xl">
+            <a
+              href="#contact"
+              className="inline-block px-10 py-5 bg-brushed-bronze text-white text-sm uppercase tracking-widest font-bold rounded-sm hover:bg-bronze-light hover:translate-y-[-4px] transition-all duration-300 shadow-2xl"
+            >
               Get Started
-            </button>
+            </a>
           </div>
         </div>
       </div>

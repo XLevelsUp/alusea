@@ -1,8 +1,58 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
+
+const GOOGLE_SCRIPT_URL =
+  process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL || "";
+
+type FormData = {
+  firstName: string;
+  email: string;
+  phone: string;
+  message: string;
+};
+
+const initialForm: FormData = {
+  firstName: "",
+  email: "",
+  phone: "",
+  message: "",
+};
 
 const ContactCTA = () => {
+  const [form, setForm] = useState<FormData>(initialForm);
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus("loading");
+
+    try {
+      const payload = {
+        ...form,
+        submittedAt: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+      };
+
+      if (GOOGLE_SCRIPT_URL) {
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      }
+
+      setStatus("success");
+      setForm(initialForm);
+    } catch {
+      setStatus("error");
+    }
+  };
+
   return (
     <section id="contact" className="relative py-28 overflow-hidden bg-matte-black group">
       {/* Top Golden Bar */}
@@ -27,41 +77,93 @@ const ContactCTA = () => {
               Get A Free Quote
             </h2>
 
-            <form className="space-y-6">
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="First Name"
-                  className="w-full bg-white rounded-full px-8 py-5 text-matte-black outline-none focus:ring-2 focus:ring-alusea-gold/50 transition-all font-medium placeholder:text-gray-400 border-none"
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {status === "success" ? (
+              <div className="flex flex-col items-start gap-5">
+                <div className="w-16 h-16 rounded-full bg-alusea-gold/20 border-2 border-alusea-gold flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" className="w-8 h-8 text-alusea-gold fill-none stroke-current" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-white text-xl font-bold mb-1">We&apos;ve got your request!</p>
+                  <p className="text-white/55 text-base">
+                    Our team will contact you within <span className="text-alusea-gold font-semibold">24 hours</span>.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setStatus("idle")}
+                  className="text-alusea-gold text-sm font-semibold underline underline-offset-4 hover:text-white transition-colors"
+                >
+                  Submit another request
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-4">
                   <input
-                    type="email"
-                    placeholder="Your Email"
+                    type="text"
+                    name="firstName"
+                    value={form.firstName}
+                    onChange={handleChange}
+                    placeholder="First Name"
+                    required
                     className="w-full bg-white rounded-full px-8 py-5 text-matte-black outline-none focus:ring-2 focus:ring-alusea-gold/50 transition-all font-medium placeholder:text-gray-400 border-none"
                   />
-                  <input
-                    type="tel"
-                    placeholder="Phone Number"
-                    className="w-full bg-white rounded-full px-8 py-5 text-matte-black outline-none focus:ring-2 focus:ring-alusea-gold/50 transition-all font-medium placeholder:text-gray-400 border-none"
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                      type="email"
+                      name="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      placeholder="Your Email"
+                      required
+                      className="w-full bg-white rounded-full px-8 py-5 text-matte-black outline-none focus:ring-2 focus:ring-alusea-gold/50 transition-all font-medium placeholder:text-gray-400 border-none"
+                    />
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={form.phone}
+                      onChange={handleChange}
+                      placeholder="Phone Number"
+                      required
+                      className="w-full bg-white rounded-full px-8 py-5 text-matte-black outline-none focus:ring-2 focus:ring-alusea-gold/50 transition-all font-medium placeholder:text-gray-400 border-none"
+                    />
+                  </div>
+
+                  <textarea
+                    name="message"
+                    value={form.message}
+                    onChange={handleChange}
+                    placeholder="Your Message"
+                    rows={4}
+                    className="w-full bg-white rounded-[2.5rem] px-8 py-6 text-matte-black outline-none focus:ring-2 focus:ring-alusea-gold/50 transition-all font-medium placeholder:text-gray-400 resize-none border-none"
                   />
                 </div>
 
-                <textarea
-                  placeholder="Your Message"
-                  rows={4}
-                  className="w-full bg-white rounded-[2.5rem] px-8 py-6 text-matte-black outline-none focus:ring-2 focus:ring-alusea-gold/50 transition-all font-medium placeholder:text-gray-400 resize-none border-none"
-                />
-              </div>
+                {status === "error" && (
+                  <p className="text-red-400 text-sm">Something went wrong. Please try again.</p>
+                )}
 
-              <button
-                type="button"
-                className="bg-alusea-gold hover:bg-[#A67C52] text-white px-16 py-4 rounded-xl font-bold text-lg transition-all shadow-xl active:scale-95"
-              >
-                Send
-              </button>
-            </form>
+                <button
+                  type="submit"
+                  disabled={status === "loading"}
+                  className="inline-flex items-center gap-3 bg-alusea-gold hover:bg-[#A67C52] text-white px-16 py-4 rounded-xl font-bold text-lg transition-all shadow-xl active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {status === "loading" ? (
+                    <>
+                      <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Sending…
+                    </>
+                  ) : (
+                    "Send"
+                  )}
+                </button>
+              </form>
+            )}
           </div>
 
           {/* Right: Social Media */}
