@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -25,16 +26,24 @@ const Header = () => {
 
   return (
     <header
-      className={`fixed top-0 w-full z-50 transition-all duration-500 ${
-        isScrolled 
-          ? "bg-matte-black/90 backdrop-blur-md py-4 shadow-2xl border-b border-white/5" 
-          : "bg-transparent py-8"
-      }`}
+      className={`fixed top-0 w-full z-50 transition-all duration-500 ${isScrolled
+        ? "bg-matte-black/90 backdrop-blur-md py-4 shadow-2xl border-b border-white/5"
+        : "bg-transparent py-8"
+        }`}
     >
       <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
         {/* Logo */}
-        <Link href="/" className="text-2xl font-bold tracking-tighter text-white group">
-          ALUSEA<span className="text-brushed-bronze group-hover:text-bronze-light transition-colors">.</span>
+        <Link href="/" className="flex items-center">
+          <div className="h-10 overflow-visible flex items-center">
+            <Image
+              src="/images/alusea-logo.svg"
+              alt="Alusea Logo"
+              width={300}
+              height={108}
+              className="object-contain h-20 w-auto brightness-0 invert"
+              priority
+            />
+          </div>
         </Link>
 
         {/* Desktop Nav */}
@@ -81,7 +90,7 @@ const Header = () => {
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div className="md:hidden absolute top-0 left-0 w-full h-screen bg-matte-black flex flex-col items-center justify-center space-y-8 animate-in fade-in zoom-in duration-300">
-          <button 
+          <button
             className="absolute top-8 right-6 text-white"
             onClick={() => setIsMobileMenuOpen(false)}
           >
@@ -89,7 +98,7 @@ const Header = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-          
+
           {navLinks.map((link) => (
             <Link
               key={link.name}

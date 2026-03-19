@@ -112,9 +112,12 @@ const WhyWorkWithUs = () => {
               ))}
             </div>
 
-            <button className="mt-8 bg-brushed-bronze hover:bg-bronze-dark text-white px-8 py-4 text-sm font-bold transition-all shadow-lg rounded-sm">
+            <a
+              href="#contact"
+              className="inline-block mt-8 bg-brushed-bronze hover:bg-bronze-dark text-white px-8 py-4 text-sm font-bold transition-all shadow-lg rounded-sm hover:translate-y-[-3px]"
+            >
               Get Your Free Quote
-            </button>
+            </a>
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-8 pt-10 border-t border-gray-100">
