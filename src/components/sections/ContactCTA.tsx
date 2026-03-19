@@ -35,6 +35,7 @@ const ContactCTA = () => {
       const payload = {
         ...form,
         submittedAt: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+        status: "Draft",
       };
 
       if (GOOGLE_SCRIPT_URL) {
