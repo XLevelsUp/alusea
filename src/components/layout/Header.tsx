@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isPagesOpen, setIsPagesOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -16,12 +18,29 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsPagesOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const navLinks = [
     { name: "Home", href: "/" },
-    { name: "About Us", href: "#about" },
-    { name: "Services", href: "#services" },
-    { name: "Pages", href: "#", hasDropdown: true },
-    { name: "Contact Us", href: "#contact" },
+    { name: "About Us", href: "/about" },
+    { name: "Services", href: "/services" },
+    { name: "Contact Us", href: "/contact" },
+  ];
+
+  const pagesDropdown = [
+    { name: "Our Products", href: "/products" },
+    { name: "Project Gallery", href: "/projects" },
+    { name: "Our Team", href: "/team" },
+    { name: "Careers", href: "/careers" },
   ];
 
   return (
@@ -52,18 +71,60 @@ const Header = () => {
             <Link
               key={link.name}
               href={link.href}
-              className="text-[13px] uppercase tracking-widest font-semibold text-white/80 hover:text-white transition-all flex items-center gap-1 group"
+              className="text-[13px] uppercase tracking-widest font-semibold text-white/80 hover:text-white transition-all"
             >
               {link.name}
-              {link.hasDropdown && (
-                <svg className="w-3 h-3 text-white/40 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              )}
             </Link>
           ))}
+
+          {/* Pages Dropdown */}
+          <div ref={dropdownRef} className="relative">
+            <button
+              onClick={() => setIsPagesOpen(!isPagesOpen)}
+              className="flex items-center gap-1 text-[13px] uppercase tracking-widest font-semibold text-white/80 hover:text-white transition-all group"
+            >
+              Pages
+              <svg
+                className={`w-3 h-3 text-white/40 group-hover:text-white transition-all duration-200 ${isPagesOpen ? "rotate-180" : ""}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* Dropdown Panel */}
+            {isPagesOpen && (
+              <div
+                className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-52 rounded-sm border border-white/10 overflow-hidden"
+                style={{
+                  background: "rgba(17,17,17,0.95)",
+                  backdropFilter: "blur(16px)",
+                  boxShadow: "0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(182,139,76,0.1)",
+                }}
+              >
+                {/* Gold top accent */}
+                <div className="h-0.5" style={{ background: "linear-gradient(to right, #B68B4C, #D4AF37)" }} />
+                <div className="py-2">
+                  {pagesDropdown.map((item) => (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setIsPagesOpen(false)}
+                      className="flex items-center gap-3 px-5 py-3 text-[12px] uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/5 transition-all group/item"
+                    >
+                      <span className="w-1 h-1 rounded-full bg-alusea-gold/40 group-hover/item:bg-alusea-gold transition-colors" />
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           <Link
-            href="#quote"
+            href="/contact"
             className="px-8 py-3 border border-white/30 text-white text-[12px] uppercase tracking-widest font-bold rounded-sm hover:bg-white hover:text-matte-black transition-all duration-300"
           >
             Get A Quote
@@ -89,7 +150,7 @@ const Header = () => {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-0 left-0 w-full h-screen bg-matte-black flex flex-col items-center justify-center space-y-8 animate-in fade-in zoom-in duration-300">
+        <div className="md:hidden absolute top-0 left-0 w-full h-screen bg-matte-black flex flex-col items-center justify-center space-y-6 animate-in fade-in zoom-in duration-300 overflow-y-auto">
           <button
             className="absolute top-8 right-6 text-white"
             onClick={() => setIsMobileMenuOpen(false)}
@@ -109,8 +170,23 @@ const Header = () => {
               {link.name}
             </Link>
           ))}
+
+          {/* Divider */}
+          <div className="w-12 h-px bg-alusea-gold/30" />
+
+          {pagesDropdown.map((item) => (
+            <Link
+              key={item.name}
+              href={item.href}
+              className="text-lg uppercase tracking-[0.2em] font-light text-white/50 hover:text-white transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              {item.name}
+            </Link>
+          ))}
+
           <Link
-            href="#quote"
+            href="/contact"
             className="mt-4 px-10 py-4 border border-brushed-bronze text-brushed-bronze text-sm uppercase tracking-widest font-bold rounded-sm"
             onClick={() => setIsMobileMenuOpen(false)}
           >

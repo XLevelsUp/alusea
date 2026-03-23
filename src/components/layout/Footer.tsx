@@ -62,10 +62,10 @@ const Footer = () => {
           <div className="pt-2">
             <h4 className="font-bold mb-8 text-[18px]">Our Links</h4>
             <ul className="space-y-4 text-[15px] font-medium opacity-90">
-              <li><Link href="#" className="hover:opacity-100 transition-opacity">Features</Link></li>
-              <li><Link href="#" className="hover:opacity-100 transition-opacity">Team Member</Link></li>
-              <li><Link href="#" className="hover:opacity-100 transition-opacity">Our Careers</Link></li>
-              <li><Link href="#" className="hover:opacity-100 transition-opacity">Login Here</Link></li>
+              <li><Link href="/products" className="hover:opacity-100 transition-opacity">Our Products</Link></li>
+              <li><Link href="/team" className="hover:opacity-100 transition-opacity">Team Member</Link></li>
+              <li><Link href="/careers" className="hover:opacity-100 transition-opacity">Our Careers</Link></li>
+              <li><Link href="/contact" className="hover:opacity-100 transition-opacity">Contact Us</Link></li>
             </ul>
           </div>
 
@@ -73,10 +73,10 @@ const Footer = () => {
           <div className="pt-2">
             <h4 className="font-bold mb-8 text-[18px]">Find It Fast</h4>
             <ul className="space-y-4 text-[15px] font-medium opacity-90">
-              <li><Link href="#" className="hover:opacity-100 transition-opacity">Home</Link></li>
-              <li><Link href="#" className="hover:opacity-100 transition-opacity">Services</Link></li>
-              <li><Link href="#" className="hover:opacity-100 transition-opacity">About Us</Link></li>
-              <li><Link href="#" className="hover:opacity-100 transition-opacity">Features</Link></li>
+              <li><Link href="/" className="hover:opacity-100 transition-opacity">Home</Link></li>
+              <li><Link href="/services" className="hover:opacity-100 transition-opacity">Services</Link></li>
+              <li><Link href="/about" className="hover:opacity-100 transition-opacity">About Us</Link></li>
+              <li><Link href="/projects" className="hover:opacity-100 transition-opacity">Project Gallery</Link></li>
             </ul>
           </div>
 
@@ -94,11 +94,21 @@ const Footer = () => {
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-white/30 flex flex-col md:flex-row justify-between items-center gap-6 text-[14px] md:text-[15px] font-medium">
-          <p>With Love - XLEVELSUP ❤️ </p>
+          <p>With Love -{" "}
+            <a
+              href="https://xlevelsup.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline font-bold"
+            >
+              XLEVELSUP
+            </a>{" "}
+            ❤️
+          </p>
           <div className="flex gap-8">
-            <Link href="#" className="hover:underline">Style Guide</Link>
-            <Link href="#" className="hover:underline">Licensing</Link>
-            <Link href="#" className="hover:underline">Instruction</Link>
+            <Link href="/about" className="hover:underline">About</Link>
+            <Link href="/contact" className="hover:underline">Contact</Link>
+            <Link href="/careers" className="hover:underline">Careers</Link>
           </div>
         </div>
       </div>
