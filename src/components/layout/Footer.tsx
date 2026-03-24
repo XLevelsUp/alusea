@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 const Footer = () => {
   return (
@@ -7,9 +8,15 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 items-start mb-16">
           {/* Brand Section */}
           <div className="space-y-8">
-            <h2 className="text-[32px] md:text-[42px] font-bold tracking-tight">
-              ALU - SEA
-            </h2>
+            <Link href="/" className="inline-block">
+              <Image
+                src="/images/alusea-logo.svg"
+                alt="Alusea Logo"
+                width={300}
+                height={108}
+                className="brightness-0 invert object-contain h-16 md:h-20 w-auto pr-4"
+              />
+            </Link>
             <div className="flex gap-4">
               {[
                 {

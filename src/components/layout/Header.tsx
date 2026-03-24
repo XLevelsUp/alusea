@@ -123,12 +123,20 @@ const Header = () => {
             )}
           </div>
 
-          <Link
-            href="/contact"
-            className="px-8 py-3 border border-white/30 text-white text-[12px] uppercase tracking-widest font-bold rounded-sm hover:bg-white hover:text-matte-black transition-all duration-300"
-          >
-            Get A Quote
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/experience-center"
+              className="hidden lg:flex px-6 py-3 bg-brushed-bronze text-white text-[12px] uppercase tracking-widest font-bold rounded-sm hover:-translate-y-1 hover:shadow-[0_8px_20px_-4px_rgba(182,139,76,0.3)] transition-all duration-300"
+            >
+              Experience Center
+            </Link>
+            <Link
+              href="/contact"
+              className="px-6 py-3 border border-white/30 text-white text-[12px] uppercase tracking-widest font-bold rounded-sm hover:bg-white hover:text-matte-black transition-all duration-300"
+            >
+              Get A Quote
+            </Link>
+          </div>
         </nav>
 
         {/* Mobile Toggle */}
@@ -185,13 +193,22 @@ const Header = () => {
             </Link>
           ))}
 
-          <Link
-            href="/contact"
-            className="mt-4 px-10 py-4 border border-brushed-bronze text-brushed-bronze text-sm uppercase tracking-widest font-bold rounded-sm"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            Get A Quote
-          </Link>
+          <div className="mt-6 flex flex-col gap-4 w-full px-10">
+            <Link
+              href="/experience-center"
+              className="w-full py-4 bg-brushed-bronze text-white text-sm uppercase tracking-widest font-bold rounded-sm text-center shadow-lg shadow-brushed-bronze/20"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Experience Center
+            </Link>
+            <Link
+              href="/contact"
+              className="w-full py-4 border border-brushed-bronze text-brushed-bronze text-sm uppercase tracking-widest font-bold rounded-sm text-center"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Get A Quote
+            </Link>
+          </div>
         </div>
       )}
     </header>
