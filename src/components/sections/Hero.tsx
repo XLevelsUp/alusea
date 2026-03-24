@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 const Hero = () => {
   return (
@@ -22,33 +23,53 @@ const Hero = () => {
       <div className="w-full max-w-[1440px] mx-auto relative z-20">
         <div className="max-w-3xl space-y-8 px-4 md:pl-6 md:pr-12">
           {/* Tagline */}
-          <div className="flex items-center space-x-3 mb-6 animate-in slide-in-from-left duration-700">
+          <motion.div 
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+            className="flex items-center space-x-3 mb-6"
+          >
             <span className="inline-block w-2 h-2 rounded-full bg-brushed-bronze" />
             <span className="text-brushed-bronze text-[11px] uppercase tracking-[0.4em] font-bold">
               Transform Your Home Today
             </span>
-          </div>
+          </motion.div>
 
           {/* Heading */}
-          <h1 className="text-5xl md:text-8xl font-bold text-white leading-[1.1] tracking-tight animate-in slide-in-from-bottom duration-1000 delay-200">
+          <motion.h1 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
+            className="text-5xl md:text-8xl font-bold text-white leading-[1.1] tracking-tight"
+          >
             Premium Imported <br />
             <span className="text-white/90">Windows and Doors</span>
-          </h1>
+          </motion.h1>
 
           {/* Button */}
-          <div className="pt-8 animate-in fade-in duration-1000 delay-500">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: 0.5 }}
+            className="pt-8"
+          >
             <a
               href="#contact"
               className="inline-block px-10 py-5 bg-brushed-bronze text-white text-sm uppercase tracking-widest font-bold rounded-sm hover:bg-bronze-light hover:translate-y-[-4px] transition-all duration-300 shadow-2xl"
             >
               Get Started
             </a>
-          </div>
+          </motion.div>
         </div>
       </div>
 
       {/* Decorative vertical line */}
-      <div className="absolute bottom-0 left-12 w-[1px] h-32 bg-gradient-to-t from-brushed-bronze to-transparent hidden md:block" />
+      <motion.div 
+        initial={{ height: 0 }}
+        animate={{ height: "8rem" }}
+        transition={{ duration: 1.5, delay: 0.8, ease: "easeInOut" }}
+        className="absolute bottom-0 left-12 w-[1px] bg-gradient-to-t from-brushed-bronze to-transparent hidden md:block" 
+      />
     </section>
   );
 };
