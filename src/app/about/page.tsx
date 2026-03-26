@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import Image from "next/image";
 
 export const metadata: Metadata = {
-  title: "About Us | Alusea",
+  title: "About Us",
   description:
     "Learn about Alusea — our story, our team, and our passion for premium aluminium architecture.",
+  alternates: {
+    canonical: "https://alusea.in/about",
+  },
 };
 
 export default function AboutPage() {
@@ -25,10 +28,10 @@ export default function AboutPage() {
             </div>
             
             <p className="text-steel-gray text-lg leading-relaxed">
-              At Alusea, we believe that windows and doors are more than just functional elements—they are the transparent boundaries that connect your sanctuary to the world. For over a decade, we have dedicated ourselves to perfecting the art of premium aluminium architecture.
+              At Alusea, we believe that windows and doors are more than just functional elements—they are the transparent boundaries that connect your sanctuary to the world. For over a decade, we have dedicated ourselves to perfecting the art of premium aluminium architecture, establishing ourselves as the best aluminium window and door manufacturer in the region.
             </p>
             <p className="text-steel-gray text-lg leading-relaxed">
-              Our mission is to empower architects, builders, and homeowners with sustainable, high-performance systems that never compromise on aesthetic brilliance. Every extrusion, thermal break, and glass pane is rigorously tested to meet our uncompromising standards.
+              If you've ever wondered what are the advantages of aluminium windows, it comes down to longevity, slim profiles, and unparalleled energy performance. Our mission is to empower architects, builders, and homeowners with sustainable, high-performance systems that never compromise on aesthetic brilliance. Every extrusion, thermal break, and glass pane is rigorously tested to meet our uncompromising standards.
             </p>
 
             <div className="grid grid-cols-2 gap-8 pt-8 border-t border-gray-100">

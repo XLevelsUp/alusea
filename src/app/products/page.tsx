@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import Image from "next/image";
 
 export const metadata: Metadata = {
-  title: "Products | Alusea",
+  title: "Products",
   description:
-    "Browse Alusea's premium collection of aluminium doors, windows, curtain walls, and architectural systems.",
+    "Browse Alusea's premium collection of aluminium doors, windows, curtain walls, and architectural systems. Contact us for the latest aluminium windows and doors price list.",
+  alternates: {
+    canonical: "https://alusea.in/products",
+  },
 };
 
 const products = [
@@ -55,7 +58,7 @@ export default function ProductsPage() {
             Our Premium Collection
           </h1>
           <p className="text-steel-gray text-lg leading-relaxed">
-            Discover our comprehensive range of high-performance aluminium systems designed to elevate modern architecture.
+            Discover our comprehensive range of high-performance aluminium systems designed to elevate modern architecture. Reach out to our team to learn the cost per square foot for aluminium windows tailored to your projects.
           </p>
         </header>
 

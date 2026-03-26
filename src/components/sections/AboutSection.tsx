@@ -32,7 +32,7 @@ const AboutSection = () => {
             </div>
 
             <p className="text-steel-gray text-lg leading-relaxed">
-              At ALU-SEA, we believe your doors and windows are more than just fittings they're the first impression of your home.
+              At ALU-SEA, we believe your doors and windows are more than just fittings—they're the first impression of your home. As reputable suppliers of aluminium sliding doors and premium architectural systems, we provide affordable aluminium windows and doors that elevate your living spaces without compromising on quality or aesthetics.
             </p>
 
             <div className="space-y-8 pt-4">

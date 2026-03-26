@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Projects | Alusea",
+  title: "Projects",
   description:
-    "Explore Alusea's portfolio of completed projects — residential, commercial, and architectural installations.",
+    "Explore Alusea's portfolio of completed architectural projects — luxury residential, commercial, and expansive installations.",
+  alternates: {
+    canonical: "https://alusea.in/projects",
+  },
 };
 
 const projectPlaceholders = [1, 2, 3, 4, 5, 6, 7, 8];

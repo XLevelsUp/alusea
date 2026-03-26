@@ -27,7 +27,7 @@ const ServicesSection = () => {
     },
     {
       title: "Energy-Smart Designs",
-      description: "High-performance windows and doors built to save energy year round.",
+      description: "Energy-efficient aluminium windows and doors built to save energy year round.",
       icon: (
         <svg viewBox="0 0 24 24" className="w-10 h-10 fill-none stroke-current" strokeWidth="1.5">
           <path d="M4 4h16v16H4zM4 12h16M12 4v16" />
