@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description:
     "Explore Alusea's portfolio of completed architectural projects — luxury residential, commercial, and expansive installations.",
   alternates: {
-    canonical: "https://alusea.in/projects",
+    canonical: "/projects",
   },
 };
 

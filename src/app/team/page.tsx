@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Our Team | Alusea",
+  title: "Our Team",
   description:
     "Meet the skilled craftsmen and professionals behind Alusea's premium aluminium solutions.",
+  alternates: {
+    canonical: "/team",
+  },
 };
 
 const teamMembers = [

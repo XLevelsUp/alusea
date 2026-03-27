@@ -16,7 +16,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://alusea.in"),
+  metadataBase: new URL("https://www.alusea.in"),
   title: {
     default: "Alusea | Premium Aluminium Doors & Windows",
     template: "%s | Alusea",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://alusea.in",
+    url: "https://www.alusea.in",
     siteName: "Alusea",
     title: {
       default: "Alusea | Premium Aluminium Doors & Windows",
@@ -50,9 +50,6 @@ export const metadata: Metadata = {
     },
     description: "Experience architectural excellence with Alusea, a premier aluminium windows and doors manufacturer.",
     images: ["/images/og-image.jpg"],
-  },
-  alternates: {
-    canonical: "https://alusea.in",
   },
   robots: {
     index: true,

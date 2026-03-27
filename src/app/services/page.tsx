@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description:
     "Explore Alusea's full range of premium aluminium door, window, and curtain wall services. Tailored engineering for modern facades.",
   alternates: {
-    canonical: "https://alusea.in/services",
+    canonical: "/services",
   },
 };
 

@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import { CheckCircle } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Features | Alusea",
+  title: "Features",
   description: "Explore the advanced engineering, security, and sustainability features of Alusea aluminium systems.",
+  alternates: {
+    canonical: "/features",
+  },
 };
 
 export default function FeaturesPage() {

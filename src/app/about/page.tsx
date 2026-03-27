@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Learn about Alusea — our story, our team, and our passion for premium aluminium architecture.",
   alternates: {
-    canonical: "https://alusea.in/about",
+    canonical: "/about",
   },
 };
 
