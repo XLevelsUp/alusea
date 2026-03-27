@@ -43,8 +43,18 @@ const Hero = () => {
             className="text-5xl md:text-8xl font-bold text-white leading-[1.1] tracking-tight"
           >
             Premium Imported <br />
-            <span className="text-white/90">Windows and Doors</span>
+            <span className="text-white/90">Aluminium Windows and Doors</span>
           </motion.h1>
+
+          {/* Subtext */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
+            className="text-white/80 text-lg md:text-xl font-medium max-w-2xl mt-6 hidden md:block"
+          >
+            Working alongside top-rated aluminium window and door brands to deliver unparalleled architectural beauty and performance to your spaces.
+          </motion.p>
 
           {/* Button */}
           <motion.div 

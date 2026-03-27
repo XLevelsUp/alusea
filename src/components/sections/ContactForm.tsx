@@ -22,6 +22,15 @@ export default function ContactForm() {
       setStatus('submitting');
       // Simulate API call
       setTimeout(() => {
+        // Track B2B Intent: General Inquiry Lead Generation
+        if (typeof window !== "undefined" && (window as any).dataLayer) {
+          (window as any).dataLayer.push({
+            event: "generate_lead",
+            lead_type: "general_inquiry",
+            form_name: "Contact Page Form"
+          });
+        }
+        
         setStatus('success');
         setFormData({ name: '', email: '', phone: '', message: '' });
       }, 1500);

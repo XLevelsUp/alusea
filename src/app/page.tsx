@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Hero from "@/components/sections/Hero";
+
+export const metadata: Metadata = {
+  title: "Home",
+  description: "Discover Alusea's premium aluminium windows and doors. Expertly crafted for modern architectural designs with superior durability and aesthetics.",
+  alternates: {
+    canonical: "https://alusea.in",
+  },
+};
 import AboutSection from "@/components/sections/AboutSection";
 import ServicesSection from "@/components/sections/ServicesSection";
 import WhyWorkWithUs from "@/components/sections/WhyWorkWithUs";

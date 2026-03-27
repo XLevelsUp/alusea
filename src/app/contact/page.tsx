@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import ContactForm from "@/components/sections/ContactForm";
 
 export const metadata: Metadata = {
-  title: "Contact Us | Alusea",
+  title: "Contact Us",
   description:
-    "Get in touch with Alusea for quotes, consultations, or inquiries about our premium aluminium products.",
+    "Get in touch with Alusea for quotes, consultations, or inquiries about our premium aluminium products. We're here to help build your vision.",
+  alternates: {
+    canonical: "https://alusea.in/contact",
+  },
 };
 
 export default function ContactPage() {
@@ -17,7 +20,7 @@ export default function ContactPage() {
             Let's Build <span className="text-brushed-bronze">Together</span>
           </h1>
           <p className="text-steel-gray text-lg leading-relaxed">
-            Whether you have a specific project in mind or need expert advice on the best aluminium systems for your space, our team is ready to assist.
+            Looking for premium aluminium windows and doors near me? Whether you have a specific project in mind or need expert advice on the best aluminium systems for your space, our team is ready to assist.
           </p>
         </header>
 

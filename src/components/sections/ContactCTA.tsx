@@ -47,6 +47,15 @@ const ContactCTA = () => {
         });
       }
 
+      // Track B2B Intent: Request a Quote Lead Generation
+      if (typeof window !== "undefined" && (window as any).dataLayer) {
+        (window as any).dataLayer.push({
+          event: "generate_lead",
+          lead_type: "quote_request",
+          form_name: "Contact CTA"
+        });
+      }
+
       setStatus("success");
       setForm(initialForm);
     } catch {
