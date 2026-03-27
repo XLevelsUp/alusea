@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Browse Alusea's premium collection of aluminium doors, windows, curtain walls, and architectural systems. Contact us for the latest aluminium windows and doors price list.",
   alternates: {
-    canonical: "https://alusea.in/products",
+    canonical: "/products",
   },
 };
 

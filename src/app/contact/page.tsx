@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Get in touch with Alusea for quotes, consultations, or inquiries about our premium aluminium products. We're here to help build your vision.",
   alternates: {
-    canonical: "https://alusea.in/contact",
+    canonical: "/contact",
   },
 };
 

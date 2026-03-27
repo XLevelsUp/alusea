@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Take an interactive virtual tour of the Alusea Experience Center. Discover our premium aluminium structural systems, sliding doors, and custom hardware.",
   alternates: {
-    canonical: "https://alusea.in/experience-center",
+    canonical: "/experience-center",
   },
 };
 
