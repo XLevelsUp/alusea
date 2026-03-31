@@ -12,7 +12,7 @@ const AboutSection = () => {
               <div className="absolute -top-10 -left-10 w-32 h-32 opacity-20 hidden md:block" style={{ backgroundImage: 'radial-gradient(var(--color-brushed-bronze) 2px, transparent 2px)', backgroundSize: '20px 20px' }} />
 
               <img
-                src="/images/aboutus.jpg"
+                src="/images/aboutus.webp"
                 alt="Modern architectural window system"
                 className="w-full h-auto relative z-10"
               />

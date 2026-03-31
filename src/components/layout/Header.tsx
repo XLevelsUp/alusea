@@ -18,7 +18,6 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -45,12 +44,13 @@ const Header = () => {
 
   return (
     <header
-      className={`fixed top-0 w-full z-50 transition-all duration-500 h-20 md:h-24 ${isScrolled
-        ? "bg-matte-black/90 backdrop-blur-md py-4 shadow-2xl border-b border-white/5"
-        : "bg-transparent py-8"
-        }`}
+      className={`fixed top-0 w-full z-50 transition-all duration-500 h-14 md:h-16 ${
+        isScrolled
+          ? "bg-matte-black/90 backdrop-blur-md py-2 shadow-2xl border-b border-white/5"
+          : "bg-transparent py-4"
+      }`}
     >
-      <div className="max-w-[1440px] mx-auto px-4 md:pl-6 md:pr-12 flex justify-between items-center">
+      <div className="max-w-[1440px] mx-auto px-4 md:pl-6 md:pr-12 flex justify-between items-center h-full">
         {/* Logo */}
         <Link href="/" className="flex items-center">
           <div className="h-10 overflow-visible flex items-center">
@@ -59,7 +59,7 @@ const Header = () => {
               alt="Alusea Logo"
               width={300}
               height={108}
-              className="object-contain h-20 w-auto brightness-0 invert"
+              className="object-contain h-16 w-auto brightness-0 invert"
               priority
             />
           </div>
@@ -94,7 +94,6 @@ const Header = () => {
               </svg>
             </button>
 
-            {/* Dropdown Panel */}
             {isPagesOpen && (
               <div
                 className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-52 rounded-sm border border-white/10 overflow-hidden"
@@ -104,7 +103,6 @@ const Header = () => {
                   boxShadow: "0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(182,139,76,0.1)",
                 }}
               >
-                {/* Gold top accent */}
                 <div className="h-0.5" style={{ background: "linear-gradient(to right, #B68B4C, #D4AF37)" }} />
                 <div className="py-2">
                   {pagesDropdown.map((item) => (
@@ -179,7 +177,6 @@ const Header = () => {
             </Link>
           ))}
 
-          {/* Divider */}
           <div className="w-12 h-px bg-alusea-gold/30" />
 
           {pagesDropdown.map((item) => (
@@ -216,4 +213,3 @@ const Header = () => {
 };
 
 export default Header;
-
