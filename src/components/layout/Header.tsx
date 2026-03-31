@@ -45,12 +45,12 @@ const Header = () => {
 
   return (
     <header
-      className={`fixed top-0 w-full z-50 transition-all duration-500 ${isScrolled
+      className={`fixed top-0 w-full z-50 transition-all duration-500 h-20 md:h-24 ${isScrolled
         ? "bg-matte-black/90 backdrop-blur-md py-4 shadow-2xl border-b border-white/5"
         : "bg-transparent py-8"
         }`}
     >
-      <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+      <div className="max-w-[1440px] mx-auto px-4 md:pl-6 md:pr-12 flex justify-between items-center">
         {/* Logo */}
         <Link href="/" className="flex items-center">
           <div className="h-10 overflow-visible flex items-center">

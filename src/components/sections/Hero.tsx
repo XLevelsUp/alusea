@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 const Hero = () => {
   return (
-    <section className="relative h-screen w-full overflow-hidden flex items-center">
+    <section className="relative min-h-screen w-full overflow-hidden flex items-center">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
@@ -20,14 +20,14 @@ const Hero = () => {
         <div className="absolute inset-0 bg-matte-black/20 z-10" />
       </div>
 
-      <div className="w-full max-w-[1440px] mx-auto relative z-20">
-        <div className="max-w-3xl space-y-8 px-4 md:pl-6 md:pr-12">
+      <div className="w-full max-w-[1440px] mx-auto relative z-20 px-4 md:px-8">
+        <div className="max-w-3xl space-y-8 px-0 sm:px-4 md:pl-6 md:pr-12">
           {/* Tagline */}
           <motion.div 
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
-            className="flex items-center space-x-3 mb-6"
+            className="flex items-center space-x-3 mb-6 mt-8 sm:mt-12 md:mt-16"
           >
             <span className="inline-block w-2 h-2 rounded-full bg-brushed-bronze" />
             <span className="text-brushed-bronze text-[11px] uppercase tracking-[0.4em] font-bold">
@@ -40,7 +40,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
-            className="text-5xl md:text-8xl font-bold text-white leading-[1.1] tracking-tight"
+            className="text-3xl sm:text-5xl md:text-8xl font-bold text-white leading-[1.1] tracking-tight mt-8"
           >
             Premium Imported <br />
             <span className="text-white/90">Aluminium Windows and Doors</span>
