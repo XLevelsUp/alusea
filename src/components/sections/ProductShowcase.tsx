@@ -94,7 +94,7 @@ const ProductShowcase = () => {
 
         {/* Slide counter + navigation */}
         <div className="hidden md:flex items-center gap-4">
-          <span className="text-white/40 text-sm tabular-nums">
+          <span className="text-white/70 text-sm tabular-nums">
             {String(current + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
           </span>
           <div className="flex items-center gap-3">

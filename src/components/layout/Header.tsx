@@ -124,7 +124,7 @@ const Header = () => {
           <div className="flex items-center gap-4">
             <Link
               href="/experience-center"
-              className="hidden lg:flex px-6 py-3 bg-brushed-bronze text-white text-[12px] uppercase tracking-widest font-bold rounded-sm hover:-translate-y-1 hover:shadow-[0_8px_20px_-4px_rgba(182,139,76,0.3)] transition-all duration-300"
+              className="hidden lg:flex px-6 py-3 bg-[#7A5418] text-white text-[12px] uppercase tracking-widest font-bold rounded-sm hover:-translate-y-1 hover:shadow-[0_8px_20px_-4px_rgba(122,84,24,0.4)] transition-all duration-300"
             >
               Experience Center
             </Link>
