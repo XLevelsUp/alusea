@@ -75,8 +75,9 @@ const ServicesSection = () => {
         <div className="flex flex-col lg:flex-row justify-between items-start mb-20 gap-8">
           <div className="space-y-4 max-w-xl">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-brushed-bronze" />
-              <span className="text-brushed-bronze text-xs uppercase tracking-[0.2em] font-bold">Our Services</span>
+              <span className="w-2 h-2 rounded-full bg-[#7A5418]" />
+              {/* FIX: darkened label text for AA contrast on light gray bg */}
+              <span className="text-[#7A5418] text-xs uppercase tracking-[0.2em] font-bold">Our Services</span>
             </div>
             <h2 className="text-[42px] md:text-[52px] font-bold text-architectural-blue leading-tight">
               Complete Door & Window Solutions
@@ -95,7 +96,8 @@ const ServicesSection = () => {
           <div className="space-y-16">
             {leftServices.map((service, idx) => (
               <div key={idx} className="flex gap-6 items-start lg:text-right lg:flex-row-reverse">
-                <div className="flex-shrink-0 text-brushed-bronze pt-1">
+                {/* FIX: icon color darkened */}
+                <div className="flex-shrink-0 text-[#7A5418] pt-1">
                   {service.icon}
                 </div>
                 <div>
@@ -120,7 +122,6 @@ const ServicesSection = () => {
                 />
               </div>
             </div>
-            {/* Background decorative element */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[80%] bg-slate-50 -z-10 rounded-full blur-3xl opacity-50" />
           </div>
 
@@ -128,7 +129,8 @@ const ServicesSection = () => {
           <div className="space-y-16">
             {rightServices.map((service, idx) => (
               <div key={idx} className="flex gap-6 items-start">
-                <div className="flex-shrink-0 text-brushed-bronze pt-1">
+                {/* FIX: icon color darkened */}
+                <div className="flex-shrink-0 text-[#7A5418] pt-1">
                   {service.icon}
                 </div>
                 <div>
