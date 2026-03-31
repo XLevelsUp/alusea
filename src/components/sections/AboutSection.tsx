@@ -44,7 +44,7 @@ const AboutSection = () => {
                   </svg>
                 </div>
                 <div>
-                  <h4 className="text-architectural-blue text-xl font-bold mb-2">Our Mission</h4>
+                  <h3 className="text-architectural-blue text-xl font-bold mb-2">Our Mission</h3>
                   <p className="text-steel-gray text-base leading-relaxed">
                     Our mission is to deliver premium doors and windows that blend durability, design, and functionality, with precise installation that enhances every space with secure and stylish solutions.
                   </p>
@@ -60,7 +60,7 @@ const AboutSection = () => {
                   </svg>
                 </div>
                 <div>
-                  <h4 className="text-architectural-blue text-xl font-bold mb-2">Our Vision</h4>
+                  <h3 className="text-architectural-blue text-xl font-bold mb-2">Our Vision</h3>
                   <p className="text-steel-gray text-base leading-relaxed">
                     Our vision is to be the most trusted name in doors and windows by delivering unmatched quality and innovative designs, creating homes and spaces where beauty meets strength.
                   </p>
