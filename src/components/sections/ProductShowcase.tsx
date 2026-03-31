@@ -165,19 +165,21 @@ const ProductShowcase = () => {
         </div>
       </div>
 
-      {/* Dot indicators */}
-      <div className="flex items-center justify-center gap-3 py-8">
+      {/* Dot indicators — touch target minimum 44x44px via padding */}
+      <div className="flex items-center justify-center gap-1 py-6">
         {slides.map((_, idx) => (
           <button
             key={idx}
             onClick={() => goTo(idx)}
             aria-label={`Go to slide ${idx + 1}`}
-            className={`transition-all duration-300 rounded-full ${
+            className="p-3 flex items-center justify-center"
+          >
+            <span className={`block transition-all duration-300 rounded-full ${
               idx === current
-                ? "w-8 h-2 bg-brushed-bronze"
-                : "w-2 h-2 bg-white/30 hover:bg-white/60"
-            }`}
-          />
+                ? "w-8 h-2 bg-[#7A5418]"
+                : "w-2 h-2 bg-white/50 hover:bg-white/80"
+            }`} />
+          </button>
         ))}
       </div>
     </section>
