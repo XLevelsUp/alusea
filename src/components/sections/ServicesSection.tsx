@@ -113,7 +113,7 @@ const ServicesSection = () => {
             <div className="bg-white p-4 shadow-2xl rounded-sm">
               <div className="relative w-full aspect-[3/4]">
                 <Image
-                  src="/images/ourservice.jpg"
+                  src="/images/ourservice.webp"
                   alt="Our services – premium windows and doors"
                   fill
                   className="object-cover"
