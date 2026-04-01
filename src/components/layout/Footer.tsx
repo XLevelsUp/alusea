@@ -3,7 +3,7 @@ import Image from "next/image";
 
 const Footer = () => {
   return (
-    <footer className="bg-alusea-gold text-white pt-20 pb-10">
+    <footer className="bg-[#7A5418] text-white pt-20 pb-10">
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 items-start mb-16">
           {/* Brand Section */}
@@ -43,21 +43,15 @@ const Footer = () => {
                   ),
                   href: "https://www.instagram.com/alusea_aluminum/"
                 },
-                /* {
-                  icon: (
-                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                      <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
-                    </svg>
-                  ),
-                  href: "#"
-                } */
               ].map((social, idx) => (
                 <Link
                   key={idx}
                   href={social.href}
-                  target={social.href !== "#" ? "_blank" : undefined}
-                  rel={social.href !== "#" ? "noopener noreferrer" : undefined}
-                  className="w-12 h-12 rounded-full border border-white flex items-center justify-center hover:bg-white hover:text-alusea-gold transition-all duration-300 cursor-pointer"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={["YouTube", "Facebook", "Instagram"][idx]}
+                  /* FIX: text-white on dark bg is fine; hover flips to dark text on white */
+                  className="w-12 h-12 rounded-full border-2 border-white text-white flex items-center justify-center hover:bg-white hover:text-[#7A5418] transition-all duration-300"
                 >
                   {social.icon}
                 </Link>
@@ -67,30 +61,34 @@ const Footer = () => {
 
           {/* Our Links */}
           <div className="pt-2">
-            <h4 className="font-bold mb-8 text-[18px]">Our Links</h4>
-            <ul className="space-y-4 text-[15px] font-medium opacity-90">
-              <li><Link href="/products" className="hover:opacity-100 transition-opacity">Our Products</Link></li>
-              <li><Link href="/team" className="hover:opacity-100 transition-opacity">Team Member</Link></li>
-              <li><Link href="/careers" className="hover:opacity-100 transition-opacity">Our Careers</Link></li>
-              <li><Link href="/contact" className="hover:opacity-100 transition-opacity">Contact Us</Link></li>
+            {/* FIX: heading is white on dark bg — fine */}
+            <h3 className="font-bold mb-8 text-[18px]">Our Links</h3>
+            {/* FIX: removed opacity-90, now full opacity for contrast */}
+            <ul className="space-y-4 text-[15px] font-medium">
+              <li><Link href="/products" className="hover:underline transition-all">Our Products</Link></li>
+              <li><Link href="/team" className="hover:underline transition-all">Team Member</Link></li>
+              <li><Link href="/careers" className="hover:underline transition-all">Our Careers</Link></li>
+              <li><Link href="/contact" className="hover:underline transition-all">Contact Us</Link></li>
             </ul>
           </div>
 
           {/* Find It Fast */}
           <div className="pt-2">
-            <h4 className="font-bold mb-8 text-[18px]">Find It Fast</h4>
-            <ul className="space-y-4 text-[15px] font-medium opacity-90">
-              <li><Link href="/" className="hover:opacity-100 transition-opacity">Home</Link></li>
-              <li><Link href="/services" className="hover:opacity-100 transition-opacity">Services</Link></li>
-              <li><Link href="/about" className="hover:opacity-100 transition-opacity">About Us</Link></li>
-              <li><Link href="/projects" className="hover:opacity-100 transition-opacity">Project Gallery</Link></li>
+            <h3 className="font-bold mb-8 text-[18px]">Find It Fast</h3>
+            {/* FIX: removed opacity-90 */}
+            <ul className="space-y-4 text-[15px] font-medium">
+              <li><Link href="/" className="hover:underline transition-all">Home</Link></li>
+              <li><Link href="/services" className="hover:underline transition-all">Services</Link></li>
+              <li><Link href="/about" className="hover:underline transition-all">About Us</Link></li>
+              <li><Link href="/projects" className="hover:underline transition-all">Project Gallery</Link></li>
             </ul>
           </div>
 
           {/* Contact Details */}
-          <div className="pt-2 space-y-4 text-[16px] md:text-[18px] font-medium opacity-90">
+          {/* FIX: removed opacity-90 */}
+          <div className="pt-2 space-y-4 text-[16px] md:text-[18px] font-medium">
             <p>aluseacbe@gmail.com</p>
-            <a href="https://wa.me/919626022722" target="_blank" rel="noopener noreferrer" className="hover:underline">96260 22722</a>
+            <a href="https://wa.me/919626022722" target="_blank" rel="noopener noreferrer" className="hover:underline block">96260 22722</a>
             <p className="leading-tight">
               No 178, A Ramachandra Road<br />
               RS Puram, Near Flower Market<br />
@@ -100,7 +98,8 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-white/30 flex flex-col md:flex-row justify-between items-center gap-6 text-[14px] md:text-[15px] font-medium">
+        {/* FIX: border-white/30 → border-white/50 for better visibility */}
+        <div className="pt-8 border-t border-white/50 flex flex-col md:flex-row justify-between items-center gap-6 text-[14px] md:text-[15px] font-medium">
           <p>With Love -{" "}
             <a
               href="https://xlevelsup.com/"
@@ -124,4 +123,3 @@ const Footer = () => {
 };
 
 export default Footer;
-

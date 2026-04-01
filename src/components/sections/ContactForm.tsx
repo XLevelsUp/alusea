@@ -11,7 +11,6 @@ export default function ContactForm() {
     if (!formData.name.trim()) tempErrors.name = "Name is required";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) tempErrors.email = "Valid email is required";
     if (!formData.message.trim()) tempErrors.message = "Message cannot be empty";
-    
     setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
   };
@@ -20,9 +19,7 @@ export default function ContactForm() {
     e.preventDefault();
     if (validate()) {
       setStatus('submitting');
-      // Simulate API call
       setTimeout(() => {
-        // Track B2B Intent: General Inquiry Lead Generation
         if (typeof window !== "undefined" && (window as any).dataLayer) {
           (window as any).dataLayer.push({
             event: "generate_lead",
@@ -30,7 +27,6 @@ export default function ContactForm() {
             form_name: "Contact Page Form"
           });
         }
-        
         setStatus('success');
         setFormData({ name: '', email: '', phone: '', message: '' });
       }, 1500);
@@ -40,7 +36,6 @@ export default function ContactForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear error on change
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
@@ -54,9 +49,10 @@ export default function ContactForm() {
         </div>
         <h3 className="text-2xl font-bold text-matte-black mb-2">Message Received</h3>
         <p className="text-steel-gray">Thank you for reaching out to Alusea. Our team will contact you within 24 hours.</p>
-        <button 
+        {/* FIX: text-brushed-bronze → text-[#7A5418] for AA contrast on white bg */}
+        <button
           onClick={() => setStatus('idle')}
-          className="mt-6 text-brushed-bronze font-bold hover:underline"
+          className="mt-6 text-[#7A5418] font-bold hover:underline"
         >
           Send another message
         </button>
@@ -69,13 +65,13 @@ export default function ContactForm() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-matte-black mb-1">Full Name *</label>
-          <input 
-            type="text" 
-            id="name" 
-            name="name" 
-            value={formData.name} 
+          <input
+            type="text"
+            id="name"
+            name="name"
+            value={formData.name}
             onChange={handleChange}
-            className={`w-full p-4 bg-gray-50 border ${errors.name ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-brushed-bronze`}
+            className={`w-full p-4 bg-gray-50 border ${errors.name ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7A5418]`}
             aria-invalid={!!errors.name}
             aria-describedby={errors.name ? "name-error" : undefined}
           />
@@ -83,13 +79,13 @@ export default function ContactForm() {
         </div>
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-matte-black mb-1">Email Address *</label>
-          <input 
-            type="email" 
-            id="email" 
-            name="email" 
-            value={formData.email} 
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={formData.email}
             onChange={handleChange}
-            className={`w-full p-4 bg-gray-50 border ${errors.email ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-brushed-bronze`}
+            className={`w-full p-4 bg-gray-50 border ${errors.email ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7A5418]`}
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? "email-error" : undefined}
           />
@@ -99,33 +95,34 @@ export default function ContactForm() {
 
       <div>
         <label htmlFor="phone" className="block text-sm font-medium text-matte-black mb-1">Phone Number (Optional)</label>
-        <input 
-          type="tel" 
-          id="phone" 
-          name="phone" 
-          value={formData.phone} 
+        <input
+          type="tel"
+          id="phone"
+          name="phone"
+          value={formData.phone}
           onChange={handleChange}
-          className="w-full p-4 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brushed-bronze"
+          className="w-full p-4 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7A5418]"
         />
       </div>
 
       <div>
         <label htmlFor="message" className="block text-sm font-medium text-matte-black mb-1">Message *</label>
-        <textarea 
-          id="message" 
-          name="message" 
-          rows={5} 
-          value={formData.message} 
+        <textarea
+          id="message"
+          name="message"
+          rows={5}
+          value={formData.message}
           onChange={handleChange}
-          className={`w-full p-4 bg-gray-50 border ${errors.message ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-brushed-bronze`}
+          className={`w-full p-4 bg-gray-50 border ${errors.message ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7A5418]`}
           aria-invalid={!!errors.message}
           aria-describedby={errors.message ? "message-error" : undefined}
         />
         {errors.message && <p id="message-error" className="mt-1 text-sm text-red-500">{errors.message}</p>}
       </div>
 
-      <button 
-        type="submit" 
+      {/* bg-matte-black + text-white passes contrast — no change needed */}
+      <button
+        type="submit"
         disabled={status === 'submitting'}
         className="w-full bg-matte-black hover:bg-architectural-blue text-white font-bold py-4 px-8 rounded-lg transition-colors flex justify-center items-center"
       >
