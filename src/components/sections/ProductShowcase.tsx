@@ -56,8 +56,9 @@ const ProductShowcase = () => {
       <div className="max-w-[1440px] mx-auto px-4 md:pl-6 md:pr-12 py-16 flex items-end justify-between">
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#7A5418]" />
-            <span className="text-[#7A5418] text-xs uppercase tracking-[0.2em] font-bold">
+            {/* FIX: on bg-matte-black, use light bronze #D4A84B instead of dark #7A5418 */}
+            <span className="w-2 h-2 rounded-full bg-[#D4A84B]" />
+            <span className="text-[#D4A84B] text-xs uppercase tracking-[0.2em] font-bold">
               Our Collection
             </span>
           </div>
@@ -75,7 +76,7 @@ const ProductShowcase = () => {
             <button
               onClick={prev}
               aria-label="Previous slide"
-              className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-white hover:border-[#7A5418] hover:text-[#7A5418] transition-all duration-300"
+              className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-white hover:border-[#D4A84B] hover:text-[#D4A84B] transition-all duration-300"
             >
               <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth="2">
                 <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
@@ -84,7 +85,7 @@ const ProductShowcase = () => {
             <button
               onClick={next}
               aria-label="Next slide"
-              className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-white hover:border-[#7A5418] hover:text-[#7A5418] transition-all duration-300"
+              className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-white hover:border-[#D4A84B] hover:text-[#D4A84B] transition-all duration-300"
             >
               <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth="2">
                 <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
