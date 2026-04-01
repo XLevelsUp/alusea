@@ -44,11 +44,10 @@ const Header = () => {
 
   return (
     <header
-      className={`fixed top-0 w-full z-50 transition-all duration-500 h-14 md:h-16 ${
-        isScrolled
+      className={`fixed top-0 w-full z-50 transition-all duration-500 h-14 md:h-16 ${isScrolled
           ? "bg-matte-black/90 backdrop-blur-md py-2 shadow-2xl border-b border-white/5"
           : "bg-transparent py-4"
-      }`}
+        }`}
     >
       <div className="max-w-[1440px] mx-auto px-4 md:pl-6 md:pr-12 flex justify-between items-center h-full">
         {/* Logo */}
@@ -139,7 +138,7 @@ const Header = () => {
 
         {/* Mobile Toggle */}
         <button
-          className="md:hidden p-2 text-white"
+          className="md:hidden p-2 text-white" aria-label="Open navigation menu"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
           {isMobileMenuOpen ? (

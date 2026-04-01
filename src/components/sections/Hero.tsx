@@ -44,7 +44,7 @@ const Hero = () => {
 
           {/* Heading */}
           <motion.h1
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 1, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
             className="text-3xl sm:text-5xl md:text-[5.5rem] font-bold text-white leading-[1.1] tracking-tight mt-2 md:mt-3"

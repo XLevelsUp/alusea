@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Image from 'next/image';
 
 const WhyWorkWithUs = () => {
   const benefits = [
@@ -75,10 +76,13 @@ const WhyWorkWithUs = () => {
           {/* Left: Image */}
           <div className="relative">
             <div className="rounded-2xl overflow-hidden shadow-2xl aspect-[4/3]">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1000"
                 alt="Modern window installation"
                 className="w-full h-full object-cover"
+                width={1000}
+                height={750}
+                sizes="(max-width: 768px) 100vw, 50vw"
               />
             </div>
           </div>
