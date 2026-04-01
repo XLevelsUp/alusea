@@ -4,41 +4,17 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 
 const slides = [
-  {
-    id: 1,
-    src: "/images/Interior 1.webp",
-    alt: "Interior showcase 1",
-  },
-  {
-    id: 2,
-    src: "/images/Interior 2.webp",
-    alt: "Interior showcase 2",
-  },
-  {
-    id: 3,
-    src: "/images/Interior 3 (1).webp",
-    alt: "Interior showcase 3",
-  },
-  {
-    id: 4,
-    src: "/images/Interior 3.webp",
-    alt: "Interior showcase 4",
-  },
+  { id: 1, src: "/images/Interior 1.webp", alt: "Interior showcase 1" },
+  { id: 2, src: "/images/Interior 2.webp", alt: "Interior showcase 2" },
+  { id: 3, src: "/images/Interior 3 (1).webp", alt: "Interior showcase 3" },
+  { id: 4, src: "/images/Interior 3.webp", alt: "Interior showcase 4" },
   {
     id: 5,
     src: "/images/Interior-Master-Line-Multi-Panel-Pivot-Glass-Revolving-Door-Aluminium-Internal-Aluminum-Center-Glass-Pivot-Doors.webp",
     alt: "Multi-panel pivot glass revolving door",
   },
-  {
-    id: 6,
-    src: "/images/glass entrance door.webp",
-    alt: "Glass entrance door",
-  },
-  {
-    id: 7,
-    src: "/images/Rectangle 87.webp",
-    alt: "Premium aluminium product",
-  },
+  { id: 6, src: "/images/glass entrance door.webp", alt: "Glass entrance door" },
+  { id: 7, src: "/images/Rectangle 87.webp", alt: "Premium aluminium product" },
   {
     id: 8,
     src: "/images/ChatGPT Image Mar 13, 2026, 04_53_24 PM.webp",
@@ -68,7 +44,6 @@ const ProductShowcase = () => {
   const prev = () => goTo(current - 1);
   const next = useCallback(() => goTo(current + 1), [current, goTo]);
 
-  // Auto-play
   useEffect(() => {
     const timer = setInterval(next, 4000);
     return () => clearInterval(timer);
@@ -81,18 +56,17 @@ const ProductShowcase = () => {
       <div className="max-w-[1440px] mx-auto px-4 md:pl-6 md:pr-12 py-16 flex items-end justify-between">
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-brushed-bronze" />
-            <span className="text-brushed-bronze text-xs uppercase tracking-[0.2em] font-bold">
+            <span className="w-2 h-2 rounded-full bg-[#7A5418]" />
+            <span className="text-[#7A5418] text-xs uppercase tracking-[0.2em] font-bold">
               Our Collection
             </span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold text-white leading-tight">
             Precision Engineered <br />
-            <span className="text-brushed-bronze italic">Architectural Solutions</span>
+            <span className="text-[#D4A84B] italic">Architectural Solutions</span>
           </h2>
         </div>
 
-        {/* Slide counter + navigation */}
         <div className="hidden md:flex items-center gap-4">
           <span className="text-white/70 text-sm tabular-nums">
             {String(current + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
@@ -101,7 +75,7 @@ const ProductShowcase = () => {
             <button
               onClick={prev}
               aria-label="Previous slide"
-              className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-white hover:border-brushed-bronze hover:text-brushed-bronze transition-all duration-300"
+              className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-white hover:border-[#7A5418] hover:text-[#7A5418] transition-all duration-300"
             >
               <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth="2">
                 <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
@@ -110,7 +84,7 @@ const ProductShowcase = () => {
             <button
               onClick={next}
               aria-label="Next slide"
-              className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-white hover:border-brushed-bronze hover:text-brushed-bronze transition-all duration-300"
+              className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-white hover:border-[#7A5418] hover:text-[#7A5418] transition-all duration-300"
             >
               <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth="2">
                 <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
@@ -120,25 +94,30 @@ const ProductShowcase = () => {
         </div>
       </div>
 
-      {/* Carousel track — constrained to max-w-[1440px] */}
+      {/* Carousel track */}
       <div className="max-w-[1440px] mx-auto px-10 md:px-32">
         <div className="relative w-full h-[65vh] md:h-[82vh] overflow-hidden rounded-sm">
           {slides.map((slide, idx) => (
             <div
               key={slide.id}
-              className={`absolute inset-0 transition-opacity duration-500 ${
-                idx === current ? "opacity-100 z-10" : "opacity-0 z-0"
-              }`}
+              className={`absolute inset-0 transition-opacity duration-500 ${idx === current ? "opacity-100 z-10" : "opacity-0 z-0"
+                }`}
             >
               <Image
                 src={slide.src}
                 alt={slide.alt}
                 fill
                 className="object-cover object-center"
-                sizes="(max-width: 1440px) 100vw, 1440px"
+                /*
+                  PERFORMANCE FIX: was "100vw" — but container has px-10 md:px-32 padding.
+                  Corrected sizes match the actual rendered width so Next.js
+                  serves the right srcset variant instead of always downloading the largest.
+                  Also only priority-load slide 0; rest are lazy loaded.
+                */
+                sizes="(max-width: 640px) 85vw, (max-width: 1024px) 75vw, 60vw"
                 priority={idx === 0}
+                loading={idx === 0 ? "eager" : "lazy"}
               />
-              {/* Subtle gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-matte-black/60 via-transparent to-transparent" />
             </div>
           ))}
@@ -165,7 +144,7 @@ const ProductShowcase = () => {
         </div>
       </div>
 
-      {/* Dot indicators — touch target minimum 44x44px via padding */}
+      {/* Dot indicators */}
       <div className="flex items-center justify-center gap-1 py-6">
         {slides.map((_, idx) => (
           <button
@@ -174,11 +153,10 @@ const ProductShowcase = () => {
             aria-label={`Go to slide ${idx + 1}`}
             className="p-3 flex items-center justify-center"
           >
-            <span className={`block transition-all duration-300 rounded-full ${
-              idx === current
+            <span className={`block transition-all duration-300 rounded-full ${idx === current
                 ? "w-8 h-2 bg-[#7A5418]"
                 : "w-2 h-2 bg-white/50 hover:bg-white/80"
-            }`} />
+              }`} />
           </button>
         ))}
       </div>
