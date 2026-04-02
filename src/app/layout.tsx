@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     url: "https://www.alusea.in",
     siteName: "Alusea",
     title: {
-      default: "Alusea | Premium Aluminium Doors & Windows",
+      default: "Alusea | Premium Aluminium Doors & Windows | Best Prices | Manufacturer in India",
       template: "%s | Alusea",
     },
     description: "Experience architectural excellence with Alusea, a premier aluminium windows and doors manufacturer.",
@@ -69,8 +69,9 @@ const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
   name: "Alusea",
-  url: "https://alusea.in",
-  logo: "https://alusea.in/images/Alusea icon 1.jpg",
+  url: "https://www.alusea.in",
+  logo: "https://www.alusea.in/images/Alusea icon 1.jpg",
+  description: "Premier manufacturer of premium aluminium doors, windows, and custom architectural systems. Specialists in modern thermal-break frames, sliding doors, and curtain walls.",
   sameAs: [
     "https://www.instagram.com/alusea_aluminum"
   ]
