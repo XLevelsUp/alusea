@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Image from 'next/image';
 
 // Empty for now, add testimonial objects here in the future
 const testimonials: { quote: string; author: string; role: string; image: string }[] = [];
@@ -85,11 +86,12 @@ const Testimonials = () => {
                 >
                   <div className="bg-white p-10 md:p-12 rounded-[2.5rem] shadow-2xl space-y-8 w-full">
                     <div className="flex items-center gap-6">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
+                      <Image
                         src={t.image}
                         alt={t.author}
-                        className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg"
+                        width={80}
+                        height={80}
+                        className="rounded-full object-cover border-4 border-white shadow-lg"
                       />
                       <div>
                         {/* FIX: h4 → h3 to fix heading order (section h2 → card h3) */}

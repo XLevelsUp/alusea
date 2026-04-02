@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 const projects = [
   {
     title: "The Marina Villa",
@@ -53,10 +55,12 @@ const ProjectGallery = () => {
                 index === 3 ? "md:col-span-12 h-[400px]" : "md:col-span-4 h-[300px]"
               }`}
             >
-              <img 
+              <Image 
                 src={project.image} 
                 alt={project.title}
-                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                className="object-cover transition-transform duration-1000 group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-matte-black via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
               <div className="absolute bottom-10 left-10 text-white translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
