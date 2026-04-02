@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     default: "Alusea | Premium Aluminium Doors & Windows",
     template: "%s | Alusea",
   },
-  description: "Experience architectural excellence with Alusea, a premier aluminium windows and doors manufacturer. Premium aluminium doors, windows, and curtain walls for modern living spaces.",
+  description: "Experience architectural excellence with Alusea. We manufacture premium thermal-break aluminium doors, custom windows, and modern structural facades.",
   keywords: ["aluminium windows and doors", "aluminium windows and doors manufacturing", "premium aluminium", "aluminium architectural systems"],
   openGraph: {
     type: "website",
@@ -30,10 +30,10 @@ export const metadata: Metadata = {
     url: "https://www.alusea.in",
     siteName: "Alusea",
     title: {
-      default: "Alusea | Premium Aluminium Doors & Windows | Best Prices | Manufacturer in India",
+      default: "Premium Aluminium Doors & Windows | Alusea India",
       template: "%s | Alusea",
     },
-    description: "Experience architectural excellence with Alusea, a premier aluminium windows and doors manufacturer.",
+    description: "Experience architectural excellence with Alusea. We manufacture premium thermal-break aluminium doors, custom windows, and modern structural facades.",
     images: [
       {
         url: "/images/og-image.jpg",
@@ -46,10 +46,10 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: {
-      default: "Alusea | Premium Aluminium Doors & Windows",
+      default: "Premium Aluminium Doors & Windows | Alusea India",
       template: "%s | Alusea",
     },
-    description: "Experience architectural excellence with Alusea, a premier aluminium windows and doors manufacturer.",
+    description: "Experience architectural excellence with Alusea. We manufacture premium thermal-break aluminium doors, custom windows, and modern structural facades.",
     images: ["/images/og-image.jpg"],
   },
   robots: {

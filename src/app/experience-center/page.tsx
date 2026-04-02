@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import ExperienceCenterClient from "./ExperienceCenterClient";
 
 export const metadata: Metadata = {
-  title: "Contact Alusea | Visit Our Experience Center",
+  title: "Visit Our Premium Aluminium Showroom",
   description:
-    "Schedule a design consultation at the Alusea Experience Center. Partner with our expert team for custom aluminium fabrications tailored to your architectural project needs.",
+    "Schedule a consultation at the Alusea Experience Center. Partner with our engineers for custom aluminium fabrications tailored to your project's needs.",
   alternates: {
     canonical: "/experience-center",
   },
