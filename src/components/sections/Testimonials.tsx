@@ -1,30 +1,17 @@
 "use client";
 
 import React from 'react';
+import Image from 'next/image';
 
-const testimonials = [
-  {
-    quote: "Their attention to detail and creative design approach transformed our website into a visually stunning and highly functional platform. We've seen a 30% increase in traffic since the relaunch.",
-    author: "John Anderson",
-    role: "CEO at Innovate Solutions",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200"
-  },
-  {
-    quote: "The precision and quality of the installation were top-notch. Alusea's team ensured every window was perfectly aligned and functional. Truly a premium experience.",
-    author: "James Harrington",
-    role: "Architect, HAID Studio",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200"
-  },
-  {
-    quote: "Exceptional service from start to finish. Their energy-smart designs have significantly reduced our cooling costs while looking absolutely stunning.",
-    author: "Sarah Al-Maktoum",
-    role: "Luxury Developer",
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=200"
-  }
-];
+// Empty for now, add testimonial objects here in the future
+const testimonials: { quote: string; author: string; role: string; image: string }[] = [];
 
 const Testimonials = () => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
+
+  if (testimonials.length === 0) {
+    return null; // Safely hide section if no testimonials are defined
+  }
 
   const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % testimonials.length);
   const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
@@ -54,11 +41,10 @@ const Testimonials = () => {
                   aria-label={`Go to testimonial ${idx + 1}`}
                   className="p-3 flex items-center justify-center"
                 >
-                  <span className={`block transition-all duration-300 rounded-full ${
-                    idx === currentIndex
-                      ? "w-8 h-2 bg-[#7A5418]"
-                      : "w-2 h-2 bg-[#7A5418]/30 hover:bg-[#7A5418]/60"
-                  }`} />
+                  <span className={`block transition-all duration-300 rounded-full ${idx === currentIndex
+                    ? "w-8 h-2 bg-[#7A5418]"
+                    : "w-2 h-2 bg-[#7A5418]/30 hover:bg-[#7A5418]/60"
+                    }`} />
                 </button>
               ))}
             </div>
@@ -95,17 +81,17 @@ const Testimonials = () => {
               {testimonials.map((t, index) => (
                 <div
                   key={index}
-                  className={`absolute inset-0 flex items-center transition-opacity duration-700 ${
-                    index === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
-                  }`}
+                  className={`absolute inset-0 flex items-center transition-opacity duration-700 ${index === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+                    }`}
                 >
                   <div className="bg-white p-10 md:p-12 rounded-[2.5rem] shadow-2xl space-y-8 w-full">
                     <div className="flex items-center gap-6">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
+                      <Image
                         src={t.image}
                         alt={t.author}
-                        className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg"
+                        width={80}
+                        height={80}
+                        className="rounded-full object-cover border-4 border-white shadow-lg"
                       />
                       <div>
                         {/* FIX: h4 → h3 to fix heading order (section h2 → card h3) */}

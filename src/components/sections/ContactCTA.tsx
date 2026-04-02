@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import Image from "next/image";
 
 const GOOGLE_SCRIPT_URL = process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL || "";
 
@@ -69,10 +70,13 @@ const ContactCTA = () => {
 
       {/* Background image with dark overlay */}
       <div className="absolute inset-0 z-0">
-        <img
+        <Image
           src="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&q=80&w=2000"
           alt="Modern Interior"
-          className="w-full h-full object-cover transition-transform duration-[10000ms] group-hover:scale-110"
+          fill
+          quality={75}
+          sizes="100vw"
+          className="object-cover transition-transform duration-[10000ms] group-hover:scale-110"
         />
         <div className="absolute inset-0 bg-black/75" />
       </div>

@@ -2,17 +2,31 @@ import type { Metadata } from "next";
 import ContactForm from "@/components/sections/ContactForm";
 
 export const metadata: Metadata = {
-  title: "Contact Us",
+  title: "Contact Alusea | Visit Our Experience Center",
   description:
-    "Get in touch with Alusea for quotes, consultations, or inquiries about our premium aluminium products. We're here to help build your vision.",
+    "Schedule a design consultation at the Alusea Experience Center. Partner with our expert team for custom aluminium fabrications tailored to your architectural project needs.",
   alternates: {
     canonical: "/contact",
   },
 };
 
 export default function ContactPage() {
+  const localBusinessSchema = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "Alusea Experience Center",
+    "image": "https://www.alusea.in/images/showroom.jpg",
+    "telephone": "+91 96260 22722",
+    "areaServed": "India",
+    "description": "Visit the Alusea experience center to interact with our premium aluminium doors, windows, and curtain walls firsthand. Schedule a design consultation today."
+  };
+
   return (
     <div className="pt-32 pb-24 px-6 min-h-screen bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+      />
       <div className="max-w-7xl mx-auto">
 
         <header className="mb-16 max-w-2xl">
