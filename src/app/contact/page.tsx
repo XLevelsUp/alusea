@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import ContactForm from "@/components/sections/ContactForm";
 
 export const metadata: Metadata = {
-  title: "Contact Alusea | Visit Our Experience Center",
+  title: "Get Quotes for Custom Aluminium Systems",
   description:
-    "Schedule a design consultation at the Alusea Experience Center. Partner with our expert team for custom aluminium fabrications tailored to your architectural project needs.",
+    "Get in touch with Alusea's architectural experts to request a free quote. We design bespoke premium aluminium windows and doors for modern properties.",
   alternates: {
     canonical: "/contact",
   },

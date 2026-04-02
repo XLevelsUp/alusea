@@ -3,7 +3,7 @@ import Hero from "@/components/sections/Hero";
 
 export const metadata: Metadata = {
   title: "Premium Aluminium Doors & Windows Manufacturer",
-  description: "Transform your modern living spaces with Alusea. Discover precision-engineered custom aluminium doors, architectural facade systems, and energy-efficient thermal break windows.",
+  description: "Transform modern spaces with Alusea. Discover precision-engineered custom aluminium doors, luxury architectural facades, and advanced thermal windows.",
   keywords: ["aluminium sliding doors", "architectural windows", "thermal break aluminium", "modern home fenestration"],
   alternates: {
     canonical: "/",

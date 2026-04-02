@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Image from "next/image";
 
 export const metadata: Metadata = {
-  title: "About Alusea | Leaders in Architectural Glazing & Aluminium",
+  title: "Leaders in Architectural Glazing & Aluminium",
   description:
-    "Learn about Alusea's passion for architectural finesse and sustainable building practices. We deliver bespoke aluminium manufacturing and professional installation.",
+    "Discover Alusea's dedication to architectural finesse and sustainable design. We provide bespoke modern aluminium manufacturing and expert installation.",
   alternates: {
     canonical: "/about",
   },

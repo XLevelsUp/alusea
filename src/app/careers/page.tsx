@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Careers",
+  title: "Jobs in Architectural Aluminium Manufacturing",
   description:
-    "Join the Alusea team. Explore career opportunities in premium aluminium fabrication and architectural design.",
+    "Join the Alusea team. Explore rewarding career opportunities in luxury aluminium fabrication, architectural design, structural engineering, and sales.",
   alternates: {
     canonical: "/careers",
   },
