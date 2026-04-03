@@ -15,11 +15,23 @@ export default function ContactForm() {
     return Object.keys(tempErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
       setStatus('submitting');
-      setTimeout(() => {
+      try {
+        const response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to send message');
+        }
+
         if (typeof window !== "undefined" && (window as any).dataLayer) {
           (window as any).dataLayer.push({
             event: "generate_lead",
@@ -29,7 +41,10 @@ export default function ContactForm() {
         }
         setStatus('success');
         setFormData({ name: '', email: '', phone: '', message: '' });
-      }, 1500);
+      } catch (error) {
+        console.error('Error submitting form:', error);
+        setStatus('error');
+      }
     }
   };
 
@@ -121,6 +136,11 @@ export default function ContactForm() {
       </div>
 
       {/* bg-matte-black + text-white passes contrast — no change needed */}
+      {status === 'error' && (
+        <div className="p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg text-sm">
+          Failed to send message. Please try again or contact us directly.
+        </div>
+      )}
       <button
         type="submit"
         disabled={status === 'submitting'}

@@ -37,6 +37,7 @@ const ContactCTA = () => {
         status: "Draft",
       };
 
+      // 1. Send data to Google Sheets
       if (GOOGLE_SCRIPT_URL) {
         await fetch(GOOGLE_SCRIPT_URL, {
           method: "POST",
@@ -45,6 +46,18 @@ const ContactCTA = () => {
           body: JSON.stringify(payload),
         });
       }
+
+      // 2. Trigger WhatsApp notification via our API route
+      await fetch('/api/contact', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.firstName,
+          email: form.email,
+          phone: form.phone,
+          message: form.message
+        }),
+      });
 
       if (typeof window !== "undefined" && (window as any).dataLayer) {
         (window as any).dataLayer.push({
@@ -56,7 +69,8 @@ const ContactCTA = () => {
 
       setStatus("success");
       setForm(initialForm);
-    } catch {
+    } catch (error) {
+      console.error("Submission error:", error);
       setStatus("error");
     }
   };
