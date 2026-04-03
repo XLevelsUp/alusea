@@ -2,17 +2,32 @@ import type { Metadata } from "next";
 import Image from "next/image";
 
 export const metadata: Metadata = {
-  title: "About Us",
+  title: "Leaders in Architectural Glazing & Aluminium",
   description:
-    "Learn about Alusea — our story, our team, and our passion for premium aluminium architecture.",
+    "Discover Alusea's dedication to architectural finesse and sustainable design. We provide bespoke modern aluminium manufacturing and expert installation.",
   alternates: {
     canonical: "/about",
   },
 };
 
 export default function AboutPage() {
+  const aboutSchema = {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "name": "About Alusea",
+    "description": "Alusea stands at the forefront of the architectural glazing industry, bringing decades of collective expertise to the design and manufacturing of supreme aluminium doors and windows. Every piece that leaves our state-of-the-art facility undergoes rigorous quality control checks and adheres to stringent international standards, guaranteeing flawless performance.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Alusea"
+    }
+  };
+
   return (
     <div className="pt-32 pb-24 px-6 min-h-screen bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutSchema) }}
+      />
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-8">

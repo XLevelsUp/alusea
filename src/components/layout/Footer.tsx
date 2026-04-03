@@ -100,7 +100,12 @@ const Footer = () => {
         {/* Bottom Bar */}
         {/* FIX: border-white/30 → border-white/50 for better visibility */}
         <div className="pt-8 border-t border-white/50 flex flex-col md:flex-row justify-between items-center gap-6 text-[14px] md:text-[15px] font-medium">
-          <p>With Love -{" "}
+          <div className="flex gap-8">
+            <Link href="/about" className="hover:underline">About</Link>
+            <Link href="/contact" className="hover:underline">Contact</Link>
+            <Link href="/careers" className="hover:underline">Careers</Link>
+          </div>
+          <p> Built With ❤️ By {" "}
             <a
               href="https://xlevelsup.com/"
               target="_blank"
@@ -109,13 +114,7 @@ const Footer = () => {
             >
               XLEVELSUP
             </a>{" "}
-            ❤️
           </p>
-          <div className="flex gap-8">
-            <Link href="/about" className="hover:underline">About</Link>
-            <Link href="/contact" className="hover:underline">Contact</Link>
-            <Link href="/careers" className="hover:underline">Careers</Link>
-          </div>
         </div>
       </div>
     </footer>

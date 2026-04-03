@@ -13,23 +13,17 @@ const Hero = () => {
           alt="Modern luxury house with aluminium windows"
           fill
           priority
+          quality={65}
+          sizes="(max-width: 768px) 100vw, (max-width: 1440px) 100vw, 1440px"
           className="object-cover animate-slow-zoom"
         />
-        {/* Overlays */}
         <div className="absolute inset-0 bg-gradient-to-r from-matte-black/80 via-matte-black/40 to-transparent z-10" />
         <div className="absolute inset-0 bg-matte-black/20 z-10" />
       </div>
 
-      {/*
-        ALIGNMENT FIX:
-        Header inner container uses: max-w-[1440px] mx-auto px-4 md:pl-6 md:pr-12
-        Hero must mirror that exactly so content left-edges line up.
-        Removed the extra inner padding block — the outer container now carries
-        all horizontal spacing, just like the header does.
-      */}
       <div className="w-full max-w-[1440px] mx-auto relative z-20 px-4 md:pl-6 md:pr-12">
         <div className="max-w-3xl space-y-1 mt-14 md:mt-16">
-          {/* Tagline */}
+
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -42,18 +36,16 @@ const Hero = () => {
             </span>
           </motion.div>
 
-          {/* Heading */}
-          <motion.h1
-            initial={{ opacity: 1, y: 0 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
-            className="text-3xl sm:text-5xl md:text-[5.5rem] font-bold text-white leading-[1.1] tracking-tight mt-2 md:mt-3"
-          >
+          {/*
+            PERFORMANCE FIX: H1 is the LCP element.
+            Removed motion.h1 with initial opacity:0 — caused 2,510ms LCP delay
+            waiting for JS hydration. Plain h1 renders immediately from SSR.
+          */}
+          <h1 className="text-3xl sm:text-5xl md:text-[5.5rem] font-bold text-white leading-[1.1] tracking-tight mt-2 md:mt-3">
             Premium Imported <br />
             <span className="text-white/90">Aluminium Windows and Doors</span>
-          </motion.h1>
+          </h1>
 
-          {/* Subtext */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -64,7 +56,6 @@ const Hero = () => {
             unparalleled architectural beauty and performance to your spaces.
           </motion.p>
 
-          {/* Button */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -81,7 +72,6 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* Decorative vertical line */}
       <motion.div
         initial={{ height: 0 }}
         animate={{ height: "8rem" }}
