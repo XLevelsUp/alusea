@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server';
 
-const WHATSAPP_TOKEN = "EAAXCXkYb5dcBRBHPA43GifNCLD1GZA154Ry6BJGGqpBDmBzpM8NjspxZAtkVu3KKD5lTCasGIa5hHns32uePUv89WgkX2uSUZCqy5OrYIPj4xuH0hrp8kzCUdDkSDdAXgO7ri4bxvFWoPZCV6EAHClEDFJihGeXR4sqILR8DFQZAVSZBXCuYbwT4Om6g0hEBeKtSdNAHE6oUgDHxuZA6BlT28J81coAdyDjSbTZBvkKbqc8xsIP0pUxYDuEVHZCRWYEB7hMIgMasNyfUn2wE8CZAUDWARz";
-const PHONE_NUMBER_ID = "1139885139198615";
-const YOUR_WHATSAPP_NUMBER = "919626022722"; // Provided by user
+const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
+const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
+const YOUR_WHATSAPP_NUMBER = process.env.WHATSAPP_RECIPIENT_NUMBER;
 
 export async function POST(req: Request) {
+  if (!WHATSAPP_TOKEN || !PHONE_NUMBER_ID || !YOUR_WHATSAPP_NUMBER) {
+    console.error("Missing required WhatsApp environment variables.");
+    return NextResponse.json({ success: false, error: "Server misconfiguration" }, { status: 500 });
+  }
+
   try {
     const body = await req.json();
     console.log("Contact API Route Triggered! Payload:", body);
