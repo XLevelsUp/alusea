@@ -12,6 +12,13 @@ type FormData = {
   message: string;
 };
 
+type FormErrors = {
+  firstName?: string;
+  email?: string;
+  phone?: string;
+  message?: string;
+};
+
 const initialForm: FormData = {
   firstName: "",
   email: "",
@@ -19,16 +26,73 @@ const initialForm: FormData = {
   message: "",
 };
 
+const validateField = (name: keyof FormData, value: string): string => {
+  switch (name) {
+    case "firstName":
+      if (!value.trim()) return "Name is required.";
+      if (value.trim().length < 2) return "Name must be at least 2 characters.";
+      if (!/^[a-zA-Z\s'-]+$/.test(value.trim())) return "Name can only contain letters.";
+      return "";
+    case "email":
+      if (!value.trim()) return "Email is required.";
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return "Please enter a valid email address.";
+      return "";
+    case "phone":
+      if (!value.trim()) return "Phone number is required.";
+      if (!/^[6-9]\d{9}$/.test(value.replace(/\s/g, ""))) return "Enter a valid 10-digit mobile number.";
+      return "";
+    case "message":
+      if (value.trim() && value.trim().length < 10) return "Message must be at least 10 characters.";
+      return "";
+    default:
+      return "";
+  }
+};
+
 const ContactCTA = () => {
   const [form, setForm] = useState<FormData>(initialForm);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [touched, setTouched] = useState<Partial<Record<keyof FormData, boolean>>>({});
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    // Clear error as user types if field was already touched
+    if (touched[name as keyof FormData]) {
+      const err = validateField(name as keyof FormData, value);
+      setErrors((prev) => ({ ...prev, [name]: err }));
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    const err = validateField(name as keyof FormData, value);
+    setErrors((prev) => ({ ...prev, [name]: err }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate all required fields before submitting
+    const requiredFields: (keyof FormData)[] = ["firstName", "email", "phone"];
+    const newErrors: FormErrors = {};
+    let hasError = false;
+
+    (["firstName", "email", "phone", "message"] as (keyof FormData)[]).forEach((field) => {
+      const err = validateField(field, form[field]);
+      if (err) {
+        newErrors[field] = err;
+        if (requiredFields.includes(field) || err) hasError = true;
+      }
+    });
+
+    setErrors(newErrors);
+    setTouched({ firstName: true, email: true, phone: true, message: true });
+
+    if (hasError) return;
+
     setStatus("loading");
 
     try {
@@ -70,6 +134,8 @@ const ContactCTA = () => {
 
       setStatus("success");
       setForm(initialForm);
+      setErrors({});
+      setTouched({});
     } catch (error) {
       console.error("Submission error:", error);
       setStatus("error");
@@ -127,47 +193,104 @@ const ContactCTA = () => {
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} noValidate className="space-y-6">
                 <div className="space-y-4">
-                  <input
-                    type="text"
-                    name="firstName"
-                    value={form.firstName}
-                    onChange={handleChange}
-                    placeholder="First Name"
-                    required
-                    className="w-full bg-white rounded-full px-8 py-5 text-matte-black outline-none focus:ring-2 focus:ring-[#7A5418]/50 transition-all font-medium placeholder:text-gray-400 border-none"
-                  />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* First Name */}
+                  <div>
                     <input
-                      type="email"
-                      name="email"
-                      value={form.email}
+                      type="text"
+                      name="firstName"
+                      value={form.firstName}
                       onChange={handleChange}
-                      placeholder="Your Email"
-                      required
-                      className="w-full bg-white rounded-full px-8 py-5 text-matte-black outline-none focus:ring-2 focus:ring-[#7A5418]/50 transition-all font-medium placeholder:text-gray-400 border-none"
+                      onBlur={handleBlur}
+                      placeholder="First Name"
+                      aria-describedby={errors.firstName ? "firstName-error" : undefined}
+                      className={`w-full bg-white rounded-full px-8 py-5 text-matte-black outline-none focus:ring-2 transition-all font-medium placeholder:text-gray-400 border-2 ${
+                        errors.firstName && touched.firstName
+                          ? "border-red-400 focus:ring-red-300"
+                          : "border-transparent focus:ring-[#7A5418]/50"
+                      }`}
                     />
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={form.phone}
-                      onChange={handleChange}
-                      placeholder="Phone Number"
-                      required
-                      className="w-full bg-white rounded-full px-8 py-5 text-matte-black outline-none focus:ring-2 focus:ring-[#7A5418]/50 transition-all font-medium placeholder:text-gray-400 border-none"
-                    />
+                    {errors.firstName && touched.firstName && (
+                      <p id="firstName-error" className="mt-2 ml-4 text-sm text-red-300 flex items-center gap-1">
+                        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                        {errors.firstName}
+                      </p>
+                    )}
                   </div>
 
-                  <textarea
-                    name="message"
-                    value={form.message}
-                    onChange={handleChange}
-                    placeholder="Your Message"
-                    rows={4}
-                    className="w-full bg-white rounded-[2.5rem] px-8 py-6 text-matte-black outline-none focus:ring-2 focus:ring-[#7A5418]/50 transition-all font-medium placeholder:text-gray-400 resize-none border-none"
-                  />
+                  {/* Email & Phone */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <input
+                        type="email"
+                        name="email"
+                        value={form.email}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="Your Email"
+                        aria-describedby={errors.email ? "email-error" : undefined}
+                        className={`w-full bg-white rounded-full px-8 py-5 text-matte-black outline-none focus:ring-2 transition-all font-medium placeholder:text-gray-400 border-2 ${
+                          errors.email && touched.email
+                            ? "border-red-400 focus:ring-red-300"
+                            : "border-transparent focus:ring-[#7A5418]/50"
+                        }`}
+                      />
+                      {errors.email && touched.email && (
+                        <p id="email-error" className="mt-2 ml-4 text-sm text-red-300 flex items-center gap-1">
+                          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                          {errors.email}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={form.phone}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="Phone Number"
+                        maxLength={10}
+                        aria-describedby={errors.phone ? "phone-error" : undefined}
+                        className={`w-full bg-white rounded-full px-8 py-5 text-matte-black outline-none focus:ring-2 transition-all font-medium placeholder:text-gray-400 border-2 ${
+                          errors.phone && touched.phone
+                            ? "border-red-400 focus:ring-red-300"
+                            : "border-transparent focus:ring-[#7A5418]/50"
+                        }`}
+                      />
+                      {errors.phone && touched.phone && (
+                        <p id="phone-error" className="mt-2 ml-4 text-sm text-red-300 flex items-center gap-1">
+                          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                          {errors.phone}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Message */}
+                  <div>
+                    <textarea
+                      name="message"
+                      value={form.message}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      placeholder="Your Message (optional)"
+                      rows={4}
+                      aria-describedby={errors.message ? "message-error" : undefined}
+                      className={`w-full bg-white rounded-[2.5rem] px-8 py-6 text-matte-black outline-none focus:ring-2 transition-all font-medium placeholder:text-gray-400 resize-none border-2 ${
+                        errors.message && touched.message
+                          ? "border-red-400 focus:ring-red-300"
+                          : "border-transparent focus:ring-[#7A5418]/50"
+                      }`}
+                    />
+                    {errors.message && touched.message && (
+                      <p id="message-error" className="mt-2 ml-4 text-sm text-red-300 flex items-center gap-1">
+                        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                        {errors.message}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 {status === "error" && (
