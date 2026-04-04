@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 
-const WHATSAPP_TOKEN = "EAAXCXkYb5dcBRIMg6d1SKuL6kYJkiTNWup4cF3nlBo7DbZBpK7R58V4QLeEIWMD71niTssEEBwOcLcy1GKrtvWFSLhZCtZCgaSwRbKQ1D2pg1spmCONJPxrSQnvKuALxzvSAuYlq9TZCmzUUTLzeZCHsHtjQctlzsCHSqPfFEtf9juyGTxTUDOW5jZBleMFTA83gZDZD";
+const WHATSAPP_TOKEN = "EAAXCXkYb5dcBRBHPA43GifNCLD1GZA154Ry6BJGGqpBDmBzpM8NjspxZAtkVu3KKD5lTCasGIa5hHns32uePUv89WgkX2uSUZCqy5OrYIPj4xuH0hrp8kzCUdDkSDdAXgO7ri4bxvFWoPZCV6EAHClEDFJihGeXR4sqILR8DFQZAVSZBXCuYbwT4Om6g0hEBeKtSdNAHE6oUgDHxuZA6BlT28J81coAdyDjSbTZBvkKbqc8xsIP0pUxYDuEVHZCRWYEB7hMIgMasNyfUn2wE8CZAUDWARz";
 const PHONE_NUMBER_ID = "1139885139198615";
-const YOUR_WHATSAPP_NUMBER = "916369395515"; // Provided by user
+const YOUR_WHATSAPP_NUMBER = "919626022722"; // Provided by user
 
 export async function POST(req: Request) {
   try {
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
       to: YOUR_WHATSAPP_NUMBER,
       type: "template",
       template: {
-        name: "new_quote_alert", // As set up in the template
+        name: "alusea_web_form", // As set up in the template
         language: { code: "en" },
         components: [
           {
