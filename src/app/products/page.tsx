@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import ProductsClient from "./ProductsClient";
 
 export const metadata: Metadata = {
-  title: "Products",
+  title: "Custom Aluminium Window & Door Collections",
   description:
-    "Browse Alusea's premium collection of aluminium doors, windows, curtain walls, and architectural systems. Contact us for the latest aluminium windows and doors price list.",
+    "Explore Alusea's high-performance aluminium window frames and door systems. Designed with ultra-slim profiles, multi-point locks, and acoustic glass.",
   alternates: {
     canonical: "/products",
   },

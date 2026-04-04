@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Services",
+  title: "Architectural Aluminium Engineering & Installation",
   description:
-    "Explore Alusea's full range of premium aluminium door, window, and curtain wall services. Tailored engineering for modern facades.",
+    "Discover Alusea's premium aluminium engineering services, from bespoke window fabrication to curtain wall structural glazing and seamless installations.",
   alternates: {
     canonical: "/services",
   },

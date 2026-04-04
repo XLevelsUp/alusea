@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from 'react';
+import Image from "next/image";
 
-const GOOGLE_SCRIPT_URL =
-  process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL || "";
+const GOOGLE_SCRIPT_URL = process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL || "";
 
 type FormData = {
   firstName: string;
@@ -38,6 +38,7 @@ const ContactCTA = () => {
         status: "Draft",
       };
 
+      // 1. Send data to Google Sheets
       if (GOOGLE_SCRIPT_URL) {
         await fetch(GOOGLE_SCRIPT_URL, {
           method: "POST",
@@ -47,7 +48,18 @@ const ContactCTA = () => {
         });
       }
 
-      // Track B2B Intent: Request a Quote Lead Generation
+      // 2. Trigger WhatsApp notification via our API route
+      await fetch('/api/contact', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.firstName,
+          email: form.email,
+          phone: form.phone,
+          message: form.message
+        }),
+      });
+
       if (typeof window !== "undefined" && (window as any).dataLayer) {
         (window as any).dataLayer.push({
           event: "generate_lead",
@@ -58,7 +70,8 @@ const ContactCTA = () => {
 
       setStatus("success");
       setForm(initialForm);
-    } catch {
+    } catch (error) {
+      console.error("Submission error:", error);
       setStatus("error");
     }
   };
@@ -66,14 +79,18 @@ const ContactCTA = () => {
   return (
     <section id="contact" className="relative py-28 overflow-hidden bg-matte-black group">
       {/* Top Golden Bar */}
-      <div className="absolute top-0 left-0 w-full h-[8px] bg-alusea-gold z-20" />
+      {/* FIX: bar color darkened to #7A5418 */}
+      <div className="absolute top-0 left-0 w-full h-[8px] bg-[#7A5418] z-20" />
 
       {/* Background image with dark overlay */}
       <div className="absolute inset-0 z-0">
-        <img
+        <Image
           src="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&q=80&w=2000"
           alt="Modern Interior"
-          className="w-full h-full object-cover transition-transform duration-[10000ms] group-hover:scale-110"
+          fill
+          quality={75}
+          sizes="100vw"
+          className="object-cover transition-transform duration-[10000ms] group-hover:scale-110"
         />
         <div className="absolute inset-0 bg-black/75" />
       </div>
@@ -89,20 +106,22 @@ const ContactCTA = () => {
 
             {status === "success" ? (
               <div className="flex flex-col items-start gap-5">
-                <div className="w-16 h-16 rounded-full bg-alusea-gold/20 border-2 border-alusea-gold flex items-center justify-center">
-                  <svg viewBox="0 0 24 24" className="w-8 h-8 text-alusea-gold fill-none stroke-current" strokeWidth="2.5">
+                {/* FIX: success icon ring uses darker gold */}
+                <div className="w-16 h-16 rounded-full bg-[#7A5418]/20 border-2 border-[#7A5418] flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" className="w-8 h-8 text-[#D4A84B] fill-none stroke-current" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
                 <div>
                   <p className="text-white text-xl font-bold mb-1">We&apos;ve got your request!</p>
-                  <p className="text-white/55 text-base">
-                    Our team will contact you within <span className="text-alusea-gold font-semibold">24 hours</span>.
+                  {/* FIX: white/55 → white/80 for readable subtext */}
+                  <p className="text-white/80 text-base">
+                    Our team will contact you within <span className="text-white font-semibold">24 hours</span>.
                   </p>
                 </div>
                 <button
                   onClick={() => setStatus("idle")}
-                  className="text-alusea-gold text-sm font-semibold underline underline-offset-4 hover:text-white transition-colors"
+                  className="text-white text-sm font-semibold underline underline-offset-4 hover:text-white/70 transition-colors"
                 >
                   Submit another request
                 </button>
@@ -117,7 +136,7 @@ const ContactCTA = () => {
                     onChange={handleChange}
                     placeholder="First Name"
                     required
-                    className="w-full bg-white rounded-full px-8 py-5 text-matte-black outline-none focus:ring-2 focus:ring-alusea-gold/50 transition-all font-medium placeholder:text-gray-400 border-none"
+                    className="w-full bg-white rounded-full px-8 py-5 text-matte-black outline-none focus:ring-2 focus:ring-[#7A5418]/50 transition-all font-medium placeholder:text-gray-400 border-none"
                   />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -128,7 +147,7 @@ const ContactCTA = () => {
                       onChange={handleChange}
                       placeholder="Your Email"
                       required
-                      className="w-full bg-white rounded-full px-8 py-5 text-matte-black outline-none focus:ring-2 focus:ring-alusea-gold/50 transition-all font-medium placeholder:text-gray-400 border-none"
+                      className="w-full bg-white rounded-full px-8 py-5 text-matte-black outline-none focus:ring-2 focus:ring-[#7A5418]/50 transition-all font-medium placeholder:text-gray-400 border-none"
                     />
                     <input
                       type="tel"
@@ -137,7 +156,7 @@ const ContactCTA = () => {
                       onChange={handleChange}
                       placeholder="Phone Number"
                       required
-                      className="w-full bg-white rounded-full px-8 py-5 text-matte-black outline-none focus:ring-2 focus:ring-alusea-gold/50 transition-all font-medium placeholder:text-gray-400 border-none"
+                      className="w-full bg-white rounded-full px-8 py-5 text-matte-black outline-none focus:ring-2 focus:ring-[#7A5418]/50 transition-all font-medium placeholder:text-gray-400 border-none"
                     />
                   </div>
 
@@ -147,7 +166,7 @@ const ContactCTA = () => {
                     onChange={handleChange}
                     placeholder="Your Message"
                     rows={4}
-                    className="w-full bg-white rounded-[2.5rem] px-8 py-6 text-matte-black outline-none focus:ring-2 focus:ring-alusea-gold/50 transition-all font-medium placeholder:text-gray-400 resize-none border-none"
+                    className="w-full bg-white rounded-[2.5rem] px-8 py-6 text-matte-black outline-none focus:ring-2 focus:ring-[#7A5418]/50 transition-all font-medium placeholder:text-gray-400 resize-none border-none"
                   />
                 </div>
 
@@ -155,10 +174,11 @@ const ContactCTA = () => {
                   <p className="text-red-400 text-sm">Something went wrong. Please try again.</p>
                 )}
 
+                {/* FIX: button bg darkened to #7A5418 for white text contrast */}
                 <button
                   type="submit"
                   disabled={status === "loading"}
-                  className="inline-flex items-center gap-3 bg-alusea-gold hover:bg-[#A67C52] text-white px-16 py-4 rounded-xl font-bold text-lg transition-all shadow-xl active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-3 bg-[#7A5418] hover:bg-[#5C3D0E] text-white px-16 py-4 rounded-xl font-bold text-lg transition-all shadow-xl active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {status === "loading" ? (
                     <>
@@ -208,21 +228,15 @@ const ContactCTA = () => {
                   ),
                   url: 'https://www.instagram.com/alusea_aluminum/'
                 },
-                /* {
-                  icon: (
-                    <svg className="w-8 h-8 md:w-11 md:h-11 fill-current" viewBox="0 0 24 24">
-                      <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
-                    </svg>
-                  ),
-                  url: '#'
-                } */
               ].map((social, idx) => (
                 <a
                   key={idx}
                   href={social.url}
-                  target={social.url !== "#" ? "_blank" : undefined}
-                  rel={social.url !== "#" ? "noopener noreferrer" : undefined}
-                  className="w-20 h-20 md:w-28 md:h-28 bg-white rounded-full flex items-center justify-center text-alusea-gold hover:bg-alusea-gold hover:text-white transition-all duration-300 shadow-2xl hover:-translate-y-2"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={["YouTube", "Facebook", "Instagram"][idx]}
+                  /* FIX: text-[#5C3D0E] on white bg passes AA; hover inverts to white on dark */
+                  className="w-20 h-20 md:w-28 md:h-28 bg-white rounded-full flex items-center justify-center text-[#5C3D0E] hover:bg-[#7A5418] hover:text-white transition-all duration-300 shadow-2xl hover:-translate-y-2"
                 >
                   {social.icon}
                 </a>
@@ -233,7 +247,7 @@ const ContactCTA = () => {
       </div>
 
       {/* Bottom Golden Bar */}
-      <div className="absolute bottom-0 left-0 w-full h-[8px] bg-alusea-gold z-20" />
+      <div className="absolute bottom-0 left-0 w-full h-[8px] bg-[#7A5418] z-20" />
     </section>
   );
 };

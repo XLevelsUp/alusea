@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Projects",
+  title: "Luxury Aluminium Facade & Villa Portfolios",
   description:
-    "Explore Alusea's portfolio of completed architectural projects — luxury residential, commercial, and expansive installations.",
+    "Explore Alusea's premier portfolio of completed architectural projects. View our custom aluminium facades across luxury residential and commercial sites.",
   alternates: {
     canonical: "/projects",
   },

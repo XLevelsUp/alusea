@@ -44,11 +44,10 @@ const Header = () => {
 
   return (
     <header
-      className={`fixed top-0 w-full z-50 transition-all duration-500 h-14 md:h-16 ${
-        isScrolled
+      className={`fixed top-0 w-full z-50 transition-all duration-500 h-14 md:h-16 ${isScrolled
           ? "bg-matte-black/90 backdrop-blur-md py-2 shadow-2xl border-b border-white/5"
           : "bg-transparent py-4"
-      }`}
+        }`}
     >
       <div className="max-w-[1440px] mx-auto px-4 md:pl-6 md:pr-12 flex justify-between items-center h-full">
         {/* Logo */}
@@ -124,7 +123,7 @@ const Header = () => {
           <div className="flex items-center gap-4">
             <Link
               href="/experience-center"
-              className="hidden lg:flex px-6 py-3 bg-brushed-bronze text-white text-[12px] uppercase tracking-widest font-bold rounded-sm hover:-translate-y-1 hover:shadow-[0_8px_20px_-4px_rgba(182,139,76,0.3)] transition-all duration-300"
+              className="hidden lg:flex px-6 py-3 bg-[#7A5418] text-white text-[12px] uppercase tracking-widest font-bold rounded-sm hover:-translate-y-1 hover:shadow-[0_8px_20px_-4px_rgba(122,84,24,0.4)] transition-all duration-300"
             >
               Experience Center
             </Link>
@@ -139,7 +138,7 @@ const Header = () => {
 
         {/* Mobile Toggle */}
         <button
-          className="md:hidden p-2 text-white"
+          className="md:hidden p-2 text-white" aria-label="Open navigation menu"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
           {isMobileMenuOpen ? (

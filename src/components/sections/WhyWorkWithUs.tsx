@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Image from 'next/image';
 
 const WhyWorkWithUs = () => {
   const benefits = [
@@ -75,10 +76,13 @@ const WhyWorkWithUs = () => {
           {/* Left: Image */}
           <div className="relative">
             <div className="rounded-2xl overflow-hidden shadow-2xl aspect-[4/3]">
-              <img 
-                src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1000" 
+              <Image
+                src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1000"
                 alt="Modern window installation"
                 className="w-full h-full object-cover"
+                width={1000}
+                height={750}
+                sizes="(max-width: 768px) 100vw, 50vw"
               />
             </div>
           </div>
@@ -87,14 +91,15 @@ const WhyWorkWithUs = () => {
           <div className="space-y-8">
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-brushed-bronze" />
-                <span className="text-brushed-bronze text-xs uppercase tracking-[0.2em] font-bold">Why Work With Us</span>
+                <span className="w-2 h-2 rounded-full bg-[#7A5418]" />
+                {/* FIX: darkened for AA contrast on white */}
+                <span className="text-[#7A5418] text-xs uppercase tracking-[0.2em] font-bold">Why Work With Us</span>
               </div>
               <h2 className="text-[42px] md:text-[52px] font-bold text-architectural-blue leading-tight">
                 The Trusted Choice for Your Windows & Doors
               </h2>
             </div>
-            
+
             <p className="text-steel-gray text-base leading-relaxed">
               We are committed to delivering doors and windows that combine strength, elegance, and precision. From consultation to installation, every step is handled with care to create secure, stylish, and lasting solutions for your space.
             </p>
@@ -102,7 +107,8 @@ const WhyWorkWithUs = () => {
             <div className="grid grid-cols-2 gap-4 pt-2">
               {benefits.map((benefit, idx) => (
                 <div key={idx} className="flex items-center gap-3">
-                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-brushed-bronze flex items-center justify-center">
+                  {/* FIX: checkmark bg darkened */}
+                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-[#7A5418] flex items-center justify-center">
                     <svg viewBox="0 0 24 24" className="w-3 h-3 text-white fill-none stroke-current" strokeWidth="3">
                       <path d="M20 6L9 17l-5-5" />
                     </svg>
@@ -112,9 +118,10 @@ const WhyWorkWithUs = () => {
               ))}
             </div>
 
+            {/* FIX: button bg darkened for white text contrast */}
             <a
               href="#contact"
-              className="inline-block mt-8 bg-brushed-bronze hover:bg-bronze-dark text-white px-8 py-4 text-sm font-bold transition-all shadow-lg rounded-sm hover:translate-y-[-3px]"
+              className="inline-block mt-8 bg-[#7A5418] hover:bg-[#5C3D0E] text-white px-8 py-4 text-sm font-bold transition-all shadow-lg rounded-sm hover:translate-y-[-3px]"
             >
               Get Your Free Quote
             </a>
@@ -135,7 +142,8 @@ const WhyWorkWithUs = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 py-12 border-y border-gray-100 mb-16 px-4">
           {features.map((feature, idx) => (
             <div key={idx} className="flex items-center gap-6">
-              <div className="flex-shrink-0 text-brushed-bronze">
+              {/* FIX: icon color darkened */}
+              <div className="flex-shrink-0 text-[#7A5418]">
                 {feature.icon}
               </div>
               <div className="flex flex-col">
@@ -149,17 +157,22 @@ const WhyWorkWithUs = () => {
         {/* Category Filters */}
         <div className="flex flex-wrap justify-between gap-4">
           {categories.map((category, idx) => (
-            <button 
-              key={idx} 
+            <button
+              key={idx}
               className={`flex-1 min-w-[180px] flex items-center justify-between px-6 py-4 border rounded-lg transition-all text-left group
-                ${idx === 0 ? 'bg-brushed-bronze border-brushed-bronze text-white' : 'border-brushed-bronze/30 text-brushed-bronze hover:border-brushed-bronze'}`}
+                ${idx === 0
+                  /* FIX: active state uses darker bg for white text contrast */
+                  ? 'bg-[#7A5418] border-[#7A5418] text-white'
+                  /* FIX: inactive text darkened for contrast on white */
+                  : 'border-[#7A5418]/40 text-[#7A5418] hover:border-[#7A5418]'
+                }`}
             >
               <span className="font-bold text-sm">{category}</span>
-              <svg 
-                viewBox="0 0 24 24" 
-                className={`w-4 h-4 transition-transform duration-300 ${idx === 0 ? 'text-white' : 'text-brushed-bronze'} group-hover:translate-y-1`} 
-                fill="none" 
-                stroke="currentColor" 
+              <svg
+                viewBox="0 0 24 24"
+                className={`w-4 h-4 transition-transform duration-300 ${idx === 0 ? 'text-white' : 'text-[#7A5418]'} group-hover:translate-y-1`}
+                fill="none"
+                stroke="currentColor"
                 strokeWidth="2.5"
               >
                 <path d="M6 9l6 6 6-6" />
