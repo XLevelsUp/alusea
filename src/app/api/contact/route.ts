@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 const WHATSAPP_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
 const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
-const YOUR_WHATSAPP_NUMBER = process.env.WHATSAPP_RECIPIENT_NUMBER;
+const YOUR_WHATSAPP_NUMBER = process.env.WHATSAPP_RECIPIENT;
 
 export async function POST(req: Request) {
   if (!WHATSAPP_TOKEN || !PHONE_NUMBER_ID || !YOUR_WHATSAPP_NUMBER) {
