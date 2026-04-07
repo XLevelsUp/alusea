@@ -69,6 +69,7 @@ const Footer = () => {
               <li><Link href="/team" className="hover:underline transition-all">Team Member</Link></li>
               <li><Link href="/careers" className="hover:underline transition-all">Our Careers</Link></li>
               <li><Link href="/contact" className="hover:underline transition-all">Contact Us</Link></li>
+              <li><Link href="/privacy-policy" className="hover:underline transition-all">Privacy Policy</Link></li>
             </ul>
           </div>
 
@@ -100,10 +101,11 @@ const Footer = () => {
         {/* Bottom Bar */}
         {/* FIX: border-white/30 → border-white/50 for better visibility */}
         <div className="pt-8 border-t border-white/50 flex flex-col md:flex-row justify-between items-center gap-6 text-[14px] md:text-[15px] font-medium">
-          <div className="flex gap-8">
+          <div className="flex flex-wrap gap-x-8 gap-y-2">
             <Link href="/about" className="hover:underline">About</Link>
             <Link href="/contact" className="hover:underline">Contact</Link>
             <Link href="/careers" className="hover:underline">Careers</Link>
+            <Link href="/privacy-policy" className="hover:underline">Privacy Policy</Link>
           </div>
           <p> Built With ❤️ By {" "}
             <a

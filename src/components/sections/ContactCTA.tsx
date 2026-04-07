@@ -205,7 +205,7 @@ const ContactCTA = () => {
                       onBlur={handleBlur}
                       placeholder="First Name"
                       aria-describedby={errors.firstName ? "firstName-error" : undefined}
-                      className={`w-full bg-white rounded-full px-8 py-5 text-matte-black outline-none focus:ring-2 transition-all font-medium placeholder:text-gray-400 border-2 ${
+                      className={`w-full bg-white rounded-full px-8 py-5 text-[#111111] outline-none focus:ring-2 transition-all font-medium placeholder:text-gray-400 border-2 ${
                         errors.firstName && touched.firstName
                           ? "border-red-400 focus:ring-red-300"
                           : "border-transparent focus:ring-[#7A5418]/50"
@@ -230,7 +230,7 @@ const ContactCTA = () => {
                         onBlur={handleBlur}
                         placeholder="Your Email"
                         aria-describedby={errors.email ? "email-error" : undefined}
-                        className={`w-full bg-white rounded-full px-8 py-5 text-matte-black outline-none focus:ring-2 transition-all font-medium placeholder:text-gray-400 border-2 ${
+                        className={`w-full bg-white rounded-full px-8 py-5 text-[#111111] outline-none focus:ring-2 transition-all font-medium placeholder:text-gray-400 border-2 ${
                           errors.email && touched.email
                             ? "border-red-400 focus:ring-red-300"
                             : "border-transparent focus:ring-[#7A5418]/50"
@@ -253,7 +253,7 @@ const ContactCTA = () => {
                         placeholder="Phone Number"
                         maxLength={10}
                         aria-describedby={errors.phone ? "phone-error" : undefined}
-                        className={`w-full bg-white rounded-full px-8 py-5 text-matte-black outline-none focus:ring-2 transition-all font-medium placeholder:text-gray-400 border-2 ${
+                        className={`w-full bg-white rounded-full px-8 py-5 text-[#111111] outline-none focus:ring-2 transition-all font-medium placeholder:text-gray-400 border-2 ${
                           errors.phone && touched.phone
                             ? "border-red-400 focus:ring-red-300"
                             : "border-transparent focus:ring-[#7A5418]/50"
@@ -278,7 +278,7 @@ const ContactCTA = () => {
                       placeholder="Your Message (optional)"
                       rows={4}
                       aria-describedby={errors.message ? "message-error" : undefined}
-                      className={`w-full bg-white rounded-[2.5rem] px-8 py-6 text-matte-black outline-none focus:ring-2 transition-all font-medium placeholder:text-gray-400 resize-none border-2 ${
+                      className={`w-full bg-white rounded-[2.5rem] px-8 py-6 text-[#111111] outline-none focus:ring-2 transition-all font-medium placeholder:text-gray-400 resize-none border-2 ${
                         errors.message && touched.message
                           ? "border-red-400 focus:ring-red-300"
                           : "border-transparent focus:ring-[#7A5418]/50"
