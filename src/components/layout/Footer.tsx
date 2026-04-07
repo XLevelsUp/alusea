@@ -70,6 +70,8 @@ const Footer = () => {
               <li><Link href="/careers" className="hover:underline transition-all">Our Careers</Link></li>
               <li><Link href="/contact" className="hover:underline transition-all">Contact Us</Link></li>
               <li><Link href="/privacy-policy" className="hover:underline transition-all">Privacy Policy</Link></li>
+              <li><Link href="/terms-of-service" className="hover:underline transition-all">Terms of Service</Link></li>
+              <li><Link href="/data-deletion" className="hover:underline transition-all">Data Deletion</Link></li>
             </ul>
           </div>
 
@@ -106,6 +108,7 @@ const Footer = () => {
             <Link href="/contact" className="hover:underline">Contact</Link>
             <Link href="/careers" className="hover:underline">Careers</Link>
             <Link href="/privacy-policy" className="hover:underline">Privacy Policy</Link>
+            <Link href="/terms-of-service" className="hover:underline">Terms of Service</Link>
           </div>
           <p> Built With ❤️ By {" "}
             <a
