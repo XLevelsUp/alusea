@@ -12,8 +12,8 @@ export default function BackButton() {
     setMounted(true);
   }, []);
 
-  // Only render on client to avoid hydration mismatch, and hide on homepage
-  if (!mounted || pathname === "/") return null;
+  // Only render on client to avoid hydration mismatch, and hide on homepage or admin panel
+  if (!mounted || pathname === "/" || pathname?.startsWith("/admin")) return null;
 
   return (
     <button
