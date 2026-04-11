@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -32,6 +33,7 @@ const Header = () => {
     { name: "Home", href: "/" },
     { name: "About Us", href: "/about" },
     { name: "Services", href: "/services" },
+    { name: "Catalogue", href: "/catalogue" },
     { name: "Contact Us", href: "/contact" },
   ];
 
@@ -41,6 +43,9 @@ const Header = () => {
     { name: "Our Team", href: "/team" },
     { name: "Careers", href: "/careers" },
   ];
+
+  const pathname = usePathname();
+  if (pathname?.startsWith('/admin')) return null;
 
   return (
     <header
