@@ -1,9 +1,15 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import { addProduct, deleteProduct } from '../actions'
+import { deleteProduct } from '../actions'
 import Image from 'next/image'
+import AddProductForm from './AddProductForm'
+import DeleteProductButton from './DeleteProductButton'
+import Link from 'next/link'
 
-export default async function AdminCataloguePage() {
+export default async function AdminCataloguePage(props: { searchParams: Promise<{ edit?: string }> | { edit?: string } }) {
+  const resolvedSearchParams = await props.searchParams;
+  const editId = resolvedSearchParams?.edit;
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -16,6 +22,8 @@ export default async function AdminCataloguePage() {
     .select('*')
     .order('created_at', { ascending: false })
 
+  const editingProduct = editId ? products?.find(p => p.id === editId) : null;
+
   return (
     <div className="p-8 max-w-7xl mx-auto w-full">
       <div className="flex justify-between items-center mb-10">
@@ -26,48 +34,18 @@ export default async function AdminCataloguePage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* ADD NEW PRODUCT FORM */}
+        {/* ADD / EDIT PRODUCT FORM */}
         <div className="lg:col-span-1">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 sticky top-8">
-            <h2 className="text-lg font-bold uppercase tracking-wider mb-6 border-b pb-3 text-matte-black">Add New Item</h2>
-            <form action={addProduct} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Product Name</label>
-                <input required name="name" type="text" className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-sm text-gray-900" placeholder="e.g. MasterLine Door" />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Category</label>
-                <select required name="category" className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-sm text-gray-900">
-                  <option value="Doors">Doors</option>
-                  <option value="Windows">Windows</option>
-                  <option value="Windows & Sliding">Windows & Sliding</option>
-                  <option value="Specialty">Specialty</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Product Image</label>
-                <input required name="image_file" type="file" accept="image/*" className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-sm text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#A67C52] file:text-white hover:file:bg-[#8e6944] cursor-pointer" />
-                <p className="text-[10px] text-gray-400 mt-1">Select an image from your device.</p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Description</label>
-                <textarea required name="description" rows={3} className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-sm text-gray-900" placeholder="Short product description..." />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Specifications (One per line)</label>
-                <textarea name="specs" rows={4} className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-sm text-gray-900"
-                  placeholder="Material: Premium Aluminum&#10;Glazing: Double Toughened&#10;Security: Multi-point lock" />
-                {/* <p className="text-[10px] text-gray-400 mt-1">Format: "Key: Value" or just plain text sentences on each line.</p> */}
-              </div>
-
-              <button type="submit" className="w-full bg-[#A67C52] hover:bg-[#8e6944] text-white py-3 rounded-md uppercase tracking-widest text-xs font-bold transition-colors mt-4 shadow-md">
-                Add Product
-              </button>
-            </form>
+            <div className="flex justify-between items-center mb-6 border-b pb-3">
+               <h2 className="text-lg font-bold uppercase tracking-wider text-matte-black">
+                 {editingProduct ? 'Edit Item' : 'Add New Item'}
+               </h2>
+               {editingProduct && (
+                 <Link href="/admin/catalogue" className="text-xs text-blue-500 hover:underline">Cancel Edit</Link>
+               )}
+            </div>
+            <AddProductForm initialData={editingProduct} />
           </div>
         </div>
 
@@ -101,14 +79,12 @@ export default async function AdminCataloguePage() {
                         </div>
                       </td>
                       <td className="p-4 align-top text-right">
-                        <form action={async () => {
-                          'use server'
-                          await deleteProduct(item.id)
-                        }}>
-                          <button type="submit" className="text-red-500 hover:text-red-700 text-xs font-semibold uppercase tracking-wider px-3 py-1 border border-red-200 hover:bg-red-50 rounded transition-colors">
-                            Delete
-                          </button>
-                        </form>
+                        <div className="flex items-center justify-end gap-2">
+                          <Link href={`/admin/catalogue?edit=${item.id}`} className="text-blue-500 hover:text-blue-700 text-xs font-semibold uppercase tracking-wider px-3 py-1 border border-blue-200 hover:bg-blue-50 rounded transition-colors">
+                            Edit
+                          </Link>
+                          <DeleteProductButton id={item.id} deleteAction={deleteProduct} />
+                        </div>
                       </td>
                     </tr>
                   ))}
