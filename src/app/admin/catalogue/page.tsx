@@ -45,7 +45,7 @@ export default async function AdminCataloguePage(props: { searchParams: Promise<
                  <Link href="/admin/catalogue" className="text-xs text-blue-500 hover:underline">Cancel Edit</Link>
                )}
             </div>
-            <AddProductForm initialData={editingProduct} />
+            <AddProductForm key={editId ?? 'new'} initialData={editingProduct} />
           </div>
         </div>
 

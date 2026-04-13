@@ -19,9 +19,13 @@ export default function ProductForm({ initialData, onCancel }: { initialData?: P
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [existingUrls, setExistingUrls] = useState<string[]>(
-    initialData?.image_urls || (initialData?.image_url ? [initialData.image_url] : [])
-  );
+  const [existingUrls, setExistingUrls] = useState<string[]>(() => {
+    const raw = initialData?.image_urls;
+    if (Array.isArray(raw) && raw.length > 0) return raw;
+    if (typeof raw === 'string') { try { return JSON.parse(raw); } catch {} }
+    if (initialData?.image_url) return [initialData.image_url];
+    return [];
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleRemoveExistingUrl = (index: number) => {
@@ -65,7 +69,23 @@ export default function ProductForm({ initialData, onCancel }: { initialData?: P
          const entries = Object.entries(initialData.specs);
          setSpecs(entries.length > 0 ? entries.map(([k, v]) => ({ key: k, value: v })) : [{ key: "", value: "" }]);
       }
+      // Defensively parse image_urls — may be null, array, or a JSON string
+      let urls: string[] = [];
+      const raw = initialData.image_urls;
+      if (Array.isArray(raw) && raw.length > 0) {
+        urls = raw;
+      } else if (typeof raw === 'string') {
+        try { urls = JSON.parse(raw); } catch {}
+      }
+      if (urls.length === 0 && initialData.image_url) {
+        urls = [initialData.image_url];
+      }
+      setExistingUrls(urls);
+    } else {
+      setSpecs([{ key: "", value: "" }]);
+      setExistingUrls([]);
     }
+    setFiles([]);
   }, [initialData]);
 
   const handleAddSpec = () => setSpecs([...specs, { key: "", value: "" }]);
