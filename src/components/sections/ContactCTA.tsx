@@ -118,8 +118,8 @@ const ContactCTA = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: form.firstName,
-          email: form.email,
           phone: form.phone,
+          email: form.email,
           message: form.message
         }),
       });

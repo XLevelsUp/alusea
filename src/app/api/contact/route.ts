@@ -13,29 +13,28 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     console.log("Contact API Route Triggered! Payload:", body);
-    const { name, email, phone, message } = body;
+    const { name, phone, email, message } = body;
 
     // Send WhatsApp Alert
     const url = `https://graph.facebook.com/v19.0/${PHONE_NUMBER_ID}/messages`;
+    console.log(body);
 
-    // Map fields to the 3 variables: Name, Phone, and Email/Message
-    // Truncate message if it's too long line to fit in a variable securely, though WhatsApp supports long text.
-    const serviceInfo = email ? `Email: ${email}` : 'No Email';
-
+    // Map fields to the 4 template variables: {{1}} name, {{2}} phone, {{3}} email, {{4}} message
     const payload = {
       messaging_product: "whatsapp",
       to: YOUR_WHATSAPP_NUMBER,
       type: "template",
       template: {
-        name: "alusea_web_form", // As set up in the template
-        language: { code: "en" },
+        name: "alusea_web_form",
+        language: { code: "en_US" },
         components: [
           {
             type: "body",
             parameters: [
               { type: "text", text: String(name || "Unknown") },
               { type: "text", text: String(phone || "No Phone provided") },
-              { type: "text", text: String(serviceInfo) }
+              { type: "text", text: String(email || "No Email provided") },
+              { type: "text", text: String(message || "No message provided") }
             ]
           }
         ]
