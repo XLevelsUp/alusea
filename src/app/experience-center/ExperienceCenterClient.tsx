@@ -4,9 +4,21 @@ import { useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
-const showroomSteps = [
+type DbZone = {
+  id: string;
+  page: string;
+  section: string;
+  title: string | null;
+  description: string | null;
+  action_text: string | null;
+  image_url: string;
+  sort_order: number;
+};
+
+const fallbackSteps = [
   {
     id: 1,
+    section: "zone_1",
     title: "The Grand Entrance",
     desc: "Welcome to the Alusea Experience Center. Begin your journey by stepping into our fully functional architectural studio.",
     image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1200",
@@ -14,6 +26,7 @@ const showroomSteps = [
   },
   {
     id: 2,
+    section: "zone_2",
     title: "Minimalist Sliding Doors",
     desc: "Feel the effortless glide of our ultra-slim structural systems perfectly designed to blur the line between indoor and outdoor living.",
     image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1200",
@@ -21,6 +34,7 @@ const showroomSteps = [
   },
   {
     id: 3,
+    section: "zone_3",
     title: "The Material Library",
     desc: "Get hands-on with our exclusive marine-grade powder coatings, anodized bronze finishes, and specialized acoustic glass.",
     image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=1200",
@@ -28,6 +42,7 @@ const showroomSteps = [
   },
   {
     id: 4,
+    section: "zone_4",
     title: "Consultation Lounge",
     desc: "Sit down with our master engineers to review architectural blueprints and design your bespoke aluminium solution over a cup of coffee.",
     image: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&q=80&w=1200",
@@ -35,7 +50,21 @@ const showroomSteps = [
   }
 ];
 
-export default function ExperienceCenterClient() {
+function buildSteps(dbZones: DbZone[]) {
+  return fallbackSteps.map((fallback) => {
+    const db = dbZones.find((z) => z.section === fallback.section);
+    return {
+      id: fallback.id,
+      title: db?.title || fallback.title,
+      desc: db?.description || fallback.desc,
+      image: db?.image_url || fallback.image,
+      action: db?.action_text || fallback.action,
+    };
+  });
+}
+
+export default function ExperienceCenterClient({ dbZones }: { dbZones: DbZone[] }) {
+  const showroomSteps = buildSteps(dbZones);
   const [currentStep, setCurrentStep] = useState(0);
 
   const nextStep = () => {

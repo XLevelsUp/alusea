@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ExperienceCenterClient from "./ExperienceCenterClient";
+import { createClient } from "@/utils/supabase/server";
 
 export const metadata: Metadata = {
   title: "Visit Our Premium Aluminium Showroom",
@@ -10,7 +11,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ExperienceCenterPage() {
+export const revalidate = 60; // Revalidate every 60 seconds
+
+export default async function ExperienceCenterPage() {
+  const supabase = await createClient();
+
+  const { data: zones } = await supabase
+    .from("page_media")
+    .select("*")
+    .eq("page", "experience_center")
+    .order("sort_order", { ascending: true });
+
   const localBusinessSchema = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
@@ -27,7 +38,7 @@ export default function ExperienceCenterPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
       />
-      <ExperienceCenterClient />
+      <ExperienceCenterClient dbZones={zones || []} />
     </>
   );
 }
