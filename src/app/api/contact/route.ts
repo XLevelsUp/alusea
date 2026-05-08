@@ -25,7 +25,7 @@ export async function POST(req: Request) {
       to: YOUR_WHATSAPP_NUMBER,
       type: "template",
       template: {
-        name: "alusea_web_form",
+        name: process.env.WHATSAPP_TEMPLATE_NAME || "alusea_web_leads",
         language: { code: "en_US" },
         components: [
           {
