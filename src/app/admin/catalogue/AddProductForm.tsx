@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { addProduct, updateProduct } from "../actions";
 import Image from "next/image";
+import { createClient } from '@/utils/supabase/client';
 
 type Product = {
   id: string;
@@ -40,12 +41,33 @@ export default function ProductForm({ initialData, onCancel }: { initialData?: P
     }
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
-    // Override existing_urls with the current (possibly pruned) state
     formData.set('existing_urls', JSON.stringify(existingUrls));
-    // Append only the new files (file input may contain stale values)
-    formData.delete('image_files');
-    files.forEach((file) => formData.append('image_files', file));
+    formData.delete('image_files'); // We handle files client-side now
+
     try {
+      const newUploadedUrls: string[] = [];
+      if (files.length > 0) {
+        const supabase = createClient();
+        for (const file of files) {
+          const fileExt = file.name.split('.').pop() || 'webp';
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('alusea-assets')
+            .upload(fileName, file, { cacheControl: '3600', upsert: false });
+
+          if (uploadError) {
+            console.error('Upload error:', uploadError);
+            throw new Error(`Failed to upload ${file.name}`);
+          }
+          
+          const { data } = supabase.storage.from('alusea-assets').getPublicUrl(fileName);
+          newUploadedUrls.push(data.publicUrl);
+        }
+      }
+
+      formData.set('new_uploaded_urls', JSON.stringify(newUploadedUrls));
+
       if (initialData) {
         await updateProduct(formData);
         alert('Product updated successfully!');

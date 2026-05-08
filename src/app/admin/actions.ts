@@ -32,7 +32,7 @@ export async function addProduct(formData: FormData) {
 
   const name = formData.get('name') as string
   const category = formData.get('category') as string
-  const imageFiles = formData.getAll('image_files') as File[]
+  const newUploadedUrlsRaw = formData.get('new_uploaded_urls') as string
   const description = formData.get('description') as string
   const specsRaw = formData.get('specs') as string
   
@@ -60,26 +60,10 @@ export async function addProduct(formData: FormData) {
   }
 
   let uploadedUrls: string[] = [];
-  for (const file of imageFiles) {
-    if (file && file.size > 0) {
-      const fileExt = file.name.split('.').pop() || 'webp'
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-      
-      const { error: uploadError } = await supabase.storage
-        .from('alusea-assets')
-        .upload(fileName, file, { cacheControl: '3600', upsert: false })
-
-      if (uploadError) {
-        console.error(uploadError)
-        throw new Error('Image upload failed')
-      }
-
-      const { data: publicUrlData } = supabase.storage
-        .from('alusea-assets')
-        .getPublicUrl(fileName)
-        
-      uploadedUrls.push(publicUrlData.publicUrl)
-    }
+  if (newUploadedUrlsRaw) {
+    try {
+      uploadedUrls = JSON.parse(newUploadedUrlsRaw);
+    } catch(e) {}
   }
 
   if (uploadedUrls.length === 0) {
@@ -115,7 +99,7 @@ export async function updateProduct(formData: FormData) {
   const description = formData.get('description') as string
   const specsRaw = formData.get('specs') as string
   const existingUrlsRaw = formData.get('existing_urls') as string
-  const imageFiles = formData.getAll('image_files') as File[]
+  const newUploadedUrlsRaw = formData.get('new_uploaded_urls') as string
   
   let specs: Record<string, string> = {}
   if (specsRaw) {
@@ -147,26 +131,11 @@ export async function updateProduct(formData: FormData) {
     } catch(e) {}
   }
 
-  for (const file of imageFiles) {
-    if (file && file.size > 0) {
-      const fileExt = file.name.split('.').pop() || 'webp'
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-      
-      const { error: uploadError } = await supabase.storage
-        .from('alusea-assets')
-        .upload(fileName, file, { cacheControl: '3600', upsert: false })
-
-      if (uploadError) {
-        console.error(uploadError)
-        throw new Error('Image upload failed')
-      }
-
-      const { data: publicUrlData } = supabase.storage
-        .from('alusea-assets')
-        .getPublicUrl(fileName)
-        
-      finalUrls.push(publicUrlData.publicUrl)
-    }
+  if (newUploadedUrlsRaw) {
+    try {
+      const newUrls = JSON.parse(newUploadedUrlsRaw)
+      finalUrls = [...finalUrls, ...newUrls]
+    } catch(e) {}
   }
 
   if (finalUrls.length === 0) {
