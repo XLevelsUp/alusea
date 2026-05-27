@@ -103,6 +103,17 @@ const Footer = () => {
               RS Puram, Near Flower Market<br />
               Coimbatore, Tamil Nadu - 641002
             </p>
+            {/* Open in Maps Link */}
+            <div className="pt-2">
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=Alusea+Doors+%26+Windows+No+178+A+Ramachandra+Road+RS+Puram+Coimbatore"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-200 hover:underline transition-colors font-semibold"
+              >
+                Open in Maps ↗
+              </a>
+            </div>
           </div>
         </div>
 
