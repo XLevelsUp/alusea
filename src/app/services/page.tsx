@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Architectural Aluminium Engineering & Installation",
+  title: "Commercial Aluminium Facade Contractor & Glazing Coimbatore | Alusea",
   description:
-    "Discover Alusea's premium aluminium engineering services, from bespoke window fabrication to curtain wall structural glazing and seamless installations.",
+    "Discover Alusea, the leading commercial aluminium facade contractor and curtain wall glazing supplier in Coimbatore. We design, fabricate, and install elite specification-grade architectural glass systems in Tamil Nadu.",
   alternates: {
     canonical: "/services",
   },
 };
 
 const servicesList = [
-  { title: "Custom Window Fabrication", desc: "Precision-engineered windows tailored to your architectural vision." },
-  { title: "Architectural Doors", desc: "Premium sliding, folding, and swing doors for seamless transitions." },
-  { title: "Curtain Wall Systems", desc: "Expansive structural glazing for impressive commercial facades." },
-  { title: "Professional Installation", desc: "Expert fitting carried out by our highly trained technicians." }
+  { title: "Custom Window Fabrication", desc: "Precision-engineered custom thermal break aluminium windows in Coimbatore tailored to strict residential U-value and acoustic specifications." },
+  { title: "Architectural Doors", desc: "Premium minimalist aluminium sliding doors for modern villas and sleek aluminium glass door frameworks for residences in Tamil Nadu." },
+  { title: "Curtain Wall Systems", desc: "Expansive structural glazing and architectural louvers supplied by the leading commercial aluminium facade contractor in Coimbatore." },
+  { title: "Professional Installation", desc: "Flawless on-site execution and structural testing for luxury apartments and corporate buildings throughout South India." }
 ];
 
 export default function ServicesPage() {
@@ -21,11 +22,15 @@ export default function ServicesPage() {
     <div className="pt-32 pb-24 px-6 min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto">
         <header className="mb-20 text-center max-w-3xl mx-auto space-y-4">
+          <div className="flex items-center justify-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#7A5418]" />
+            <span className="text-[#7A5418] text-xs uppercase tracking-[0.2em] font-bold">Services</span>
+          </div>
           <h1 className="text-4xl md:text-6xl font-bold text-architectural-blue tracking-tight">
             Our Services
           </h1>
           <p className="text-steel-gray text-lg leading-relaxed">
-            From initial consultation to final installation, we provide end-to-end aluminium engineering solutions.
+            From initial concept to final on-site installation, we provide complete, elite-grade aluminium engineering solutions. As the leading <Link href="/" className="text-brushed-bronze hover:underline font-semibold">architectural glazing manufacturer in South India</Link>, we bring structural integrity and luxury design together.
           </p>
         </header>
 

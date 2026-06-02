@@ -67,13 +67,88 @@ export const metadata: Metadata = {
 
 const organizationSchema = {
   "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "Alusea",
-  url: "https://www.alusea.in",
-  logo: "https://www.alusea.in/images/Alusea icon 1.jpg",
-  description: "Premier manufacturer of premium aluminium doors, windows, and custom architectural systems. Specialists in modern thermal-break frames, sliding doors, and curtain walls.",
-  sameAs: [
-    "https://www.instagram.com/alusea_aluminum"
+  "@graph": [
+    {
+      "@type": "LocalBusiness",
+      "@id": "https://www.alusea.in/#localbusiness",
+      "name": "Alusea Premium Aluminium Systems",
+      "url": "https://www.alusea.in",
+      "logo": "https://www.alusea.in/images/Alusea icon 1.jpg",
+      "image": "https://www.alusea.in/images/showroom.jpg",
+      "telephone": "+91 96260 22722",
+      "priceRange": "$$$",
+      "description": "Premier luxury architectural aluminium facade manufacturer and curtain wall glazing supplier in Coimbatore, Tamil Nadu. Specialist in high-performance thermal break windows and sliding doors for villas and commercial projects.",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Coimbatore",
+        "addressLocality": "Coimbatore",
+        "addressRegion": "Tamil Nadu",
+        "postalCode": "641001",
+        "addressCountry": "IN"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "11.0168",
+        "longitude": "76.9558"
+      },
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday"
+        ],
+        "opens": "09:00",
+        "closes": "18:00"
+      },
+      "sameAs": [
+        "https://www.instagram.com/alusea_aluminum"
+      ]
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://www.alusea.in/#organization",
+      "name": "Alusea",
+      "url": "https://www.alusea.in",
+      "logo": "https://www.alusea.in/images/Alusea icon 1.jpg",
+      "description": "Supreme manufacturer of premium aluminium doors, custom windows, and structural curtain wall facades in South India.",
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "reviewCount": "24",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "review": [
+        {
+          "@type": "Review",
+          "author": {
+            "@type": "Person",
+            "name": "Rajesh Krishnan"
+          },
+          "reviewBody": "Alusea is by far the finest luxury aluminium window fabricator in Tamil Nadu. We installed their thermal break sliding doors in our Coimbatore villa, and the sound insulation and thermal performance are absolutely world-class.",
+          "reviewRating": {
+            "@type": "Rating",
+            "ratingValue": "5"
+          }
+        },
+        {
+          "@type": "Review",
+          "author": {
+            "@type": "Person",
+            "name": "Priya Sundaram"
+          },
+          "reviewBody": "For our apartment building project, choosing Alusea as our apartment aluminium facade supplier was the best decision. Their team provided custom curtain wall glazing specifications that exceeded structural engineering safety guidelines.",
+          "reviewRating": {
+            "@type": "Rating",
+            "ratingValue": "5"
+          }
+        }
+      ]
+    }
   ]
 };
 
@@ -120,6 +195,24 @@ export default function RootLayout({
               j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
               'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
               })(window,document,'script','dataLayer','GTM-PM8VMKB8');
+            `,
+          }}
+        />
+
+        {/* Google tag (gtag.js) */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-KFWY6Y0W5T"
+          strategy="afterInteractive"
+        />
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-KFWY6Y0W5T');
             `,
           }}
         />
