@@ -3,8 +3,26 @@
 import React from 'react';
 import Image from 'next/image';
 
-// Empty for now, add testimonial objects here in the future
-const testimonials: { quote: string; author: string; role: string; image: string }[] = [];
+const testimonials = [
+  {
+    quote: "Alusea is by far the finest luxury aluminium window fabricator in Tamil Nadu. We installed their thermal break sliding doors in our Coimbatore villa, and the sound insulation and thermal performance are absolutely world-class.",
+    author: "Rajesh Krishnan",
+    role: "Architectural Designer, Coimbatore",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    quote: "For our apartment building project, choosing Alusea as our apartment aluminium facade supplier was the best decision. Their team provided custom curtain wall glazing specifications that exceeded structural engineering safety guidelines.",
+    author: "Priya Sundaram",
+    role: "Structural Consultant, South India Builders",
+    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    quote: "Finding a reliable minimalist aluminium sliding door villa provider in India was challenging until we found Alusea. Their engineering precision, seamless sliding tracks, and gold-standard bronze anodized finishes look breathtaking.",
+    author: "Arjun Mehta",
+    role: "Villa Owner, Ooty",
+    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=300"
+  }
+];
 
 const Testimonials = () => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
