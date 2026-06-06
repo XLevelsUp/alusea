@@ -36,7 +36,8 @@ export const metadata: Metadata = {
     description: "Experience architectural excellence with Alusea. We manufacture premium thermal-break aluminium doors, custom windows, and modern structural facades.",
     images: [
       {
-        url: "/images/og-image.jpg",
+        // TODO: replace with a purpose-built 1200x630 branded OG image
+        url: "/images/hero_night.webp",
         width: 1200,
         height: 630,
         alt: "Alusea Premium Aluminium Solutions",
@@ -50,7 +51,7 @@ export const metadata: Metadata = {
       template: "%s | Alusea",
     },
     description: "Experience architectural excellence with Alusea. We manufacture premium thermal-break aluminium doors, custom windows, and modern structural facades.",
-    images: ["/images/og-image.jpg"],
+    images: ["/images/hero_night.webp"],
   },
   robots: {
     index: true,
