@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 type Product = {
   id: string;
@@ -122,8 +123,21 @@ function ProductCard({ product, itemVariants }: { product: Product, itemVariants
 
 export default function CatalogueClient({ initialProducts }: { initialProducts: Product[] }) {
   const [activeCategory, setActiveCategory] = useState("All");
+  const searchParams = useSearchParams();
+  const categoryParam = searchParams.get("category");
 
   const categories = ["All", ...Array.from(new Set(initialProducts.map(p => p.category)))];
+
+  useEffect(() => {
+    if (categoryParam) {
+      const matched = categories.find(
+        (c) => c.toLowerCase() === categoryParam.toLowerCase()
+      );
+      if (matched) {
+        setActiveCategory(matched);
+      }
+    }
+  }, [categoryParam, categories]);
 
   const filteredProducts = activeCategory === "All"
     ? initialProducts

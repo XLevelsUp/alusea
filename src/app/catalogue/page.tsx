@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { Suspense } from "react";
 import CatalogueClient from "./CatalogueClient";
 import { createClient } from "@/utils/supabase/server";
 
@@ -20,5 +21,14 @@ export default async function CataloguePage() {
     console.error("Supabase Error fetching catalogue:", error);
   }
 
-  return <CatalogueClient initialProducts={products || []} />;
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white dark:bg-matte-black pt-32 pb-24 px-6 flex flex-col items-center justify-center">
+        <div className="w-10 h-10 border-4 border-[#B68B4C] border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-steel-gray font-medium">Loading Alusea Catalogue...</p>
+      </div>
+    }>
+      <CatalogueClient initialProducts={products || []} />
+    </Suspense>
+  );
 }
