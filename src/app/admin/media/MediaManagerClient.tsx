@@ -84,8 +84,8 @@ export default function MediaManagerClient({ initialMedia }: { initialMedia: Med
         formRef.current?.reset();
         setPreview(null);
         setTimeout(() => setSuccess(null), 3000);
-      } catch (err: any) {
-        setError(err.message || "Upload failed");
+      } catch (err: unknown) {
+        setError((err as Error).message || "Upload failed");
       }
     });
   };
@@ -95,8 +95,8 @@ export default function MediaManagerClient({ initialMedia }: { initialMedia: Med
     setDeletingId(item.id);
     try {
       await deletePageMedia(item.id, item.image_url);
-    } catch (err: any) {
-      alert("Delete failed: " + err.message);
+    } catch (err: unknown) {
+      alert("Delete failed: " + (err as Error).message);
     } finally {
       setDeletingId(null);
     }

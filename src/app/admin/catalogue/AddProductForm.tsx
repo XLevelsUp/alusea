@@ -78,8 +78,8 @@ export default function ProductForm({ initialData, onCancel }: { initialData?: P
         setFiles([]);
         setSpecs([{ key: "", value: "" }]);
       }
-    } catch (error: any) {
-      alert(`Error: ${error.message || 'Something went wrong.'}`);
+    } catch (error: unknown) {
+      alert(`Error: ${(error as Error).message || 'Something went wrong.'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -89,6 +89,7 @@ export default function ProductForm({ initialData, onCancel }: { initialData?: P
     if (initialData) {
       if (initialData.specs) {
          const entries = Object.entries(initialData.specs);
+         // eslint-disable-next-line react-hooks/set-state-in-effect
          setSpecs(entries.length > 0 ? entries.map(([k, v]) => ({ key: k, value: v })) : [{ key: "", value: "" }]);
       }
       // Defensively parse image_urls — may be null, array, or a JSON string

@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from 'react';
+import * as fbq from '@/utils/fpixel';
 
 type FormData = { name: string; email: string; phone: string; message: string };
 
@@ -61,13 +62,21 @@ export default function ContactForm() {
           throw new Error('Failed to send message');
         }
 
-        if (typeof window !== "undefined" && (window as any).dataLayer) {
-          (window as any).dataLayer.push({
+        if (typeof window !== "undefined" && window.dataLayer) {
+          window.dataLayer.push({
             event: "generate_lead",
             lead_type: "general_inquiry",
             form_name: "Contact Page Form"
           });
         }
+
+        fbq.event("Lead", {
+          content_name: "General Inquiry",
+          content_category: "Contact Form",
+          value: 0,
+          currency: "INR"
+        });
+
         setStatus('success');
         setFormData({ name: '', email: '', phone: '', message: '' });
       } catch (error) {

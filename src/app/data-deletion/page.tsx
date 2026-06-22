@@ -159,7 +159,7 @@ export default function DataDeletionPage() {
                 <p className="text-steel-gray leading-relaxed">
                   Any records of notifications sent via WhatsApp Business API
                   containing your enquiry details will be deleted from our
-                  systems. Please note that WhatsApp message history on Meta's
+                  systems. Please note that WhatsApp message history on Meta&apos;s
                   servers is subject to{" "}
                   <a
                     href="https://www.whatsapp.com/legal/privacy-policy"
