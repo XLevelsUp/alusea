@@ -30,18 +30,16 @@ export default function ComingSoon({
   description = "We're crafting something extraordinary. This page will be ready soon.",
   icon = defaultIcon,
 }: ComingSoonProps) {
-  const [particles, setParticles] = useState<{ x: number; y: number; size: number; opacity: number; speed: number }[]>([]);
-
-  useEffect(() => {
-    const generated = Array.from({ length: 30 }, () => ({
+  const [particles] = useState(() =>
+    Array.from({ length: 30 }, () => ({
       x: Math.random() * 100,
       y: Math.random() * 100,
       size: Math.random() * 3 + 1,
       opacity: Math.random() * 0.5 + 0.1,
       speed: Math.random() * 20 + 10,
-    }));
-    setParticles(generated);
-  }, []);
+      delay: Math.random() * -20,
+    }))
+  );
 
   return (
     <section className="relative min-h-screen bg-matte-black flex items-center justify-center overflow-hidden">
@@ -82,7 +80,7 @@ export default function ComingSoon({
               height: `${p.size}px`,
               opacity: p.opacity,
               animation: `floatUp ${p.speed}s linear infinite`,
-              animationDelay: `${Math.random() * -20}s`,
+              animationDelay: `${p.delay}s`,
             }}
           />
         ))}

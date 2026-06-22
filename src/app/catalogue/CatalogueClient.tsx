@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 
 type Product = {
@@ -16,7 +16,7 @@ type Product = {
   specs: Record<string, string>;
 };
 
-function ProductCard({ product, itemVariants }: { product: Product, itemVariants: any }) {
+function ProductCard({ product, itemVariants }: { product: Product, itemVariants: unknown }) {
   const [imgIndex, setImgIndex] = useState(0);
   
   let images = product.image_urls && product.image_urls.length > 0 ? product.image_urls : [product.image_url];
@@ -122,13 +122,18 @@ function ProductCard({ product, itemVariants }: { product: Product, itemVariants
 }
 
 export default function CatalogueClient({ initialProducts }: { initialProducts: Product[] }) {
+  const categories = useMemo(() => {
+    return ["All", ...Array.from(new Set(initialProducts.map(p => p.category)))];
+  }, [initialProducts]);
+
   const [activeCategory, setActiveCategory] = useState("All");
+  const [prevCategoryParam, setPrevCategoryParam] = useState<string | null>(null);
+
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category");
 
-  const categories = ["All", ...Array.from(new Set(initialProducts.map(p => p.category)))];
-
-  useEffect(() => {
+  if (categoryParam !== prevCategoryParam) {
+    setPrevCategoryParam(categoryParam);
     if (categoryParam) {
       const matched = categories.find(
         (c) => c.toLowerCase() === categoryParam.toLowerCase()
@@ -136,8 +141,10 @@ export default function CatalogueClient({ initialProducts }: { initialProducts: 
       if (matched) {
         setActiveCategory(matched);
       }
+    } else {
+      setActiveCategory("All");
     }
-  }, [categoryParam, categories]);
+  }
 
   const filteredProducts = activeCategory === "All"
     ? initialProducts

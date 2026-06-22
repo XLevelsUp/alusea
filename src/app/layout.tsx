@@ -5,6 +5,7 @@ import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import BackButton from "@/components/ui/BackButton";
+import MetaPixel from "@/components/layout/MetaPixel";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -173,10 +174,13 @@ export default function RootLayout({
         */}
         <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="preconnect" href="https://connect.facebook.net" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        <link rel="dns-prefetch" href="https://connect.facebook.net" />
       </head>
       <body className={`${inter.variable} ${outfit.variable} antialiased selection:bg-brushed-bronze selection:text-white`}>
+        <MetaPixel />
 
         {/*
           PERFORMANCE FIX: replaced <GoogleTagManager> from @next/third-parties

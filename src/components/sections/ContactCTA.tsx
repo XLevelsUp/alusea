@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from "next/image";
+import * as fbq from '@/utils/fpixel';
 
 const GOOGLE_SCRIPT_URL = process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL || "";
 
@@ -124,13 +125,20 @@ const ContactCTA = () => {
         }),
       });
 
-      if (typeof window !== "undefined" && (window as any).dataLayer) {
-        (window as any).dataLayer.push({
+      if (typeof window !== "undefined" && window.dataLayer) {
+        window.dataLayer.push({
           event: "generate_lead",
           lead_type: "quote_request",
           form_name: "Contact CTA"
         });
       }
+
+      fbq.event("Lead", {
+        content_name: "Quote Request",
+        content_category: "Contact Form",
+        value: 0,
+        currency: "INR"
+      });
 
       setStatus("success");
       setForm(initialForm);

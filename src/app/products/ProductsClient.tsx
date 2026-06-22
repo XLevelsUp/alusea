@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import "@/utils/fpixel"; // Ensures global window typings are loaded
 
 const products = [
   {
@@ -74,8 +75,8 @@ export default function ProductsClient() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
   const trackProductClick = (productName: string) => {
-    if (typeof window !== "undefined" && (window as any).dataLayer) {
-      (window as any).dataLayer.push({
+    if (typeof window !== "undefined" && window.dataLayer) {
+      window.dataLayer.push({
         event: "select_item",
         item_list_name: "Products Showcase",
         items: [{
