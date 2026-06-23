@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -16,7 +16,7 @@ type Product = {
   specs: Record<string, string>;
 };
 
-function ProductCard({ product, itemVariants }: { product: Product, itemVariants: unknown }) {
+function ProductCard({ product, itemVariants }: { product: Product, itemVariants: Variants }) {
   const [imgIndex, setImgIndex] = useState(0);
   
   let images = product.image_urls && product.image_urls.length > 0 ? product.image_urls : [product.image_url];
@@ -158,7 +158,7 @@ export default function CatalogueClient({ initialProducts }: { initialProducts: 
     }
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { y: 40, opacity: 0 },
     visible: { 
       y: 0, 
