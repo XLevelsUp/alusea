@@ -36,12 +36,12 @@ export default function ServicesPage() {
                <div className="relative z-10">
                  <h3 className="text-2xl font-bold text-matte-black mb-4 group-hover:text-brushed-bronze transition-colors">{service.title}</h3>
                  <p className="text-steel-gray leading-relaxed max-w-sm">{service.desc}</p>
-                 <button className="mt-8 text-sm font-bold text-matte-black flex items-center gap-2 group-hover:text-brushed-bronze transition-colors">
+                 <Link href="/contact" className="mt-8 text-sm font-bold text-matte-black flex items-center gap-2 group-hover:text-brushed-bronze transition-colors">
                    Learn More
                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                    </svg>
-                 </button>
+                 </Link>
                </div>
             </div>
           ))}

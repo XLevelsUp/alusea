@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -32,19 +33,24 @@ const Header = () => {
     { name: "Home", href: "/" },
     { name: "About Us", href: "/about" },
     { name: "Services", href: "/services" },
+    { name: "Catalogue", href: "/catalogue" },
     { name: "Contact Us", href: "/contact" },
   ];
 
   const pagesDropdown = [
     { name: "Our Products", href: "/products" },
-    { name: "Project Gallery", href: "/projects" },
-    { name: "Our Team", href: "/team" },
+    // { name: "Project Gallery", href: "/projects" },
     { name: "Careers", href: "/careers" },
   ];
 
+  const pathname = usePathname();
+  const isHome = pathname === "/";
+  if (pathname?.startsWith('/admin')) return null;
+
   return (
     <header
-      className={`fixed top-0 w-full z-50 transition-all duration-500 h-14 md:h-16 ${isScrolled
+      className={`fixed top-0 w-full z-50 transition-all duration-500 h-14 md:h-16 ${
+        isScrolled || !isHome
           ? "bg-matte-black/90 backdrop-blur-md py-2 shadow-2xl border-b border-white/5"
           : "bg-transparent py-4"
         }`}

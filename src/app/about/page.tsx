@@ -64,7 +64,7 @@ export default function AboutPage() {
           <div className="relative">
             <div className="aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl relative">
               <Image
-                src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1000"
+                src="/images/about-building.webp"
                 alt="Alusea architectural building"
                 fill
                 className="object-cover"
