@@ -37,10 +37,10 @@ function ProductCard({ product, itemVariants }: { product: Product, itemVariants
   return (
     <motion.div 
       variants={itemVariants}
-      className="group flex flex-col bg-white rounded-xl overflow-hidden shadow-[0_4px_20px_-10px_rgba(0,0,0,0.1)] hover:shadow-2xl transition-all duration-700 border border-gray-100 relative"
+      className="group flex flex-col bg-white dark:bg-[#151515] rounded-xl overflow-hidden shadow-[0_4px_20px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_20px_-10px_rgba(0,0,0,0.5)] hover:shadow-2xl transition-all duration-700 border border-gray-100 dark:border-white/5 relative"
     >
       {/* Product Image Container */}
-      <div className="relative w-full h-[320px] xl:h-[380px] overflow-hidden bg-gray-100 group/img">
+      <div className="relative w-full h-[320px] xl:h-[380px] overflow-hidden bg-gray-100 dark:bg-[#0a0a0a] group/img">
         <Image
           src={images[imgIndex]}
           alt={product.name}
@@ -71,21 +71,21 @@ function ProductCard({ product, itemVariants }: { product: Product, itemVariants
         )}
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-        <div className="absolute top-5 left-5 bg-white/90 backdrop-blur-md text-matte-black text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-sm border border-black/10 shadow-lg z-10 pointer-events-none">
+        <div className="absolute top-5 left-5 bg-white/90 dark:bg-black/80 backdrop-blur-md text-matte-black dark:text-white text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-sm border border-black/10 dark:border-white/10 shadow-lg z-10 pointer-events-none">
           {product.category}
         </div>
       </div>
 
       {/* Product Info */}
-      <div className="p-8 flex flex-col flex-grow relative z-10 bg-white">
-        <h3 className="text-2xl font-bold text-matte-black mb-4 group-hover:text-[#B68B4C] transition-colors duration-300">
+      <div className="p-8 flex flex-col flex-grow relative z-10 bg-white dark:bg-[#151515]">
+        <h3 className="text-2xl font-bold text-matte-black dark:text-white mb-4 group-hover:text-[#B68B4C] transition-colors duration-300">
           {product.name}
         </h3>
-        <p className="text-sm text-steel-gray mb-8 flex-grow leading-relaxed">
+        <p className="text-sm text-steel-gray dark:text-gray-400 mb-8 flex-grow leading-relaxed">
           {product.description}
         </p>
 
-        <div className="w-full h-px bg-gray-200 mb-6" />
+        <div className="w-full h-px bg-gray-200 dark:bg-white/10 mb-6" />
 
         {/* Technical Specifications */}
         <div className="space-y-4 mb-10">
@@ -95,8 +95,8 @@ function ProductCard({ product, itemVariants }: { product: Product, itemVariants
           </h4>
           {Object.entries(product.specs).map(([key, value]) => (
             <div key={key} className="flex justify-between items-center text-[13px]">
-              <span className="text-gray-500 font-medium">{key}</span>
-              <span className="text-matte-black font-semibold text-right ml-4">{value}</span>
+              <span className="text-gray-500 dark:text-gray-400 font-medium">{key}</span>
+              <span className="text-matte-black dark:text-white font-semibold text-right ml-4">{value}</span>
             </div>
           ))}
         </div>
@@ -168,11 +168,11 @@ export default function CatalogueClient({ initialProducts }: { initialProducts: 
   };
 
   return (
-    <main className="min-h-screen bg-white pt-24 pb-0 flex flex-col">
+    <main className="min-h-screen bg-white dark:bg-matte-black pt-24 pb-0 flex flex-col">
       {/* Hero Section */}
       <section className="relative w-full py-24 px-6 overflow-hidden flex flex-col items-center justify-center text-center">
         <div 
-          className="absolute inset-0 max-w-7xl mx-auto opacity-10 pointer-events-none" 
+          className="absolute inset-0 max-w-7xl mx-auto opacity-10 dark:opacity-20 pointer-events-none" 
           style={{ backgroundImage: 'radial-gradient(circle at center, #B68B4C 0%, transparent 60%)' }}
         />
         
@@ -186,11 +186,11 @@ export default function CatalogueClient({ initialProducts }: { initialProducts: 
             <span className="text-xs uppercase tracking-[0.2em] font-bold text-[#A67C52]">Product Collection</span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-bold uppercase tracking-tight mb-6 text-matte-black">
+          <h1 className="text-5xl md:text-7xl font-bold uppercase tracking-tight mb-6 text-matte-black dark:text-white">
             Our <span className="text-gradient">Catalogue</span>
           </h1>
           
-          <p className="text-lg md:text-xl text-steel-gray max-w-2xl mx-auto font-light leading-relaxed">
+          <p className="text-lg md:text-xl text-steel-gray dark:text-gray-300 max-w-2xl mx-auto font-light leading-relaxed">
             Discover our range of meticulously engineered premium aluminum systems. 
             Uncompromising quality, exceptional aesthetics, and unparalleled performance designed for modern architecture.
           </p>
@@ -207,7 +207,7 @@ export default function CatalogueClient({ initialProducts }: { initialProducts: 
               className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 border ${
                 activeCategory === category
                   ? "bg-[#B68B4C] border-[#B68B4C] text-white"
-                  : "bg-transparent border-gray-200 text-steel-gray hover:border-[#B68B4C] hover:text-[#B68B4C]"
+                  : "bg-transparent border-gray-200 dark:border-white/10 text-steel-gray dark:text-gray-300 hover:border-[#B68B4C] dark:hover:text-white hover:text-[#B68B4C]"
               }`}
             >
               {category}

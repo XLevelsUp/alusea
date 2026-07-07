@@ -31,7 +31,7 @@ export default function ContactPage() {
 
         <header className="mb-16 max-w-2xl">
           <h1 className="text-4xl md:text-6xl font-bold text-architectural-blue mb-4">
-            Let's Build <span className="text-brushed-bronze">Together</span>
+            Let&apos;s Build <span className="text-brushed-bronze">Together</span>
           </h1>
           <p className="text-steel-gray text-lg leading-relaxed">
             Looking for premium aluminium windows and doors near me? Whether you have a specific project in mind or need expert advice on the best aluminium systems for your space, our team is ready to assist.

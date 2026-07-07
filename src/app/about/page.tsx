@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Leaders in Architectural Glazing & Aluminium",
+  title: "About Us | Luxury Aluminium Window Fabricator Tamil Nadu | Alusea",
   description:
-    "Discover Alusea's dedication to architectural finesse and sustainable design. We provide bespoke modern aluminium manufacturing and expert installation.",
+    "Discover Alusea's dedication to architectural glazing and premium aluminium fabrication. As a leading luxury aluminium window fabricator in Tamil Nadu and architectural glazing manufacturer in South India, we craft bespoke fenestration solutions.",
   alternates: {
     canonical: "/about",
   },
@@ -43,10 +44,10 @@ export default function AboutPage() {
             </div>
             
             <p className="text-steel-gray text-lg leading-relaxed">
-              At Alusea, we believe that windows and doors are more than just functional elements—they are the transparent boundaries that connect your sanctuary to the world. For over a decade, we have dedicated ourselves to perfecting the art of premium aluminium architecture, establishing ourselves as the best aluminium window and door manufacturer in the region.
+              At Alusea, we believe that windows and doors are more than just functional elements—they are the transparent boundaries that connect your sanctuary to the world. For over a decade, we have dedicated ourselves to perfecting the art of premium aluminium architecture, establishing ourselves as the leading <Link href="/" className="text-brushed-bronze hover:underline font-semibold">aluminium window doors manufacturer in Coimbatore</Link> and South India.
             </p>
             <p className="text-steel-gray text-lg leading-relaxed">
-              If you've ever wondered what are the advantages of aluminium windows, it comes down to longevity, slim profiles, and unparalleled energy performance. Our mission is to empower architects, builders, and homeowners with sustainable, high-performance systems that never compromise on aesthetic brilliance. Every extrusion, thermal break, and glass pane is rigorously tested to meet our uncompromising standards.
+              If you&apos;ve ever wondered what are the advantages of aluminium windows, it comes down to longevity, slim profiles, and unparalleled energy performance. As a prominent <Link href="/products" className="text-brushed-bronze hover:underline font-semibold">luxury aluminium window fabricator in Tamil Nadu</Link> and <Link href="/services" className="text-brushed-bronze hover:underline font-semibold">architectural glazing manufacturer in South India</Link>, our mission is to empower architects, builders, and homeowners with sustainable, high-performance systems that never compromise on aesthetic brilliance. Every extrusion, thermal break, and glass pane is rigorously tested to meet our uncompromising standards.
             </p>
 
             <div className="grid grid-cols-2 gap-8 pt-8 border-t border-gray-100">
@@ -71,7 +72,7 @@ export default function AboutPage() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-matte-black/60 to-transparent flex items-end p-8">
                 <p className="text-white text-xl font-medium max-w-sm">
-                  "Redefining spaces with light, strength, and visionary design."
+                  &quot;Redefining spaces with light, strength, and visionary design.&quot;
                 </p>
               </div>
             </div>

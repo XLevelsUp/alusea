@@ -22,7 +22,7 @@ export default function CareersPage() {
             Build Your Future <span className="text-brushed-bronze">With Us</span>
           </h1>
           <p className="text-steel-gray text-lg leading-relaxed max-w-2xl mx-auto">
-            We're always looking for passionate engineers, craftsmen, and leaders to join our mission of reshaping modern architecture.
+            We&apos;re always looking for passionate engineers, craftsmen, and leaders to join our mission of reshaping modern architecture.
           </p>
         </header>
 

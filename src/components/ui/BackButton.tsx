@@ -9,11 +9,12 @@ export default function BackButton() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
-  // Only render on client to avoid hydration mismatch, and hide on homepage
-  if (!mounted || pathname === "/") return null;
+  // Only render on client to avoid hydration mismatch, and hide on homepage or admin panel
+  if (!mounted || pathname === "/" || pathname?.startsWith("/admin")) return null;
 
   return (
     <button
