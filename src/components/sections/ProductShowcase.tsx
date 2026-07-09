@@ -6,23 +6,22 @@ import Image from "next/image";
 const slides = [
   { id: 1, src: "/images/Interior 1.webp", alt: "Matte black multi-panel pivot glass revolving door for luxury residential entrance" },
   { id: 2, src: "/images/Interior 2.webp", alt: "Ultra-slim frame aluminium floor-to-ceiling panoramic sliding window systems" },
-  { id: 3, src: "/images/Interior 3 (1).webp", alt: "Energy-efficient thermal break aluminium casement window with double glazing" },
-  { id: 4, src: "/images/Interior 3.webp", alt: "Custom built aluminium bi-fold doors seamlessly connecting indoor and outdoor living spaces" },
+  { id: 3, src: "/images/Interior 3.webp", alt: "Energy-efficient thermal break aluminium casement window with double glazing" },
   {
-    id: 5,
-    src: "/images/Interior-Master-Line-Multi-Panel-Pivot-Glass-Revolving-Door-Aluminium-Internal-Aluminum-Center-Glass-Pivot-Doors.webp",
+    id: 4,
+    src: "/images/interior-master-line.webp",
     alt: "Premium architectural aluminium pivot entrance door with modern minimalist hardware",
   },
-  { id: 6, src: "/images/glass entrance door.webp", alt: "Commercial grade aluminium frame glass entrance door with enhanced security locking mechanism" },
-  { id: 7, src: "/images/Rectangle 87.webp", alt: "High-performance aluminium facade system designed for contemporary sleek architectural buildings" },
+  { id: 5, src: "/images/glass entrance door.webp", alt: "Commercial grade aluminium frame glass entrance door with enhanced security locking mechanism" },
+  { id: 6, src: "/images/Rectangle 87.webp", alt: "High-performance aluminium facade system designed for contemporary sleek architectural buildings" },
   {
-    id: 8,
-    src: "/images/ChatGPT Image Mar 13, 2026, 04_53_24 PM.webp",
+    id: 7,
+    src: "/images/product-showcase-1.webp",
     alt: "Luxurious modern home featuring custom oversized aluminium windows and slimline sliding doors",
   },
   {
-    id: 9,
-    src: "/images/ChatGPT Image Mar 13, 2026, 04_56_24 PM.webp",
+    id: 8,
+    src: "/images/product-showcase-2.webp",
     alt: "Precision engineered structural aluminium window frames offering maximum natural light and weather resistance",
   },
 ];

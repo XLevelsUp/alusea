@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 
+const BASE_URL = "https://www.alusea.in";
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
@@ -106,6 +108,6 @@ export default function robots(): MetadataRoute.Robots {
         crawlDelay: 15,
       },
     ],
-    sitemap: "https://www.alusea.in/sitemap.xml",
+    sitemap: `${BASE_URL}/sitemap.xml`,
   };
 }

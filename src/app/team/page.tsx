@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   },
 };
 
+/*
 const teamMembers = [
   { role: "Founder & CEO" },
   { role: "Lead Architect" },
@@ -17,6 +18,7 @@ const teamMembers = [
   { role: "Senior Fabricator" },
   { role: "Installation Director" }
 ];
+*/
 
 export default function TeamPage() {
   return (
@@ -31,6 +33,7 @@ export default function TeamPage() {
           </p>
         </header>
 
+        {/* Team members grid hidden on UI
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
           {teamMembers.map((member, idx) => (
             <div key={idx} className="group">
@@ -49,6 +52,7 @@ export default function TeamPage() {
             </div>
           ))}
         </div>
+        */}
       </div>
     </div>
   );
