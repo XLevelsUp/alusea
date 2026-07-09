@@ -65,7 +65,7 @@ const WhyWorkWithUs = () => {
   const categories = [
     "Windows",
     "Doors",
-    "Shower Cubicals",
+    "Shower Cubicles",
     "Railings",
     "Facades Windows"
   ];
@@ -83,7 +83,7 @@ const WhyWorkWithUs = () => {
       { name: "Bi-Fold Doors", href: "/catalogue?category=Windows%20%26%20Sliding" },
       { name: "Signature Entrance Doors", href: "/catalogue?category=Doors" }
     ],
-    "Shower Cubicals": [
+    "Shower Cubicles": [
       { name: "Frameless Shower Cubicles", href: "/catalogue?category=Specialty" },
       { name: "Luxury Glass Partitions", href: "/catalogue?category=Specialty" }
     ],
