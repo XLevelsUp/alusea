@@ -25,9 +25,6 @@ export const metadata: Metadata = {
   },
   description: "Experience architectural excellence with Alusea. We manufacture premium thermal-break aluminium doors, custom windows, and modern structural facades.",
   keywords: ["aluminium windows and doors", "aluminium windows and doors manufacturing", "premium aluminium", "aluminium architectural systems"],
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     type: "website",
     locale: "en_US",
