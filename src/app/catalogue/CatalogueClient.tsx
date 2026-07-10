@@ -122,9 +122,16 @@ function ProductCard({ product, itemVariants }: { product: Product, itemVariants
 }
 
 export default function CatalogueClient({ initialProducts }: { initialProducts: Product[] }) {
-  const categories = useMemo(() => {
-    return ["All", ...Array.from(new Set(initialProducts.map(p => p.category)))];
+  const products = useMemo(() => {
+    return initialProducts.map(p => ({
+      ...p,
+      category: p.category === "Windows & Sliding" ? "Sliding Systems" : p.category
+    }));
   }, [initialProducts]);
+
+  const categories = useMemo(() => {
+    return ["All", ...Array.from(new Set(products.map(p => p.category)))];
+  }, [products]);
 
   const [activeCategory, setActiveCategory] = useState("All");
   const [prevCategoryParam, setPrevCategoryParam] = useState<string | null>(null);
@@ -147,8 +154,8 @@ export default function CatalogueClient({ initialProducts }: { initialProducts: 
   }
 
   const filteredProducts = activeCategory === "All"
-    ? initialProducts
-    : initialProducts.filter(p => p.category === activeCategory);
+    ? products
+    : products.filter(p => p.category === activeCategory);
 
   const containerVariants = {
     hidden: { opacity: 0 },

@@ -162,10 +162,10 @@ export default function ProductForm({ initialData, onCancel }: { initialData?: P
 
       <div>
         <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Category</label>
-        <select required name="category" defaultValue={initialData?.category || "Doors"} className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-sm text-gray-900">
+        <select required name="category" defaultValue={(initialData?.category === "Windows & Sliding" ? "Sliding Systems" : initialData?.category) || "Doors"} className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-sm text-gray-900">
           <option value="Doors">Doors</option>
           <option value="Windows">Windows</option>
-          <option value="Windows & Sliding">Windows & Sliding</option>
+          <option value="Sliding Systems">Sliding Systems</option>
           <option value="Specialty">Specialty</option>
         </select>
       </div>

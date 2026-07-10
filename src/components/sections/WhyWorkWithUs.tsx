@@ -65,33 +65,30 @@ const WhyWorkWithUs = () => {
   const categories = [
     "Windows",
     "Doors",
-    "Shower Cubicles",
-    "Railings",
-    "Facades Windows"
+    "Sliding Systems",
+    "Specialty"
   ];
 
   const categoryOptions: Record<string, { name: string; href: string }[]> = {
     "Windows": [
       { name: "Alumina Thermal Windows", href: "/catalogue?category=Windows" },
       { name: "Classic Casement Windows", href: "/catalogue?category=Windows" },
-      { name: "Architectural Fixed Glazing", href: "/catalogue?category=Windows" },
-      { name: "Panoramic Sliding Windows", href: "/catalogue?category=Windows%20%26%20Sliding" }
+      { name: "Architectural Fixed Glazing", href: "/catalogue?category=Windows" }
     ],
     "Doors": [
-      { name: "Minimalist Sliding Doors", href: "/catalogue?category=Windows%20%26%20Sliding" },
       { name: "Pivot Entrance Doors", href: "/catalogue?category=Doors" },
-      { name: "Bi-Fold Doors", href: "/catalogue?category=Windows%20%26%20Sliding" },
       { name: "Signature Entrance Doors", href: "/catalogue?category=Doors" }
     ],
-    "Shower Cubicles": [
+    "Sliding Systems": [
+      { name: "Panoramic Sliding Windows", href: "/catalogue?category=Sliding%20Systems" },
+      { name: "Minimalist Sliding Doors", href: "/catalogue?category=Sliding%20Systems" },
+      { name: "Bi-Fold Doors", href: "/catalogue?category=Sliding%20Systems" }
+    ],
+    "Specialty": [
       { name: "Frameless Shower Cubicles", href: "/catalogue?category=Specialty" },
-      { name: "Luxury Glass Partitions", href: "/catalogue?category=Specialty" }
-    ],
-    "Railings": [
+      { name: "Luxury Glass Partitions", href: "/catalogue?category=Specialty" },
       { name: "Glass Railing Systems", href: "/catalogue?category=Specialty" },
-      { name: "Aluminium Balustrades", href: "/catalogue?category=Specialty" }
-    ],
-    "Facades Windows": [
+      { name: "Aluminium Balustrades", href: "/catalogue?category=Specialty" },
       { name: "Commercial Curtain Walls", href: "/catalogue?category=Specialty" },
       { name: "Modern Facade Systems", href: "/catalogue?category=Specialty" }
     ]
