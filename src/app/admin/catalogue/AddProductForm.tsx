@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { addProduct, updateProduct } from "../actions";
 import Image from "next/image";
+import Link from "next/link";
 import { createClient } from '@/utils/supabase/client';
 
 type Product = {
@@ -15,7 +16,7 @@ type Product = {
   image_urls?: string[];
 };
 
-export default function ProductForm({ initialData, onCancel }: { initialData?: Product, onCancel?: () => void }) {
+export default function ProductForm({ initialData, cancelUrl }: { initialData?: Product, cancelUrl?: string }) {
   const [specs, setSpecs] = useState<{key: string, value: string}[]>([{ key: "", value: "" }]);
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -71,12 +72,19 @@ export default function ProductForm({ initialData, onCancel }: { initialData?: P
       if (initialData) {
         await updateProduct(formData);
         alert('Product updated successfully!');
+        if (cancelUrl) {
+          window.location.href = cancelUrl;
+        }
       } else {
         await addProduct(formData);
         alert('Product added successfully!');
-        e.currentTarget.reset();
-        setFiles([]);
-        setSpecs([{ key: "", value: "" }]);
+        if (cancelUrl) {
+          window.location.href = cancelUrl;
+        } else {
+          e.currentTarget.reset();
+          setFiles([]);
+          setSpecs([{ key: "", value: "" }]);
+        }
       }
     } catch (error: unknown) {
       alert(`Error: ${(error as Error).message || 'Something went wrong.'}`);
@@ -276,10 +284,10 @@ export default function ProductForm({ initialData, onCancel }: { initialData?: P
       </div>
 
       <div className="flex gap-3 mt-6">
-        {onCancel && (
-          <button type="button" onClick={onCancel} className="w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-md uppercase tracking-widest text-xs font-bold transition-colors shadow-sm">
+        {cancelUrl && (
+          <Link href={cancelUrl} className="w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-md uppercase tracking-widest text-xs font-bold transition-colors shadow-sm flex items-center justify-center">
             Cancel
-          </button>
+          </Link>
         )}
         <button type="submit" disabled={isSubmitting} className="flex-1 bg-[#A67C52] hover:bg-[#8e6944] text-white py-3 rounded-md uppercase tracking-widest text-xs font-bold transition-colors shadow-md disabled:opacity-50">
           {isSubmitting ? "Saving..." : (initialData ? "Update Product" : "Add Product")}

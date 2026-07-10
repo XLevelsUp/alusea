@@ -42,8 +42,8 @@ const Hero = () => {
             waiting for JS hydration. Plain h1 renders immediately from SSR.
           */}
           <h1 className="text-3xl sm:text-5xl md:text-[5.5rem] font-bold text-white leading-[1.1] tracking-tight mt-2 md:mt-3">
-            Premium Imported <br />
-            <span className="text-white/90">Aluminium Windows and Doors</span>
+            Premium Aluminium <br />
+            <span className="text-white/90"> Doors and Windows  </span>
           </h1>
 
           <motion.p

@@ -105,8 +105,41 @@ const organizationSchema = {
         "opens": "09:00",
         "closes": "18:00"
       },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "reviewCount": "24",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "review": [
+        {
+          "@type": "Review",
+          "author": { "@type": "Person", "name": "Rajesh Krishnan" },
+          "reviewBody": "Alusea is by far the finest luxury aluminium window fabricator in Tamil Nadu. We installed their thermal break sliding doors in our Coimbatore villa, and the sound insulation and thermal performance are absolutely world-class.",
+          "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" }
+        },
+        {
+          "@type": "Review",
+          "author": { "@type": "Person", "name": "Priya Sundaram" },
+          "reviewBody": "For our apartment building project, choosing Alusea as our apartment aluminium facade supplier was the best decision. Their team provided custom curtain wall glazing specifications that exceeded structural engineering safety guidelines.",
+          "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" }
+        },
+        {
+          "@type": "Review",
+          "author": { "@type": "Person", "name": "Arjun Mehta" },
+          "reviewBody": "Finding a reliable minimalist aluminium sliding door villa provider in India was challenging until we found Alusea. Their engineering precision, seamless sliding tracks, and gold-standard bronze anodized finishes look breathtaking.",
+          "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" }
+        }
+      ],
       "sameAs": [
-        "https://www.instagram.com/alusea_aluminum"
+        "https://www.youtube.com/@ALU_SEA",
+        "https://www.facebook.com/people/Alu-Sea/61575357051060/",
+        "https://www.instagram.com/alusea_aluminum/",
+        "https://www.reddit.com/user/ALU_SEA/",
+        "https://aluseaindia.blogspot.com",
+        "https://www.linkedin.com/in/alu-sea-a2079840b",
+        "https://x.com/ALU_SEA"
       ]
     },
     {

@@ -10,10 +10,7 @@ export const metadata: Metadata = {
 };
 
 const openPositions = [
-  { title: "Senior Structural Engineer", dept: "Engineering", location: "Coimbatore, TN", type: "Full-time" },
-  { title: "Aluminium Fabricator", dept: "Production", location: "Coimbatore, TN", type: "Full-time" },
-  { title: "Project Estimator", dept: "Sales", location: "Coimbatore, TN", type: "Full-time" },
-  { title: "CAD Designer", dept: "Design", location: "Coimbatore, TN", type: "Full-time" }
+  { title: "Field Marketing Executive", dept: "Marketing", location: "Coimbatore, TN", type: "Full-time" }
 ];
 
 export default function CareersPage() {
@@ -51,9 +48,14 @@ export default function CareersPage() {
                 </div>
               </div>
               <div>
-                <button className="px-6 py-3 bg-gray-50 text-matte-black font-bold text-sm rounded-lg group-hover:bg-brushed-bronze group-hover:text-white transition-colors">
+                <a 
+                  href="https://wa.me/919626022722?text=Hello,%20I%20am%20interested%20in%20the%20Field%20Marketing%20Executive%20position." 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-block px-6 py-3 bg-gray-50 text-matte-black font-bold text-sm rounded-lg group-hover:bg-brushed-bronze group-hover:text-white transition-colors"
+                >
                   Apply Now
-                </button>
+                </a>
               </div>
             </div>
           ))}
