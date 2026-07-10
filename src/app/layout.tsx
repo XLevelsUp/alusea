@@ -138,7 +138,7 @@ const organizationSchema = {
         "https://www.instagram.com/alusea_aluminum/",
         "https://www.reddit.com/user/ALU_SEA/",
         "https://aluseaindia.blogspot.com",
-        "https://www.linkedin.com/in/alu-sea-a2079840b",
+        "https://www.linkedin.com/company/alu-sea/",
         "https://x.com/ALU_SEA"
       ]
     },
