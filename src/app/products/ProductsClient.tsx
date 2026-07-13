@@ -15,7 +15,7 @@ const products = [
     id: 2,
     title: "Casement Windows",
     subtitle: "Classic design enhanced with modern thermal performance. Custom thermal break aluminium windows in Coimbatore built to withstand high wind loads.",
-    image: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&q=80&w=1000",
+    image: "/images/casement-window.webp",
   },
   {
     id: 3,
@@ -164,8 +164,8 @@ export default function ProductsClient() {
         {/* Product Grid */}
         <div className="grid grid-cols-1 tracking-tight md:grid-cols-2 lg:grid-cols-3 gap-8">
           {products.map((product) => (
-            <article 
-              key={product.id} 
+            <article
+              key={product.id}
               className="group cursor-pointer"
               onClick={() => trackProductClick(product.title)}
             >
@@ -222,9 +222,8 @@ export default function ProductsClient() {
                         {faq.question}
                       </span>
                       <svg
-                        className={`w-5 h-5 text-[#7A5418] transform transition-transform duration-300 flex-shrink-0 ${
-                          isOpen ? "rotate-180" : ""
-                        }`}
+                        className={`w-5 h-5 text-[#7A5418] transform transition-transform duration-300 flex-shrink-0 ${isOpen ? "rotate-180" : ""
+                          }`}
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -234,9 +233,8 @@ export default function ProductsClient() {
                       </svg>
                     </button>
                     <div
-                      className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                        isOpen ? "max-h-[300px] border-t border-gray-100" : "max-h-0"
-                      }`}
+                      className={`transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? "max-h-[300px] border-t border-gray-100" : "max-h-0"
+                        }`}
                     >
                       <p className="px-6 py-5 text-steel-gray leading-relaxed text-sm bg-gray-50/50">
                         {faq.answer}
