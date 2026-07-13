@@ -179,6 +179,132 @@ export async function deleteProduct(id: string) {
   revalidatePath('/admin/catalogue')
 }
 
+export async function addCategory(formData: FormData) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('Unauthorized')
+  }
+
+  const name = (formData.get('name') as string)?.trim()
+  if (!name) {
+    throw new Error('Category name is required')
+  }
+
+  const { error } = await supabase
+    .from('categories')
+    .insert([{ name }])
+
+  if (error) {
+    console.error(error)
+    throw new Error('Could not add category: ' + error.message)
+  }
+
+  revalidatePath('/')
+  revalidatePath('/catalogue')
+  revalidatePath('/admin/catalogue')
+  revalidatePath('/admin/categories')
+}
+
+export async function updateCategory(formData: FormData) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('Unauthorized')
+  }
+
+  const id = formData.get('id') as string
+  const name = (formData.get('name') as string)?.trim()
+  if (!name) {
+    throw new Error('Category name is required')
+  }
+
+  const { data: existing, error: fetchError } = await supabase
+    .from('categories')
+    .select('name')
+    .eq('id', id)
+    .single()
+
+  if (fetchError || !existing) {
+    throw new Error('Could not find category')
+  }
+
+  const { error } = await supabase
+    .from('categories')
+    .update({ name })
+    .eq('id', id)
+
+  if (error) {
+    console.error(error)
+    throw new Error('Could not update category: ' + error.message)
+  }
+
+  if (existing.name !== name) {
+    const { error: productsError } = await supabase
+      .from('products')
+      .update({ category: name })
+      .eq('category', existing.name)
+
+    if (productsError) {
+      console.error(productsError)
+      throw new Error('Category renamed, but failed to update existing products: ' + productsError.message)
+    }
+  }
+
+  revalidatePath('/')
+  revalidatePath('/catalogue')
+  revalidatePath('/admin/catalogue')
+  revalidatePath('/admin/categories')
+}
+
+export async function deleteCategory(id: string) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('Unauthorized')
+  }
+
+  const { data: category, error: fetchError } = await supabase
+    .from('categories')
+    .select('name')
+    .eq('id', id)
+    .single()
+
+  if (fetchError || !category) {
+    throw new Error('Could not find category')
+  }
+
+  const { count, error: countError } = await supabase
+    .from('products')
+    .select('id', { count: 'exact', head: true })
+    .eq('category', category.name)
+
+  if (countError) {
+    throw new Error('Could not verify category usage')
+  }
+
+  if (count && count > 0) {
+    throw new Error(`Cannot delete "${category.name}" — ${count} product(s) still use this category.`)
+  }
+
+  const { error } = await supabase
+    .from('categories')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    throw new Error('Could not delete category')
+  }
+
+  revalidatePath('/')
+  revalidatePath('/catalogue')
+  revalidatePath('/admin/catalogue')
+  revalidatePath('/admin/categories')
+}
+
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();

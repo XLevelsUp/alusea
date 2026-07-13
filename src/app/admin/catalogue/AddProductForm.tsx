@@ -16,15 +16,15 @@ type Product = {
   image_urls?: string[];
 };
 
-export default function ProductForm({ initialData, cancelUrl }: { initialData?: Product, cancelUrl?: string }) {
-  const [specs, setSpecs] = useState<{key: string, value: string}[]>([{ key: "", value: "" }]);
+export default function ProductForm({ initialData, cancelUrl, categories = [] }: { initialData?: Product, cancelUrl?: string, categories?: string[] }) {
+  const [specs, setSpecs] = useState<{ key: string, value: string }[]>([{ key: "", value: "" }]);
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [existingUrls, setExistingUrls] = useState<string[]>(() => {
     const raw = initialData?.image_urls;
     if (Array.isArray(raw) && raw.length > 0) return raw;
-    if (typeof raw === 'string') { try { return JSON.parse(raw); } catch {} }
+    if (typeof raw === 'string') { try { return JSON.parse(raw); } catch { } }
     if (initialData?.image_url) return [initialData.image_url];
     return [];
   });
@@ -52,7 +52,7 @@ export default function ProductForm({ initialData, cancelUrl }: { initialData?: 
         for (const file of files) {
           const fileExt = file.name.split('.').pop() || 'webp';
           const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-          
+
           const { error: uploadError } = await supabase.storage
             .from('alusea-assets')
             .upload(fileName, file, { cacheControl: '3600', upsert: false });
@@ -61,7 +61,7 @@ export default function ProductForm({ initialData, cancelUrl }: { initialData?: 
             console.error('Upload error:', uploadError);
             throw new Error(`Failed to upload ${file.name}`);
           }
-          
+
           const { data } = supabase.storage.from('alusea-assets').getPublicUrl(fileName);
           newUploadedUrls.push(data.publicUrl);
         }
@@ -96,9 +96,9 @@ export default function ProductForm({ initialData, cancelUrl }: { initialData?: 
   useEffect(() => {
     if (initialData) {
       if (initialData.specs) {
-         const entries = Object.entries(initialData.specs);
-         // eslint-disable-next-line react-hooks/set-state-in-effect
-         setSpecs(entries.length > 0 ? entries.map(([k, v]) => ({ key: k, value: v })) : [{ key: "", value: "" }]);
+        const entries = Object.entries(initialData.specs);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSpecs(entries.length > 0 ? entries.map(([k, v]) => ({ key: k, value: v })) : [{ key: "", value: "" }]);
       }
       // Defensively parse image_urls — may be null, array, or a JSON string
       let urls: string[] = [];
@@ -106,7 +106,7 @@ export default function ProductForm({ initialData, cancelUrl }: { initialData?: 
       if (Array.isArray(raw) && raw.length > 0) {
         urls = raw;
       } else if (typeof raw === 'string') {
-        try { urls = JSON.parse(raw); } catch {}
+        try { urls = JSON.parse(raw); } catch { }
       }
       if (urls.length === 0 && initialData.image_url) {
         urls = [initialData.image_url];
@@ -170,17 +170,17 @@ export default function ProductForm({ initialData, cancelUrl }: { initialData?: 
 
       <div>
         <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Category</label>
-        <select required name="category" defaultValue={(initialData?.category === "Windows & Sliding" ? "Sliding Systems" : initialData?.category) || "Doors"} className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-sm text-gray-900">
-          <option value="Doors">Doors</option>
-          <option value="Windows">Windows</option>
-          <option value="Sliding Systems">Sliding Systems</option>
-          <option value="Specialty">Specialty</option>
+        <select required name="category" defaultValue={(initialData?.category === "Windows & Sliding" ? "Sliding Systems" : initialData?.category) || categories[0] || ""} className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-sm text-gray-900">
+          {categories.length === 0 && <option value="" disabled>No categories yet — add one first</option>}
+          {categories.map((category) => (
+            <option key={category} value={category}>{category}</option>
+          ))}
         </select>
       </div>
 
       <div>
         <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Product Images</label>
-        <div 
+        <div
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
@@ -193,15 +193,15 @@ export default function ProductForm({ initialData, cancelUrl }: { initialData?: 
           <p className="text-sm text-gray-500 font-medium">Click or drag images here</p>
           <p className="text-[10px] text-gray-400 mt-1">Upload multiple files for your product gallery.</p>
         </div>
-        <input 
-          required={!initialData && files.length === 0} 
-          ref={fileInputRef} 
-          onChange={handleFileChange} 
-          name="image_files" 
-          type="file" 
-          accept="image/*" 
-          multiple 
-          className="hidden" 
+        <input
+          required={!initialData && files.length === 0}
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          name="image_files"
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
         />
 
         {/* Existing Previews */}
@@ -253,7 +253,7 @@ export default function ProductForm({ initialData, cancelUrl }: { initialData?: 
       <div>
         <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Specifications</label>
         {specs.map((spec, index) => (
-           <div key={index} className="flex gap-2 mb-2 items-center">
+          <div key={index} className="flex gap-2 mb-2 items-center">
             <input
               type="text"
               placeholder="Key (e.g. Material)"
