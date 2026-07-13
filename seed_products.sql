@@ -10,5 +10,5 @@ INSERT INTO public.products (name, category, image_url, description, specs) VALU
 -- Sample Product 3 (Door)
 ('Villa Grand Entrance', 'Doors', '/images/glass entrance door.webp', 'A massive, luxurious glass and aluminum entrance door featuring integrated smart locks.', '{"Security": "Class RC3", "Glass Type": "Frosted Toughened", "Hardware": "Motorized Multi-point"}'),
 
--- Sample Product 4 (Specialty)
-('Commercial Curtain Wall', 'Specialty', '/images/Rectangle 87.webp', 'Continuous grid facade system for high-rise commercial structures.', '{"Mullion Depth": "150mm", "Integration": "Photovoltaic Panels", "Wind Load": "Up to 3000 Pa"}');
+-- Sample Product 4 (speciality)
+('Commercial Curtain Wall', 'speciality', '/images/Rectangle 87.webp', 'Continuous grid facade system for high-rise commercial structures.', '{"Mullion Depth": "150mm", "Integration": "Photovoltaic Panels", "Wind Load": "Up to 3000 Pa"}');

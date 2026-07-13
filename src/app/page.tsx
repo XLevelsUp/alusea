@@ -33,15 +33,22 @@ import ProductShowcase from "@/components/sections/ProductShowcase";
 // import ProjectGallery from "@/components/sections/ProjectGallery";
 import Testimonials from "@/components/sections/Testimonials";
 import ContactCTA from "@/components/sections/ContactCTA";
+import { createClient } from "@/utils/supabase/server";
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+  const { data: products } = await supabase
+    .from('products')
+    .select('id, name, category')
+    .order('created_at', { ascending: false });
+
   return (
     <main className="min-h-screen">
-      
+
       <Hero />
       <AboutSection />
       <ServicesSection />
-      <WhyWorkWithUs />
+      <WhyWorkWithUs products={products || []} />
       <ProductShowcase />
       {/* <ProjectGallery /> */}
       <Testimonials />

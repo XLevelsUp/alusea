@@ -1,10 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-const WhyWorkWithUs = () => {
+type ProductSummary = {
+  id: string;
+  name: string;
+  category: string;
+};
+
+const CATEGORY_ORDER = ["Windows", "Doors", "Sliding Systems", "speciality"];
+
+const WhyWorkWithUs = ({ products = [] }: { products?: ProductSummary[] }) => {
   const benefits = [
     "Unmatched Quality",
     "Expert Craftsmanship",
@@ -62,37 +70,31 @@ const WhyWorkWithUs = () => {
     }
   ];
 
-  const categories = [
-    "Windows",
-    "Doors",
-    "Sliding Systems",
-    "Specialty"
-  ];
+  const normalizedProducts = useMemo(
+    () =>
+      products.map((p) => ({
+        ...p,
+        category: p.category === "Windows & Sliding" ? "Sliding Systems" : p.category,
+      })),
+    [products]
+  );
 
-  const categoryOptions: Record<string, { name: string; href: string }[]> = {
-    "Windows": [
-      { name: "Alumina Thermal Windows", href: "/catalogue?category=Windows" },
-      { name: "Classic Casement Windows", href: "/catalogue?category=Windows" },
-      { name: "Architectural Fixed Glazing", href: "/catalogue?category=Windows" }
-    ],
-    "Doors": [
-      { name: "Pivot Entrance Doors", href: "/catalogue?category=Doors" },
-      { name: "Signature Entrance Doors", href: "/catalogue?category=Doors" }
-    ],
-    "Sliding Systems": [
-      { name: "Panoramic Sliding Windows", href: "/catalogue?category=Sliding%20Systems" },
-      { name: "Minimalist Sliding Doors", href: "/catalogue?category=Sliding%20Systems" },
-      { name: "Bi-Fold Doors", href: "/catalogue?category=Sliding%20Systems" }
-    ],
-    "Specialty": [
-      { name: "Frameless Shower Cubicles", href: "/catalogue?category=Specialty" },
-      { name: "Luxury Glass Partitions", href: "/catalogue?category=Specialty" },
-      { name: "Glass Railing Systems", href: "/catalogue?category=Specialty" },
-      { name: "Aluminium Balustrades", href: "/catalogue?category=Specialty" },
-      { name: "Commercial Curtain Walls", href: "/catalogue?category=Specialty" },
-      { name: "Modern Facade Systems", href: "/catalogue?category=Specialty" }
-    ]
-  };
+  const categoryOptions = useMemo(() => {
+    const map: Record<string, { name: string; href: string }[]> = {};
+    normalizedProducts.forEach((product) => {
+      const href = `/catalogue?category=${encodeURIComponent(product.category)}`;
+      if (!map[product.category]) map[product.category] = [];
+      map[product.category].push({ name: product.name, href });
+    });
+    return map;
+  }, [normalizedProducts]);
+
+  const categories = useMemo(() => {
+    const present = Object.keys(categoryOptions);
+    const ordered = CATEGORY_ORDER.filter((c) => present.includes(c));
+    const rest = present.filter((c) => !CATEGORY_ORDER.includes(c));
+    return [...ordered, ...rest];
+  }, [categoryOptions]);
 
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
 
@@ -188,57 +190,59 @@ const WhyWorkWithUs = () => {
         </div>
 
         {/* Category Filters */}
-        <div className="flex flex-wrap justify-between gap-4">
-          {categories.map((category, idx) => {
-            const isOpen = activeDropdown === idx;
-            return (
-              <div key={idx} className="relative flex-1 min-w-[180px]">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveDropdown(isOpen ? null : idx);
-                  }}
-                  className={`w-full flex items-center justify-between px-6 py-4 border rounded-lg transition-all text-left group
-                    ${isOpen
-                      ? 'bg-[#7A5418] border-[#7A5418] text-white shadow-md'
-                      : 'border-[#7A5418]/40 text-[#7A5418] hover:border-[#7A5418] hover:bg-[#7A5418]/5'
-                    }`}
-                >
-                  <span className="font-bold text-sm">{category}</span>
-                  <svg
-                    viewBox="0 0 24 24"
-                    className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'text-white rotate-180' : 'text-[#7A5418] group-hover:translate-y-0.5'}`}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <path d="M6 9l6 6 6-6" />
-                  </svg>
-                </button>
-
-                {/* Dropdown Menu */}
-                {isOpen && (
-                  <div
-                    className="absolute top-full left-0 right-0 mt-2 rounded-lg border border-[#7A5418]/25 bg-white/95 backdrop-blur-md shadow-xl py-2 z-30 transition-all duration-200 animate-in fade-in slide-in-from-top-2"
-                    style={{
-                      boxShadow: "0 10px 30px -10px rgba(122,84,24,0.15), 0 1px 3px rgba(0,0,0,0.05)"
+        {categories.length > 0 && (
+          <div className="flex flex-wrap justify-between gap-4">
+            {categories.map((category, idx) => {
+              const isOpen = activeDropdown === idx;
+              return (
+                <div key={idx} className="relative flex-1 min-w-[180px]">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveDropdown(isOpen ? null : idx);
                     }}
+                    className={`w-full flex items-center justify-between px-6 py-4 border rounded-lg transition-all text-left group
+                    ${isOpen
+                        ? 'bg-[#7A5418] border-[#7A5418] text-white shadow-md'
+                        : 'border-[#7A5418]/40 text-[#7A5418] hover:border-[#7A5418] hover:bg-[#7A5418]/5'
+                      }`}
                   >
-                    {categoryOptions[category]?.map((option, optIdx) => (
-                      <Link
-                        key={optIdx}
-                        href={option.href}
-                        className="block w-full px-5 py-3 text-xs font-bold text-left text-steel-gray hover:text-white hover:bg-[#7A5418] transition-all"
-                      >
-                        {option.name}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                    <span className="font-bold text-sm">{category}</span>
+                    <svg
+                      viewBox="0 0 24 24"
+                      className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'text-white rotate-180' : 'text-[#7A5418] group-hover:translate-y-0.5'}`}
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {isOpen && (
+                    <div
+                      className="absolute top-full left-0 right-0 mt-2 rounded-lg border border-[#7A5418]/25 bg-white/95 backdrop-blur-md shadow-xl py-2 z-30 transition-all duration-200 animate-in fade-in slide-in-from-top-2"
+                      style={{
+                        boxShadow: "0 10px 30px -10px rgba(122,84,24,0.15), 0 1px 3px rgba(0,0,0,0.05)"
+                      }}
+                    >
+                      {categoryOptions[category]?.map((option, optIdx) => (
+                        <Link
+                          key={optIdx}
+                          href={option.href}
+                          className="block w-full px-5 py-3 text-xs font-bold text-left text-steel-gray hover:text-white hover:bg-[#7A5418] transition-all"
+                        >
+                          {option.name}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );
