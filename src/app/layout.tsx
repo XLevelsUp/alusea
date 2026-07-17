@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import InstagramFeed from "@/components/sections/InstagramFeed";
 import BackButton from "@/components/ui/BackButton";
 import MetaPixel from "@/components/layout/MetaPixel";
 
@@ -258,6 +259,7 @@ export default function RootLayout({
         <main className="min-h-screen">
           {children}
         </main>
+        <InstagramFeed />
         <Footer />
         <BackButton />
       </body>

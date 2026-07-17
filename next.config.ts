@@ -21,6 +21,14 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: '*.supabase.co',
       },
+      {
+        protocol: 'https',
+        hostname: '*.cdninstagram.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.fbcdn.net',
+      },
     ],
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 30,
