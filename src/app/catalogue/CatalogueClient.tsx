@@ -19,11 +19,7 @@ type Product = {
 function ProductCard({ product, itemVariants }: { product: Product, itemVariants: Variants }) {
   const [imgIndex, setImgIndex] = useState(0);
   
-  let images = product.image_urls && product.image_urls.length > 0 ? product.image_urls : [product.image_url];
-  // For demo: auto-repeat generic images to test slider
-  if (images.length === 1) {
-    images = [images[0], images[0], images[0]];
-  }
+  const images = product.image_urls && product.image_urls.length > 0 ? product.image_urls : [product.image_url];
 
   useEffect(() => {
     if (images.length > 1) {
