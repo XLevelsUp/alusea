@@ -19,7 +19,10 @@ async function fetchInstagramMedia(token: string): Promise<InstagramMedia[]> {
 
     const json: { data?: InstagramMedia[] } = await res.json();
     return (json.data ?? [])
-      .filter((item) => item.media_type === "VIDEO")
+      // Instagram's API occasionally omits media_url for a reel (CDN/processing
+      // state on their end) — without it there's nothing playable to embed, so
+      // skip those rather than showing a card whose video can never load.
+      .filter((item) => item.media_type === "VIDEO" && !!item.media_url)
       .slice(0, 4);
   } catch (error) {
     console.error("Instagram feed error:", error);
