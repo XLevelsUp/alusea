@@ -192,6 +192,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const clarityProjectId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID;
+  const clarityEnabled = !!clarityProjectId && clarityProjectId !== "your_clarity_project_id";
+
   return (
     <html lang="en">
       <head>
@@ -212,6 +215,22 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://connect.facebook.net" />
+
+        {/* Microsoft Clarity */}
+        {clarityEnabled && (
+          <script
+            id="microsoft-clarity"
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function(c,l,a,r,i,t,y){
+                    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+                })(window, document, "clarity", "script", "${clarityProjectId}");
+              `,
+            }}
+          />
+        )}
       </head>
       <body className={`${inter.variable} ${outfit.variable} antialiased selection:bg-brushed-bronze selection:text-white`}>
         <MetaPixel />
