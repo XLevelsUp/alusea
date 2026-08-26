@@ -78,7 +78,7 @@ const Testimonials = () => {
                   >
                     4.9
                   </span>
-                  <span className="text-sm text-amber-600 font-medium">
+                  <span className="text-sm text-amber-700 font-medium">
                     (<span itemProp="reviewCount">24</span> reviews)
                   </span>
                   <meta itemProp="bestRating" content="5" />

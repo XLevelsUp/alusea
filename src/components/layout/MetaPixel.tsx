@@ -2,8 +2,8 @@
 
 import { useEffect, Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import Script from "next/script";
 import * as fbq from "@/utils/fpixel";
+import DelayedScript from "./DelayedScript";
 
 function PixelTracker() {
   const pathname = usePathname();
@@ -19,10 +19,18 @@ function PixelTracker() {
 export default function MetaPixel() {
   return (
     <>
-      {/* Base Meta Pixel Code */}
-      <Script
+      {/*
+        PERFORMANCE FIX: afterInteractive preloads fbevents.js at high priority,
+        competing with the hero's LCP resources on first load. lazyOnload defers
+        it until the browser is idle — pixel tracking doesn't need to fire
+        before the user sees the page. Staggered 2s after GTM/gtag (see
+        layout.tsx) so all three analytics scripts don't execute in the same
+        idle tick as one long main-thread task.
+      */}
+      <DelayedScript
         id="fb-pixel"
-        strategy="afterInteractive"
+        delayMs={2000}
+        strategy="lazyOnload"
         dangerouslySetInnerHTML={{
           __html: `
             !function(f,b,e,v,n,t,s)

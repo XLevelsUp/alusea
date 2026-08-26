@@ -7,6 +7,7 @@ import Footer from "@/components/layout/Footer";
 import InstagramFeed from "@/components/sections/InstagramFeed";
 import BackButton from "@/components/ui/BackButton";
 import MetaPixel from "@/components/layout/MetaPixel";
+import DelayedScript from "@/components/layout/DelayedScript";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -256,14 +257,24 @@ export default function RootLayout({
           }}
         />
 
-        {/* Google tag (gtag.js) */}
-        <Script
+        {/*
+          PERFORMANCE FIX: gtag.js was strategy="afterInteractive", which makes
+          Next.js inject a high-priority <link rel="preload"> for this 162 KiB
+          script in <head>. On a throttled connection that preload competes
+          directly with the hero image/fonts during the LCP-critical window.
+          lazyOnload defers it until the page is idle. It's also staggered
+          1s after GTM (below) so both scripts' main-thread work doesn't land
+          in the same idle tick as one long task.
+        */}
+        <DelayedScript
+          delayMs={1000}
           src="https://www.googletagmanager.com/gtag/js?id=G-KFWY6Y0W5T"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
-        <Script
+        <DelayedScript
           id="google-analytics"
-          strategy="afterInteractive"
+          delayMs={1000}
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{
             __html: `
               window.dataLayer = window.dataLayer || [];
