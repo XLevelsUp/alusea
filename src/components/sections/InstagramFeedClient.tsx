@@ -29,6 +29,27 @@ const PlayIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   </svg>
 );
 
+const PauseIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={`${className} fill-current`} viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M7 5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V5zm7 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V5z" />
+  </svg>
+);
+
+const VolumeOffIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={`${className} fill-none stroke-current`} viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M11 5 6 9H2v6h4l5 4V5z" />
+    <line x1="23" y1="9" x2="17" y2="15" />
+    <line x1="17" y1="9" x2="23" y2="15" />
+  </svg>
+);
+
+const VolumeOnIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={`${className} fill-none stroke-current`} viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M11 5 6 9H2v6h4l5 4V5z" />
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+  </svg>
+);
+
 /* Flanking reel — hover to preview, click to bring it centre stage */
 const SideReel = ({
   item,
@@ -83,8 +104,36 @@ const SideReel = ({
 const InstagramFeedClient = ({ items }: { items: InstagramMedia[] }) => {
   // Items arrive newest-first; the latest reel opens centre stage
   const [activeId, setActiveId] = useState(items[0]?.id);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
+  const activeVideoRef = useRef<HTMLVideoElement>(null);
   const pathname = usePathname();
   if (pathname?.startsWith("/admin")) return null;
+
+  const togglePlayback = () => {
+    const video = activeVideoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      video.play();
+      setIsPlaying(true);
+    } else {
+      video.pause();
+      setIsPlaying(false);
+    }
+  };
+
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsMuted((prev) => !prev);
+  };
+
+  const handleSelect = (id: string) => {
+    setActiveId(id);
+    setIsPlaying(true);
+    // A freshly mounted <video> always starts muted (browser autoplay rules) —
+    // reset the toggle so its icon doesn't lie about the new reel's actual state.
+    setIsMuted(true);
+  };
 
   const active = items.find((item) => item.id === activeId) ?? items[0];
   const others = items.filter((item) => item.id !== active.id);
@@ -159,7 +208,7 @@ const InstagramFeedClient = ({ items }: { items: InstagramMedia[] }) => {
               {leftItems.map((item, i) => (
                 // Phones fit one reel per side; extras join from tablet up
                 <div key={item.id} className={i > 0 ? "hidden md:block" : ""}>
-                  <SideReel item={item} onSelect={() => setActiveId(item.id)} />
+                  <SideReel item={item} onSelect={() => handleSelect(item.id)} />
                 </div>
               ))}
             </div>
@@ -187,33 +236,70 @@ const InstagramFeedClient = ({ items }: { items: InstagramMedia[] }) => {
                   className="absolute inset-0 overflow-hidden rounded-sm bg-alusea-light-gray shadow-[0_40px_80px_-32px_rgba(122,84,24,0.5)] ring-1 ring-black/10"
                 >
                   <video
+                    key={active.id}
+                    ref={activeVideoRef}
                     src={active.media_url}
                     poster={active.thumbnail_url}
                     autoPlay
-                    muted
+                    muted={isMuted}
                     loop
                     playsInline
                     preload="metadata"
-                    className="absolute inset-0 h-full w-full object-cover"
+                    onClick={togglePlayback}
+                    className="absolute inset-0 h-full w-full cursor-pointer object-cover"
                   />
 
+                  {/* Play/pause toggle — always visible so the reel doesn't read as a static image */}
+                  <button
+                    type="button"
+                    onClick={togglePlayback}
+                    aria-label={isPlaying ? "Pause reel" : "Play reel"}
+                    className="absolute inset-0 flex items-center justify-center"
+                  >
+                    <span
+                      className={`flex h-12 w-12 items-center justify-center rounded-full border border-white/60 bg-black/30 text-white backdrop-blur-sm transition-opacity duration-300 md:h-14 md:w-14 ${
+                        isPlaying ? "opacity-0 hover:opacity-100" : "opacity-100"
+                      }`}
+                    >
+                      {isPlaying ? (
+                        <PauseIcon className="h-5 w-5 md:h-6 md:w-6" />
+                      ) : (
+                        <PlayIcon className="ml-0.5 h-5 w-5 md:h-6 md:w-6" />
+                      )}
+                    </span>
+                  </button>
+
+                  {/* Mute toggle — separate from play/pause, top-right corner */}
+                  <button
+                    type="button"
+                    onClick={toggleMute}
+                    aria-label={isMuted ? "Unmute reel" : "Mute reel"}
+                    className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full border border-white/60 bg-black/30 text-white backdrop-blur-sm transition-colors duration-300 hover:bg-black/50 md:right-4 md:top-4 md:h-9 md:w-9"
+                  >
+                    {isMuted ? (
+                      <VolumeOffIcon className="h-4 w-4" />
+                    ) : (
+                      <VolumeOnIcon className="h-4 w-4" />
+                    )}
+                  </button>
+
                   {isLatest && (
-                    <span className="absolute left-2.5 top-2.5 rounded-sm bg-brushed-bronze px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-white shadow-md md:left-4 md:top-4 md:px-3 md:py-1.5 md:text-[10px]">
+                    <span className="pointer-events-none absolute left-2.5 top-2.5 rounded-sm bg-brushed-bronze px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-white shadow-md md:left-4 md:top-4 md:px-3 md:py-1.5 md:text-[10px]">
                       Latest
                     </span>
                   )}
 
-                  <div className="absolute inset-x-0 bottom-0 space-y-2 bg-gradient-to-t from-black/90 via-black/40 to-transparent px-3 pb-3 pt-10 md:space-y-3 md:px-5 md:pb-5 md:pt-16">
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 space-y-2 bg-gradient-to-t from-black/85 via-black/25 to-transparent px-3 pb-3 pt-14 md:space-y-3 md:px-5 md:pb-5 md:pt-24">
                     {active.caption && (
-                      <p className="hidden text-sm font-medium leading-snug text-white line-clamp-2 sm:block">
-                        {active.caption}
+                      <p className="hidden truncate text-sm font-medium text-white sm:block">
+                        {active.caption.split("#")[0].trim()}
                       </p>
                     )}
                     <Link
                       href={active.permalink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-sm border border-white/40 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-white backdrop-blur-sm transition-colors duration-300 hover:border-brushed-bronze hover:text-brushed-bronze md:gap-2 md:px-4 md:py-2 md:text-[11px]"
+                      className="pointer-events-auto inline-flex items-center gap-1.5 rounded-sm border border-white/40 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-white backdrop-blur-sm transition-colors duration-300 hover:border-brushed-bronze hover:text-brushed-bronze md:gap-2 md:px-4 md:py-2 md:text-[11px]"
                     >
                       <InstagramIcon className="h-3.5 w-3.5 md:h-4 md:w-4" />
                       Watch Reel
@@ -226,7 +312,7 @@ const InstagramFeedClient = ({ items }: { items: InstagramMedia[] }) => {
             <div className="flex items-center gap-3 sm:gap-4 md:gap-6">
               {rightItems.map((item, i) => (
                 <div key={item.id} className={i > 0 ? "hidden md:block" : ""}>
-                  <SideReel item={item} onSelect={() => setActiveId(item.id)} />
+                  <SideReel item={item} onSelect={() => handleSelect(item.id)} />
                 </div>
               ))}
             </div>

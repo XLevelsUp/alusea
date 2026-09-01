@@ -24,6 +24,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             <Link href="/admin/media" className="block px-4 py-3 rounded-md bg-white/10 hover:bg-white/20 transition-colors cursor-pointer font-medium tracking-wide">
               Page Media
             </Link>
+            <Link href="/admin/blog" className="block px-4 py-3 rounded-md bg-white/10 hover:bg-white/20 transition-colors cursor-pointer font-medium tracking-wide">
+              Blog
+            </Link>
             {/* Add more admin routes here in the future */}
           </nav>
           

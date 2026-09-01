@@ -1,8 +1,22 @@
 import type { MetadataRoute } from "next";
+import { createClient } from "@/utils/supabase/server";
 
 const BASE_URL = "https://www.alusea.in";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const supabase = await createClient();
+  const { data: posts } = await supabase
+    .from("blog_posts")
+    .select("slug, updated_at")
+    .order("published_at", { ascending: false });
+
+  const blogEntries: MetadataRoute.Sitemap = (posts || []).map((post) => ({
+    url: `${BASE_URL}/blog/${post.slug}`,
+    lastModified: new Date(post.updated_at),
+    changeFrequency: "monthly",
+    priority: 0.7,
+  }));
+
   return [
     {
       url: BASE_URL,
@@ -70,5 +84,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "yearly",
       priority: 0.3,
     },
+    {
+      url: `${BASE_URL}/blog`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    ...blogEntries,
   ];
 }
