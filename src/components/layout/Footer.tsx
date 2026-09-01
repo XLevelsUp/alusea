@@ -101,6 +101,7 @@ const Footer = () => {
             {/* FIX: removed opacity-90, now full opacity for contrast */}
             <ul className="space-y-4 text-[15px] font-medium">
               <li><Link href="/products" className="hover:underline transition-all">Our Products</Link></li>
+              <li><Link href="/blog" className="hover:underline transition-all">Blog</Link></li>
               <li><Link href="/careers" className="hover:underline transition-all">Our Careers</Link></li>
               <li><Link href="/contact" className="hover:underline transition-all">Contact Us</Link></li>
             </ul>
