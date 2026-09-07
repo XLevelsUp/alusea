@@ -1,42 +1,15 @@
 {
-  "name": "alusea",
-  "version": "0.1.0",
+  "name": "alusea-monorepo",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "browserslist": [
-    "last 2 years",
-    "not dead",
-    "not ie 11"
+  "workspaces": [
+    "apps/*"
   ],
-  "dependencies": {
-    "@next/third-parties": "^16.2.2",
-    "@supabase/ssr": "^0.10.2",
-    "@supabase/supabase-js": "^2.103.0",
-    "@tiptap/extension-link": "^3.30.6",
-    "@tiptap/extension-underline": "^3.30.6",
-    "@tiptap/react": "^3.30.6",
-    "@tiptap/starter-kit": "^3.30.6",
-    "framer-motion": "^12.38.0",
-    "lucide-react": "^1.0.1",
-    "next": "16.1.6",
-    "react": "19.2.3",
-    "react-dom": "19.2.3"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@tailwindcss/typography": "^0.5.20",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "critters": "^0.0.23",
-    "eslint": "^9",
-    "eslint-config-next": "16.1.6",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+  "scripts": {
+    "dev:marketing": "npm run dev --workspace=apps/marketing",
+    "dev:admin": "npm run dev --workspace=apps/admin",
+    "build:marketing": "npm run build --workspace=apps/marketing",
+    "build:admin": "npm run build --workspace=apps/admin",
+    "lint:marketing": "npm run lint --workspace=apps/marketing",
+    "lint:admin": "npm run lint --workspace=apps/admin"
   }
 }
