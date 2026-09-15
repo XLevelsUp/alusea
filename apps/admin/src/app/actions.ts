@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { syncProductToCatalog, removeProductFromCatalog } from '@/lib/metaCatalog'
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
@@ -35,7 +36,9 @@ export async function addProduct(formData: FormData) {
   const newUploadedUrlsRaw = formData.get('new_uploaded_urls') as string
   const description = formData.get('description') as string
   const specsRaw = formData.get('specs') as string
-  
+  const pricePerSqftRaw = formData.get('price_per_sqft') as string
+  const pricePerSqft = pricePerSqftRaw ? parseFloat(pricePerSqftRaw) : 1500
+
   let specs: Record<string, string> = {}
   if (specsRaw) {
     try {
@@ -72,14 +75,18 @@ export async function addProduct(formData: FormData) {
 
   const finalImageUrl = uploadedUrls[0];
 
-  const { error } = await supabase
+  const { data: inserted, error } = await supabase
     .from('products')
-    .insert([{ name, category, image_url: finalImageUrl, image_urls: uploadedUrls, description, specs }])
+    .insert([{ name, category, image_url: finalImageUrl, image_urls: uploadedUrls, description, specs, price_per_sqft: pricePerSqft }])
+    .select()
+    .single()
 
   if (error) {
     console.error(error)
     throw new Error('Could not add product: ' + error.message)
   }
+
+  await syncProductToCatalog(inserted)
 
   revalidatePath('/catalogue')
   revalidatePath('/catalogue')
@@ -100,7 +107,9 @@ export async function updateProduct(formData: FormData) {
   const specsRaw = formData.get('specs') as string
   const existingUrlsRaw = formData.get('existing_urls') as string
   const newUploadedUrlsRaw = formData.get('new_uploaded_urls') as string
-  
+  const pricePerSqftRaw = formData.get('price_per_sqft') as string
+  const pricePerSqft = pricePerSqftRaw ? parseFloat(pricePerSqftRaw) : 1500
+
   let specs: Record<string, string> = {}
   if (specsRaw) {
     try {
@@ -144,15 +153,19 @@ export async function updateProduct(formData: FormData) {
 
   const mainImageUrl = finalUrls[0];
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from('products')
-    .update({ name, category, image_url: mainImageUrl, image_urls: finalUrls, description, specs })
+    .update({ name, category, image_url: mainImageUrl, image_urls: finalUrls, description, specs, price_per_sqft: pricePerSqft })
     .eq('id', id)
+    .select()
+    .single()
 
   if (error) {
     console.error(error)
     throw new Error('Could not update product: ' + error.message)
   }
+
+  await syncProductToCatalog(updated)
 
   revalidatePath('/catalogue')
   revalidatePath('/catalogue')
@@ -174,6 +187,8 @@ export async function deleteProduct(id: string) {
   if (error) {
     throw new Error('Could not delete product')
   }
+
+  await removeProductFromCatalog(id)
 
   revalidatePath('/catalogue')
   revalidatePath('/catalogue')
