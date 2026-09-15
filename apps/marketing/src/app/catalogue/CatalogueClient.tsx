@@ -36,7 +36,7 @@ function ProductCard({ product, itemVariants }: { product: Product, itemVariants
       className="group flex flex-col bg-white dark:bg-[#151515] rounded-xl overflow-hidden shadow-[0_4px_20px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_20px_-10px_rgba(0,0,0,0.5)] hover:shadow-2xl transition-all duration-700 border border-gray-100 dark:border-white/5 relative"
     >
       {/* Product Image Container */}
-      <div className="relative w-full h-[320px] xl:h-[380px] overflow-hidden bg-gray-100 dark:bg-[#0a0a0a] group/img">
+      <Link href={`/catalogue/${product.id}`} className="relative w-full h-[320px] xl:h-[380px] overflow-hidden bg-gray-100 dark:bg-[#0a0a0a] group/img block">
         <Image
           src={images[imgIndex]}
           alt={product.name}
@@ -70,13 +70,15 @@ function ProductCard({ product, itemVariants }: { product: Product, itemVariants
         <div className="absolute top-5 left-5 bg-white/90 dark:bg-black/80 backdrop-blur-md text-matte-black dark:text-white text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-sm border border-black/10 dark:border-white/10 shadow-lg z-10 pointer-events-none">
           {product.category}
         </div>
-      </div>
+      </Link>
 
       {/* Product Info */}
       <div className="p-8 flex flex-col flex-grow relative z-10 bg-white dark:bg-[#151515]">
-        <h3 className="text-2xl font-bold text-matte-black dark:text-white mb-4 group-hover:text-[#B68B4C] transition-colors duration-300">
-          {product.name}
-        </h3>
+        <Link href={`/catalogue/${product.id}`}>
+          <h3 className="text-2xl font-bold text-matte-black dark:text-white mb-4 group-hover:text-[#B68B4C] transition-colors duration-300">
+            {product.name}
+          </h3>
+        </Link>
         <p className="text-sm text-steel-gray dark:text-gray-400 mb-8 flex-grow leading-relaxed">
           {product.description}
         </p>

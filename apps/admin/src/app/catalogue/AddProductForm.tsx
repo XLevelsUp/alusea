@@ -14,6 +14,7 @@ type Product = {
   specs: Record<string, string>;
   image_url: string;
   image_urls?: string[];
+  price_per_sqft?: number;
 };
 
 export default function ProductForm({ initialData, cancelUrl, categories = [] }: { initialData?: Product, cancelUrl?: string, categories?: string[] }) {
@@ -243,6 +244,20 @@ export default function ProductForm({ initialData, cancelUrl, categories = [] }:
             </div>
           </div>
         )}
+      </div>
+
+      <div>
+        <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">
+          Starting Price (₹ per sq ft) <span className="text-gray-400 normal-case font-normal">— used for the WhatsApp product catalog</span>
+        </label>
+        <input
+          name="price_per_sqft"
+          defaultValue={initialData?.price_per_sqft ?? 1500}
+          type="number"
+          min={0}
+          step="1"
+          className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-sm text-gray-900"
+        />
       </div>
 
       <div>
