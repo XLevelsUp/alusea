@@ -34,7 +34,11 @@ function toCatalogItem(product: Product) {
 
   return {
     retailer_id: product.id,
-    name: product.name,
+    // Meta renders `price` as a bare currency figure with no unit, which reads as
+    // the price of the whole unit. Alusea sells per sq ft, so the unit goes in the
+    // name to stay visible in the WhatsApp list without tapping through.
+    // "Rs." not "₹": Graph stores non-ASCII in `name` as "?" (verified U+003F).
+    name: `${product.name} (from Rs. ${startingPrice}/sq ft)`,
     description: product.description,
     availability: "in stock",
     condition: "new",
