@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 import CatalogueClient from "./CatalogueClient";
 import { createClient } from "@/lib/supabase/server";
+import type { ProductRow } from "@/lib/supabase/types";
 
 export const metadata: Metadata = {
   title: "Product Catalogue | Alusea Premium Aluminum Solutions",
@@ -28,7 +29,7 @@ export default async function CataloguePage() {
         <p className="mt-4 text-steel-gray font-medium">Loading Alusea Catalogue...</p>
       </div>
     }>
-      <CatalogueClient initialProducts={products || []} />
+      <CatalogueClient initialProducts={(products || []) as ProductRow[]} />
     </Suspense>
   );
 }

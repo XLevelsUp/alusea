@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getProfile } from "@/lib/auth/session";
+import { landingPageFor } from "@/lib/auth/roles";
 
 export default async function AdminRootPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const profile = await getProfile();
 
-  redirect(user ? "/catalogue" : "/login");
+  redirect(profile ? landingPageFor(profile.role) : "/login");
 }

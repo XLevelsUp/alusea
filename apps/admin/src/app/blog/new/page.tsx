@@ -1,15 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { requireRole } from '@/lib/auth/session'
 import Link from 'next/link'
 import BlogPostForm from '../BlogPostForm'
 
 export default async function NewBlogPostPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  await requireRole('owner', 'sales')
 
   const { data: categories } = await supabase
     .from('blog_categories')

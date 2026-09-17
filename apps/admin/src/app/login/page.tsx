@@ -1,5 +1,6 @@
 import { login } from '../actions'
-import { createClient } from '@/lib/supabase/server'
+import { getProfile } from '@/lib/auth/session'
+import { landingPageFor } from '@/lib/auth/roles'
 import { redirect } from 'next/navigation'
 
 export default async function LoginPage({
@@ -7,11 +8,10 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ error?: string }>
 }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const profile = await getProfile()
 
-  if (user) {
-    redirect('/catalogue')
+  if (profile) {
+    redirect(landingPageFor(profile.role))
   }
   
   const search = await searchParams

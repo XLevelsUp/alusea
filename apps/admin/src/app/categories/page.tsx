@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { requireRole } from '@/lib/auth/session'
 import { deleteCategory } from '../actions'
 import CategoryForm from './CategoryForm'
 import DeleteCategoryButton from './DeleteCategoryButton'
@@ -10,11 +10,7 @@ export default async function AdminCategoriesPage(props: { searchParams: Promise
   const editId = resolvedSearchParams?.edit;
 
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  await requireRole('owner', 'sales')
 
   const { data: categories } = await supabase
     .from('categories')

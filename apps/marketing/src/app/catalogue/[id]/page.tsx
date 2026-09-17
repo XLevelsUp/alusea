@@ -3,25 +3,18 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import ProductDetailClient from "./ProductDetailClient";
+import type { ProductRow } from "@/lib/supabase/types";
 
 export const revalidate = 0;
 
-type Product = {
-  id: string;
-  category: string;
-  name: string;
-  image_url: string;
-  image_urls?: string[];
-  description: string;
-  specs: Record<string, string>;
-};
+type Product = ProductRow;
 
 const BASE_URL = "https://www.alusea.in";
 
 async function getProduct(id: string): Promise<Product | null> {
   const supabase = await createClient();
   const { data } = await supabase.from("products").select("*").eq("id", id).single();
-  return data;
+  return data as Product | null;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {

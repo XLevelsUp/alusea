@@ -57,6 +57,17 @@ When running both locally, set `apps/admin/.env.local`'s
 
 ## Database migrations
 
-SQL migration files live in `supabase/` at the repo root and are run
-manually against the Supabase project via its SQL Editor — there is no
-automated migration runner. Run them in the order they were created.
+Schema changes are tracked as ordered migration files in
+`supabase/migrations/` and applied with the Supabase CLI:
+
+```bash
+npx supabase link --project-ref <your-project-ref>   # once
+npm run db:push
+```
+
+Both apps share one Supabase project, so a migration affects both. See
+[database.md](./database.md) for the full workflow, including how to
+regenerate the TypeScript types after a schema change.
+
+The old hand-run `.sql` files now live in `supabase/legacy/` for reference
+and should not be run.

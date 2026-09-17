@@ -1,14 +1,10 @@
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { requireRole } from '@/lib/auth/session'
 import MediaManagerClient from './MediaManagerClient'
 
 export default async function AdminMediaPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  await requireRole('owner', 'sales')
 
   const { data: media, error } = await supabase
     .from('page_media')

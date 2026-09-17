@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { syncProductToCatalog, removeProductFromCatalog } from '@/lib/metaCatalog'
+import { assertRole } from '@/lib/auth/session'
+import { landingPageFor } from '@/lib/auth/roles'
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
@@ -13,23 +15,31 @@ export async function login(formData: FormData) {
     password: formData.get('password') as string,
   }
 
-  const { error } = await supabase.auth.signInWithPassword(data)
+  const { data: session, error } = await supabase.auth.signInWithPassword(data)
 
-  if (error) {
+  if (error || !session.user) {
     redirect('/login?error=Could not authenticate user')
   }
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role, is_active')
+    .eq('id', session.user.id)
+    .single()
+
+  if (!profile || !profile.is_active) {
+    await supabase.auth.signOut()
+    redirect('/login?error=This account is not active. Ask an owner to enable it.')
+  }
+
   revalidatePath('/', 'layout')
-  redirect('/catalogue')
+  redirect(landingPageFor(profile.role))
 }
 
 export async function addProduct(formData: FormData) {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
+  await assertRole('owner', 'sales')
 
   const name = formData.get('name') as string
   const category = formData.get('category') as string
@@ -95,10 +105,7 @@ export async function addProduct(formData: FormData) {
 export async function updateProduct(formData: FormData) {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
+  await assertRole('owner', 'sales')
 
   const id = formData.get('id') as string
   const name = formData.get('name') as string
@@ -174,10 +181,7 @@ export async function updateProduct(formData: FormData) {
 export async function deleteProduct(id: string) {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
+  await assertRole('owner', 'sales')
 
   const { error } = await supabase
     .from('products')
@@ -197,10 +201,7 @@ export async function deleteProduct(id: string) {
 export async function addCategory(formData: FormData) {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
+  await assertRole('owner', 'sales')
 
   const name = (formData.get('name') as string)?.trim()
   if (!name) {
@@ -225,10 +226,7 @@ export async function addCategory(formData: FormData) {
 export async function updateCategory(formData: FormData) {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
+  await assertRole('owner', 'sales')
 
   const id = formData.get('id') as string
   const name = (formData.get('name') as string)?.trim()
@@ -277,10 +275,7 @@ export async function updateCategory(formData: FormData) {
 export async function deleteCategory(id: string) {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
+  await assertRole('owner', 'sales')
 
   const { data: category, error: fetchError } = await supabase
     .from('categories')

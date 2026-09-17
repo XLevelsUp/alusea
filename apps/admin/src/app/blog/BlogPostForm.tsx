@@ -4,29 +4,11 @@ import { useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { addBlogPost, updateBlogPost, type BlogSection, type BlogQA, type BlogCta, type ImageFit } from "./actions";
+import { addBlogPost, updateBlogPost } from "./actions";
+import type { BlogSection, BlogQA, BlogCta, ImageFit, BlogPostRow } from "@/lib/supabase/types";
 import RichTextEditor from "./RichTextEditor";
 
-type BlogPost = {
-  id: string;
-  slug: string;
-  title: string;
-  featured_image_url: string;
-  featured_image_alt: string;
-  featured_image_fit: ImageFit;
-  category: string;
-  tags: string[];
-  author: string;
-  reading_time_minutes: number;
-  published_at: string;
-  intro_html: string;
-  second_image_url: string | null;
-  second_image_alt: string | null;
-  second_image_fit: ImageFit;
-  sections: BlogSection[];
-  qa: BlogQA[];
-  cta: BlogCta;
-};
+type BlogPost = BlogPostRow;
 
 const DEFAULT_CTA: BlogCta = {
   intro:

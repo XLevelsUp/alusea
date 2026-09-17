@@ -1,21 +1,18 @@
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { requireRole } from '@/lib/auth/session'
 import { deleteProduct } from '../actions'
 import Image from 'next/image'
 import AddProductForm from './AddProductForm'
 import DeleteProductButton from './DeleteProductButton'
 import Link from 'next/link'
+import type { ProductRow } from '@/lib/supabase/types'
 
 export default async function AdminCataloguePage(props: { searchParams: Promise<{ edit?: string; add?: string }> | { edit?: string; add?: string } }) {
   const resolvedSearchParams = await props.searchParams;
   const editId = resolvedSearchParams?.edit;
 
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  await requireRole('owner', 'sales')
 
   const { data: products } = await supabase
     .from('products')
@@ -29,7 +26,7 @@ export default async function AdminCataloguePage(props: { searchParams: Promise<
 
   const isAddOpen = resolvedSearchParams?.add === 'true';
   const isModalOpen = !!editId || isAddOpen;
-  const editingProduct = editId ? products?.find(p => p.id === editId) : null;
+  const editingProduct = editId ? (products?.find(p => p.id === editId) as ProductRow | undefined) : null;
 
   return (
     <div className="p-8 max-w-7xl mx-auto w-full relative">
