@@ -17,16 +17,11 @@
   --color-foreground: var(--foreground);
 }
 
+/* The admin panel is a light-only interface: its cards, tables and forms are all built on white. Following the OS dark preference turned the default text near-white, which made any element without an explicit colour class invisible against those cards. */
 :root {
+  color-scheme: light;
   --background: #ffffff;
   --foreground: #111111;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #111111;
-    --foreground: #F5F5F7;
-  }
 }
 
 body {
