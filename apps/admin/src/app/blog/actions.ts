@@ -2,34 +2,9 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { assertRole } from '@/lib/auth/session'
+import type { BlogSection, BlogQA, BlogCta, ImageFit } from '@/lib/supabase/types'
 
-export type BlogSubsection = {
-  heading: string
-  body_html: string
-}
-
-export type BlogSection = {
-  heading: string
-  body_html: string
-  subsections: BlogSubsection[]
-}
-
-export type BlogQA = {
-  question: string
-  answer: string
-}
-
-export type BlogCtaButton = {
-  label: string
-  href: string
-}
-
-export type BlogCta = {
-  intro: string
-  buttons: BlogCtaButton[]
-}
-
-export type ImageFit = 'cover' | 'contain'
 
 function readImageFit(formData: FormData, field: string): ImageFit {
   return formData.get(field) === 'contain' ? 'contain' : 'cover'
@@ -44,12 +19,8 @@ function slugify(input: string): string {
 }
 
 async function requireUser() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
-  return supabase
+  await assertRole('owner', 'sales')
+  return createClient()
 }
 
 function readPostFields(formData: FormData) {

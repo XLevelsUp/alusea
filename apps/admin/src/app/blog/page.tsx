@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { requireRole } from '@/lib/auth/session'
 import { deleteBlogPost } from './actions'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -9,11 +9,7 @@ const MARKETING_URL = process.env.NEXT_PUBLIC_MARKETING_URL || 'https://www.alus
 
 export default async function AdminBlogPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  await requireRole('owner', 'sales')
 
   const { data: posts } = await supabase
     .from('blog_posts')

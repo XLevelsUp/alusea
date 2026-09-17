@@ -2,14 +2,11 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { assertRole } from '@/lib/auth/session'
 
 async function requireUser() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
-  return supabase
+  await assertRole('owner', 'sales')
+  return createClient()
 }
 
 export async function approveComment(id: string, postSlug: string) {

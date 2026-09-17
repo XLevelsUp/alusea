@@ -1,15 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { requireRole } from '@/lib/auth/session'
 import Link from 'next/link'
 import CommentModerationRow from './CommentModerationRow'
 
 export default async function AdminBlogCommentsPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  await requireRole('owner', 'sales')
 
   const { data: comments } = await supabase
     .from('blog_comments')

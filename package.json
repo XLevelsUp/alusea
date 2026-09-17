@@ -10,6 +10,19 @@
     "build:marketing": "npm run build --workspace=apps/marketing",
     "build:admin": "npm run build --workspace=apps/admin",
     "lint:marketing": "npm run lint --workspace=apps/marketing",
-    "lint:admin": "npm run lint --workspace=apps/admin"
+    "lint:admin": "npm run lint --workspace=apps/admin",
+    "db:diff": "supabase db diff -f",
+    "db:push": "supabase db push",
+    "db:reset": "supabase db reset",
+    "db:lint": "supabase db lint",
+    "types:db": "supabase gen types typescript --local > apps/admin/src/lib/supabase/types.ts && npm run types:sync",
+    "types:db:remote": "supabase gen types typescript --linked > apps/admin/src/lib/supabase/types.ts && npm run types:sync",
+    "types:sync": "cp apps/admin/src/lib/supabase/types.ts apps/marketing/src/lib/supabase/types.ts",
+    "types:check": "node scripts/check-db-types-sync.mjs",
+    "test:admin": "node --test --experimental-strip-types \"apps/admin/src/**/*.test.ts\"",
+    "test": "npm run test:admin"
+  },
+  "devDependencies": {
+    "supabase": "^2.117.0"
   }
 }

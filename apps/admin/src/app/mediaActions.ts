@@ -2,12 +2,12 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { assertRole } from '@/lib/auth/session'
 
 export async function addPageMedia(formData: FormData) {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  await assertRole('owner', 'sales')
 
   const page        = formData.get('page') as string
   const section     = formData.get('section') as string
@@ -44,8 +44,7 @@ export async function addPageMedia(formData: FormData) {
 export async function deletePageMedia(id: string, imageUrl: string) {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  await assertRole('owner', 'sales')
 
   // Delete from DB first
   const { error: deleteError } = await supabase

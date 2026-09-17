@@ -5,31 +5,11 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import ShareLinks from "./ShareLinks";
 import CommentForm from "./CommentForm";
-import type { BlogSection, BlogQA, BlogCta, ImageFit } from "@/lib/blog-types";
+import type { BlogPostRow } from "@/lib/supabase/types";
 
 export const revalidate = 300;
 
-type BlogPost = {
-  id: string;
-  slug: string;
-  title: string;
-  featured_image_url: string;
-  featured_image_alt: string;
-  featured_image_fit: ImageFit;
-  category: string;
-  tags: string[];
-  author: string;
-  reading_time_minutes: number;
-  intro_html: string;
-  second_image_url: string | null;
-  second_image_alt: string | null;
-  second_image_fit: ImageFit;
-  sections: BlogSection[];
-  qa: BlogQA[];
-  cta: BlogCta;
-  published_at: string;
-  updated_at: string;
-};
+type BlogPost = BlogPostRow;
 
 const BASE_URL = "https://www.alusea.in";
 
@@ -41,7 +21,7 @@ function excerptFromHtml(html: string, maxLength = 160): string {
 async function getPost(slug: string): Promise<BlogPost | null> {
   const supabase = await createClient();
   const { data } = await supabase.from("blog_posts").select("*").eq("slug", slug).single();
-  return data;
+  return data as BlogPost | null;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

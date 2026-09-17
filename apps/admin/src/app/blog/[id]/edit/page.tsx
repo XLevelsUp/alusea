@@ -1,16 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
-import { redirect, notFound } from 'next/navigation'
+import { requireRole } from '@/lib/auth/session'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import BlogPostForm from '../../BlogPostForm'
+import type { BlogPostRow } from '@/lib/supabase/types'
 
 export default async function EditBlogPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  await requireRole('owner', 'sales')
 
   const { data: post } = await supabase
     .from('blog_posts')
@@ -37,7 +35,7 @@ export default async function EditBlogPostPage({ params }: { params: Promise<{ i
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <BlogPostForm initialData={post} categories={categories?.map((c) => c.name) || []} cancelUrl="/blog" />
+        <BlogPostForm initialData={post as BlogPostRow} categories={categories?.map((c) => c.name) || []} cancelUrl="/blog" />
       </div>
     </div>
   )
