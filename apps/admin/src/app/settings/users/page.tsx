@@ -2,8 +2,9 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS, type Role } from "@/lib/auth/roles";
-import { inviteUser, updateUserRole, setUserActive } from "./actions";
+import { updateUserRole, setUserActive } from "./actions";
 import UserRow from "./UserRow";
+import AddUserForm from "./AddUserForm";
 
 export default async function UsersPage(props: {
   searchParams: Promise<{ add?: string }>;
@@ -99,77 +100,7 @@ export default async function UsersPage(props: {
                 </svg>
               </Link>
             </div>
-            <form action={inviteUser} className="p-6 space-y-4 overflow-y-auto">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="full_name">
-                  Full name
-                </label>
-                <input
-                  id="full_name"
-                  name="full_name"
-                  type="text"
-                  required
-                  className="rounded-md px-4 py-2 bg-gray-50 border border-gray-200 w-full text-black"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="email">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  className="rounded-md px-4 py-2 bg-gray-50 border border-gray-200 w-full text-black"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="password">
-                  Temporary password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="text"
-                  required
-                  minLength={8}
-                  className="rounded-md px-4 py-2 bg-gray-50 border border-gray-200 w-full text-black"
-                />
-                <p className="text-xs text-gray-400 mt-1">Share this with them directly, then ask them to change it after signing in.</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="role">
-                  Role
-                </label>
-                <select
-                  id="role"
-                  name="role"
-                  defaultValue="staff"
-                  className="rounded-md px-4 py-2 bg-gray-50 border border-gray-200 w-full text-black"
-                >
-                  {ROLES.map((role) => (
-                    <option key={role} value={role}>
-                      {ROLE_LABELS[role]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="submit"
-                  className="flex-1 bg-matte-black hover:bg-black text-white px-4 py-3 rounded-md uppercase tracking-widest text-xs font-bold transition-colors cursor-pointer"
-                >
-                  Create User
-                </button>
-                <Link
-                  href="/settings/users"
-                  className="px-5 py-3 border border-gray-200 text-gray-600 rounded-md uppercase tracking-widest text-xs font-bold hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </Link>
-              </div>
-            </form>
+            <AddUserForm />
           </div>
         </div>
       )}
