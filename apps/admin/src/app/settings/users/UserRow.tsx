@@ -2,6 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { ROLES, ROLE_LABELS, type Role } from "@/lib/auth/roles";
+import type { ActionResult } from "./actions";
+
+type Action = (formData: FormData) => Promise<ActionResult>;
 
 type Props = {
   id: string;
@@ -10,21 +13,22 @@ type Props = {
   role: Role;
   isActive: boolean;
   isSelf: boolean;
-  updateRole: (formData: FormData) => Promise<void>;
-  setActive: (formData: FormData) => Promise<void>;
+  updateRole: Action;
+  setActive: Action;
 };
 
 export default function UserRow({ id, email, fullName, role, isActive, isSelf, updateRole, setActive }: Props) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  function run(action: (fd: FormData) => Promise<void>, formData: FormData) {
+  function run(action: Action, formData: FormData) {
     setError(null);
     startTransition(async () => {
       try {
-        await action(formData);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Something went wrong");
+        const result = await action(formData);
+        if (result.error) setError(result.error);
+      } catch {
+        setError("Something went wrong. Please try again.");
       }
     });
   }
