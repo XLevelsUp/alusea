@@ -1,5 +1,7 @@
 'use server'
 
+import { ActionError, defineAction } from '@/lib/actions'
+
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { assertRole } from '@/lib/auth/session'
@@ -41,7 +43,7 @@ function readPostFields(formData: FormData) {
   const publishedDateInput = (formData.get('published_at') as string)?.trim()
   const publishedAt = publishedDateInput ? new Date(publishedDateInput).toISOString() : new Date().toISOString()
   if (publishedDateInput && isNaN(new Date(publishedDateInput).getTime())) {
-    throw new Error('Invalid published date')
+    throw new ActionError('Invalid published date')
   }
 
   const introHtml = formData.get('intro_html') as string
@@ -54,29 +56,29 @@ function readPostFields(formData: FormData) {
   try {
     sections = JSON.parse((formData.get('sections_json') as string) || '[]')
   } catch {
-    throw new Error('Invalid sections data')
+    throw new ActionError('Invalid sections data')
   }
 
   let qa: BlogQA[] = []
   try {
     qa = JSON.parse((formData.get('qa_json') as string) || '[]')
   } catch {
-    throw new Error('Invalid Q&A data')
+    throw new ActionError('Invalid Q&A data')
   }
 
   let cta: BlogCta = { intro: '', buttons: [] }
   try {
     cta = JSON.parse((formData.get('cta_json') as string) || '{}')
   } catch {
-    throw new Error('Invalid CTA data')
+    throw new ActionError('Invalid CTA data')
   }
 
-  if (!title) throw new Error('Title is required')
-  if (!slug) throw new Error('Slug could not be generated — please provide a title or slug')
-  if (!featuredImageUrl) throw new Error('Featured image is required')
-  if (!featuredImageAlt) throw new Error('Featured image alt text is required')
-  if (!category) throw new Error('Category is required')
-  if (!introHtml || introHtml === '<p></p>') throw new Error('Introduction is required')
+  if (!title) throw new ActionError('Title is required')
+  if (!slug) throw new ActionError('Slug could not be generated — please provide a title or slug')
+  if (!featuredImageUrl) throw new ActionError('Featured image is required')
+  if (!featuredImageAlt) throw new ActionError('Featured image alt text is required')
+  if (!category) throw new ActionError('Category is required')
+  if (!introHtml || introHtml === '<p></p>') throw new ActionError('Introduction is required')
 
   return {
     title,
@@ -99,7 +101,7 @@ function readPostFields(formData: FormData) {
   }
 }
 
-export async function addBlogPost(formData: FormData) {
+export const addBlogPost = defineAction(async function addBlogPost(formData: FormData) {
   const supabase = await requireUser()
   const fields = readPostFields(formData)
 
@@ -107,20 +109,20 @@ export async function addBlogPost(formData: FormData) {
 
   if (error) {
     if (error.code === '23505') {
-      throw new Error('A post with this slug already exists — choose a different title or slug')
+      throw new ActionError('A post with this slug already exists — choose a different title or slug')
     }
     console.error(error)
-    throw new Error('Could not add blog post: ' + error.message)
+    throw new ActionError('Could not add blog post: ' + error.message)
   }
 
   revalidatePath('/blog')
   revalidatePath('/blog')
-}
+})
 
-export async function updateBlogPost(formData: FormData) {
+export const updateBlogPost = defineAction(async function updateBlogPost(formData: FormData) {
   const supabase = await requireUser()
   const id = formData.get('id') as string
-  if (!id) throw new Error('Missing post id')
+  if (!id) throw new ActionError('Missing post id')
 
   const fields = readPostFields(formData)
 
@@ -131,26 +133,26 @@ export async function updateBlogPost(formData: FormData) {
 
   if (error) {
     if (error.code === '23505') {
-      throw new Error('A post with this slug already exists — choose a different title or slug')
+      throw new ActionError('A post with this slug already exists — choose a different title or slug')
     }
     console.error(error)
-    throw new Error('Could not update blog post: ' + error.message)
+    throw new ActionError('Could not update blog post: ' + error.message)
   }
 
   revalidatePath('/blog')
   revalidatePath(`/blog/${fields.slug}`)
   revalidatePath('/blog')
-}
+})
 
-export async function deleteBlogPost(id: string) {
+export const deleteBlogPost = defineAction(async function deleteBlogPost(id: string) {
   const supabase = await requireUser()
 
   const { error } = await supabase.from('blog_posts').delete().eq('id', id)
 
   if (error) {
-    throw new Error('Could not delete blog post')
+    throw new ActionError('Could not delete blog post')
   }
 
   revalidatePath('/blog')
   revalidatePath('/blog')
-}
+})

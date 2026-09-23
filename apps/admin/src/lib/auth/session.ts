@@ -4,6 +4,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import type { Role } from './roles'
+import { ActionError } from '@/lib/actionError'
 
 export type Profile = {
   id: string
@@ -46,7 +47,7 @@ export async function requireRole(...allowed: Role[]): Promise<Profile> {
 // Server-action equivalent: throws instead of redirecting, since actions have no page to navigate to.
 export async function assertRole(...allowed: Role[]): Promise<Profile> {
   const profile = await getProfile()
-  if (!profile) throw new Error('Unauthorized')
-  if (!allowed.includes(profile.role)) throw new Error('Forbidden')
+  if (!profile) throw new ActionError('Your session has expired. Please sign in again.')
+  if (!allowed.includes(profile.role)) throw new ActionError('You do not have permission to do this.')
   return profile
 }

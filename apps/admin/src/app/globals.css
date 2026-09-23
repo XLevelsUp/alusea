@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 @plugin "@tailwindcss/typography";
 
 @theme {
@@ -12,9 +16,29 @@
   --color-bronze-dark: #8B4513;
   --color-alusea-gold: #B68B4C;
   --color-alusea-light-gray: #F1EFF0;
-  
+}
+
+/* shadcn/ui tokens mapped to the Alusea palette, so components/ui renders in brand colours without per-form class strings. */
+@theme inline {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 }
 
 /* The admin panel is a light-only interface: its cards, tables and forms are all built on white. Following the OS dark preference turned the default text near-white, which made any element without an explicit colour class invisible against those cards. */
@@ -22,11 +46,37 @@
   color-scheme: light;
   --background: #ffffff;
   --foreground: #111111;
+  --card: #ffffff;
+  --card-foreground: #111111;
+  --popover: #ffffff;
+  --popover-foreground: #111111;
+  --primary: #111111;
+  --primary-foreground: #ffffff;
+  --secondary: #F5F5F7;
+  --secondary-foreground: #111111;
+  --muted: #F9FAFB;
+  --muted-foreground: #6B7280;
+  --accent: #F5F5F7;
+  --accent-foreground: #111111;
+  --destructive: #DC2626;
+  --border: #E5E7EB;
+  --input: #E5E7EB;
+  --ring: #A67C52;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  button:not(:disabled), [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
@@ -78,4 +128,3 @@ h1, h2, h3, h4, h5, h6 {
 .animate-slow-zoom {
   animation: slow-zoom 20s linear infinite alternate;
 }
-

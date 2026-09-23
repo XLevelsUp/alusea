@@ -3,7 +3,7 @@ import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { formatPaise } from "@/lib/erp/money";
 import EmployeeForm from "./EmployeeForm";
-import EmployeeStatusButton from "./EmployeeStatusButton";
+import StatusToggleButton from "@/components/StatusToggleButton";
 import { addEmployee, updateEmployee, setEmployeeActive } from "./actions";
 
 export default async function EmployeesPage(props: {
@@ -115,7 +115,7 @@ export default async function EmployeesPage(props: {
                       >
                         Edit
                       </Link>
-                      <EmployeeStatusButton
+                      <StatusToggleButton
                         id={employee.id}
                         isActive={employee.is_active}
                         setActive={setEmployeeActive}

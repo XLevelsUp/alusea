@@ -1,5 +1,6 @@
 // Parses the repeating line-item rows a quote or invoice form submits, shared so both documents price identically.
 
+import { ActionError } from '../actionError'
 import { parseRupeesToPaise } from './money'
 import { areaSqFt, lineAmountPaise } from './tax'
 
@@ -51,11 +52,11 @@ export function parseLineItems(formData: FormData): ParsedLineItem[] {
         : (explicitQuantity ?? 1)
 
     if (quantity < 0) {
-      throw new Error(`Line ${items.length + 1}: quantity cannot be negative`)
+      throw new ActionError(`Line ${items.length + 1}: quantity cannot be negative`)
     }
 
     if (ratePaise < 0) {
-      throw new Error(`Line ${items.length + 1}: rate cannot be negative`)
+      throw new ActionError(`Line ${items.length + 1}: rate cannot be negative`)
     }
 
     items.push({
@@ -72,7 +73,7 @@ export function parseLineItems(formData: FormData): ParsedLineItem[] {
   }
 
   if (items.length === 0) {
-    throw new Error('Add at least one line with a description')
+    throw new ActionError('Add at least one line with a description')
   }
 
   return items

@@ -3,6 +3,9 @@ import { requireProfile } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { formatPaise } from "@/lib/erp/money";
 import type { ExpenseStatus } from "@/lib/supabase/types";
+import { SelectField, TextField } from "@/components/form-fields";
+import { Button } from "@/components/ui/button";
+import { NativeSelectOption } from "@/components/ui/native-select";
 
 const STATUS_STYLES: Record<ExpenseStatus, string> = {
   draft: "bg-gray-100 text-gray-600",
@@ -113,71 +116,26 @@ export default async function ExpensesPage(props: {
 
       <form className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6" action="/expenses">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1" htmlFor="from">
-              From
-            </label>
-            <input
-              id="from"
-              name="from"
-              type="date"
-              defaultValue={from}
-              className="rounded px-3 py-2 bg-gray-50 border border-gray-200 w-full text-black text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1" htmlFor="to">
-              To
-            </label>
-            <input
-              id="to"
-              name="to"
-              type="date"
-              defaultValue={to}
-              className="rounded px-3 py-2 bg-gray-50 border border-gray-200 w-full text-black text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1" htmlFor="category">
-              Category
-            </label>
-            <select
-              id="category"
-              name="category"
-              defaultValue={categoryId}
-              className="rounded px-3 py-2 bg-gray-50 border border-gray-200 w-full text-black text-sm"
-            >
-              <option value="">All categories</option>
-              {categories?.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1" htmlFor="status">
-              Status
-            </label>
-            <select
-              id="status"
-              name="status"
-              defaultValue={status}
-              className="rounded px-3 py-2 bg-gray-50 border border-gray-200 w-full text-black text-sm"
-            >
-              {FILTERS.map((filter) => (
-                <option key={filter.key} value={filter.key}>
-                  {filter.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-matte-black text-white text-xs font-bold uppercase tracking-wider rounded cursor-pointer hover:bg-black transition-colors"
-          >
+          <TextField label="From" name="from" type="date" defaultValue={from} />
+          <TextField label="To" name="to" type="date" defaultValue={to} />
+          <SelectField label="Category" name="category" defaultValue={categoryId}>
+            <NativeSelectOption value="">All categories</NativeSelectOption>
+            {categories?.map((category) => (
+              <NativeSelectOption key={category.id} value={category.id}>
+                {category.name}
+              </NativeSelectOption>
+            ))}
+          </SelectField>
+          <SelectField label="Status" name="status" defaultValue={status}>
+            {FILTERS.map((filter) => (
+              <NativeSelectOption key={filter.key} value={filter.key}>
+                {filter.label}
+              </NativeSelectOption>
+            ))}
+          </SelectField>
+          <Button type="submit" size="lg">
             Apply
-          </button>
+          </Button>
         </div>
       </form>
 

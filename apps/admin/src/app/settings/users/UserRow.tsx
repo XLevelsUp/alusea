@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { useAction } from "@/hooks/use-action";
+import type { Action } from "@/lib/actions";
 import { ROLES, ROLE_LABELS, type Role } from "@/lib/auth/roles";
-import type { ActionResult } from "./actions";
-
-type Action = (formData: FormData) => Promise<ActionResult>;
 
 type Props = {
   id: string;
@@ -18,20 +19,12 @@ type Props = {
 };
 
 export default function UserRow({ id, email, fullName, role, isActive, isSelf, updateRole, setActive }: Props) {
-  const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-
-  function run(action: Action, formData: FormData) {
-    setError(null);
-    startTransition(async () => {
-      try {
-        const result = await action(formData);
-        if (result.error) setError(result.error);
-      } catch {
-        setError("Something went wrong. Please try again.");
-      }
-    });
-  }
+  // Controlled so a rejected change snaps back to the saved role instead of showing one that was never stored.
+  const [selectedRole, setSelectedRole] = useState(role);
+  const roleAction = useAction(updateRole);
+  const activeAction = useAction(setActive);
+  const isPending = roleAction.isPending || activeAction.isPending;
+  const error = roleAction.error ?? activeAction.error;
 
   return (
     <tr className={`hover:bg-gray-50/50 transition-colors ${isActive ? "" : "opacity-50"}`}>
@@ -40,28 +33,33 @@ export default function UserRow({ id, email, fullName, role, isActive, isSelf, u
           <span className="font-semibold text-gray-900">{fullName || "—"}</span>
           <span className="text-xs text-gray-500">{email}</span>
           {isSelf && <span className="text-[10px] uppercase tracking-wider text-[#A67C52] mt-1">You</span>}
-          {error && <span className="text-xs text-red-600 mt-2">{error}</span>}
+          {error && <span role="alert" className="text-xs text-destructive mt-2">{error}</span>}
         </div>
       </td>
       <td className="p-4 align-top">
-        <select
-          defaultValue={role}
+        <NativeSelect
+          value={selectedRole}
           disabled={isPending || isSelf}
           aria-label={`Role for ${email}`}
+          className="w-44"
           onChange={(e) => {
+            const next = e.target.value as Role;
+            setSelectedRole(next);
+            activeAction.setError(null);
             const fd = new FormData();
             fd.set("user_id", id);
-            fd.set("role", e.target.value);
-            run(updateRole, fd);
+            fd.set("role", next);
+            roleAction.run(fd).then((result) => {
+              if (!result.ok) setSelectedRole(role);
+            });
           }}
-          className="rounded-md px-3 py-2 bg-white border border-gray-200 text-sm text-black disabled:bg-gray-100 disabled:cursor-not-allowed"
         >
           {ROLES.map((r) => (
-            <option key={r} value={r}>
+            <NativeSelectOption key={r} value={r}>
               {ROLE_LABELS[r]}
-            </option>
+            </NativeSelectOption>
           ))}
-        </select>
+        </NativeSelect>
       </td>
       <td className="p-4 align-top">
         <span
@@ -73,19 +71,21 @@ export default function UserRow({ id, email, fullName, role, isActive, isSelf, u
         </span>
       </td>
       <td className="p-4 align-top text-right">
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           disabled={isPending || isSelf}
           onClick={() => {
+            roleAction.setError(null);
             const fd = new FormData();
             fd.set("user_id", id);
             fd.set("is_active", String(!isActive));
-            run(setActive, fd);
+            activeAction.run(fd);
           }}
-          className="text-xs font-semibold uppercase tracking-wider px-3 py-1 border rounded transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed border-gray-200 text-gray-600 hover:bg-gray-50"
         >
           {isPending ? "…" : isActive ? "Deactivate" : "Reactivate"}
-        </button>
+        </Button>
       </td>
     </tr>
   );

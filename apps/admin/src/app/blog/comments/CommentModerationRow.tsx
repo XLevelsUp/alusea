@@ -1,6 +1,8 @@
 'use client';
 
-import { useTransition } from 'react';
+import { Button } from '@/components/ui/button';
+import { useActionRunner } from '@/hooks/use-action';
+import type { Action } from '@/lib/actions';
 import { approveComment, rejectComment, deleteComment } from './actions';
 
 type Comment = {
@@ -14,18 +16,12 @@ type Comment = {
 };
 
 export default function CommentModerationRow({ comment }: { comment: Comment }) {
-  const [isPending, startTransition] = useTransition();
+  const { run, isPending, error } = useActionRunner();
   const postSlug = comment.blog_posts?.slug || '';
 
-  const handle = (action: (id: string, slug: string) => Promise<void>, confirmMsg?: string) => {
+  const handle = (action: Action<[string, string]>, confirmMsg?: string) => {
     if (confirmMsg && !window.confirm(confirmMsg)) return;
-    startTransition(async () => {
-      try {
-        await action(comment.id, postSlug);
-      } catch {
-        alert('Something went wrong.');
-      }
-    });
+    run(action, comment.id, postSlug);
   };
 
   return (
@@ -61,34 +57,40 @@ export default function CommentModerationRow({ comment }: { comment: Comment }) 
       <td className="p-4 align-top text-right">
         <div className="flex items-center justify-end gap-2 flex-wrap">
           {comment.status !== 'approved' && (
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               disabled={isPending}
               onClick={() => handle(approveComment)}
-              className="text-green-600 hover:text-green-800 text-xs font-semibold uppercase tracking-wider px-3 py-1 border border-green-200 hover:bg-green-50 rounded transition-colors disabled:opacity-50"
+              className="border-green-200 text-green-600 hover:bg-green-50 hover:text-green-800"
             >
               Approve
-            </button>
+            </Button>
           )}
           {comment.status !== 'rejected' && (
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               disabled={isPending}
               onClick={() => handle(rejectComment)}
-              className="text-amber-600 hover:text-amber-800 text-xs font-semibold uppercase tracking-wider px-3 py-1 border border-amber-200 hover:bg-amber-50 rounded transition-colors disabled:opacity-50"
+              className="border-amber-200 text-amber-600 hover:bg-amber-50 hover:text-amber-800"
             >
               Reject
-            </button>
+            </Button>
           )}
-          <button
+          <Button
             type="button"
+            variant="destructive"
+            size="sm"
             disabled={isPending}
             onClick={() => handle(deleteComment, 'Permanently delete this comment?')}
-            className="text-red-500 hover:text-red-700 text-xs font-semibold uppercase tracking-wider px-3 py-1 border border-red-200 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
           >
             Delete
-          </button>
+          </Button>
         </div>
+        {error && <p role="alert" className="text-xs text-destructive mt-2">{error}</p>}
       </td>
     </tr>
   );

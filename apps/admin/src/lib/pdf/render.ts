@@ -4,6 +4,7 @@
 import 'server-only'
 import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer'
 import type { ReactElement } from 'react'
+import { ActionError } from '@/lib/actionError'
 import { createClient } from '@/lib/supabase/server'
 
 export const DOCUMENTS_BUCKET = 'alusea-documents'
@@ -55,7 +56,7 @@ export async function renderAndStore({
   })
 
   if (error) {
-    throw new Error(`Could not store the PDF: ${error.message}`)
+    throw new ActionError(`Could not store the PDF: ${error.message}`)
   }
 
   return { path, signedUrl: await createSignedUrl(path) }

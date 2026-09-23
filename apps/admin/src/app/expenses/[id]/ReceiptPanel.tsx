@@ -1,6 +1,11 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { XIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { useActionRunner } from "@/hooks/use-action";
+import type { Action } from "@/lib/actions";
 
 export type ReceiptRow = {
   id: string;
@@ -24,53 +29,43 @@ export default function ReceiptPanel({
   expenseId: string;
   receipts: ReceiptRow[];
   canEdit: boolean;
-  upload: (formData: FormData) => Promise<void>;
-  remove: (formData: FormData) => Promise<void>;
+  upload: Action;
+  remove: Action;
 }) {
-  const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const formRef = useRef<HTMLFormElement>(null);
+  const { run, isPending, error } = useActionRunner();
 
-  function onUpload(formData: FormData) {
-    setError(null);
-    startTransition(async () => {
-      try {
-        await upload(formData);
-        formRef.current?.reset();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Could not upload");
-      }
+  function onUpload(e: React.SubmitEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    run(upload, new FormData(form)).then((result) => {
+      if (result.ok) form.reset();
     });
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="p-5 border-b border-gray-100">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-matte-black">Receipts</h2>
-        <p className="text-xs text-gray-400 mt-0.5">Stored privately, visible only to you and accounts.</p>
-      </div>
+    <Card className="gap-0 py-0">
+      <CardHeader className="p-5 border-b">
+        <CardTitle className="text-sm font-bold uppercase tracking-wider text-matte-black">Receipts</CardTitle>
+        <CardDescription className="text-xs">Stored privately, visible only to you and accounts.</CardDescription>
+      </CardHeader>
 
       {canEdit && (
-        <form ref={formRef} action={onUpload} className="p-5 bg-gray-50 border-b border-gray-100">
+        <form onSubmit={onUpload} className="p-5 bg-muted border-b">
           <input type="hidden" name="expense_id" value={expenseId} />
           <div className="flex flex-wrap gap-3 items-center">
-            <input
+            <Input
               type="file"
               name="receipt"
               required
               accept="image/*,application/pdf"
               aria-label="Receipt file"
-              className="text-sm text-gray-600 file:mr-3 file:px-4 file:py-2 file:rounded file:border-0 file:bg-white file:border file:border-gray-200 file:text-xs file:font-bold file:uppercase file:tracking-wider file:text-gray-600 file:cursor-pointer"
+              className="w-auto flex-1 min-w-48 bg-white"
             />
-            <button
-              type="submit"
-              disabled={isPending}
-              className="px-4 py-2 bg-matte-black text-white text-xs font-bold uppercase tracking-wider rounded cursor-pointer disabled:opacity-50"
-            >
+            <Button type="submit" size="lg" disabled={isPending}>
               {isPending ? "Uploading…" : "Upload"}
-            </button>
+            </Button>
           </div>
-          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+          {error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}
         </form>
       )}
 
@@ -92,29 +87,22 @@ export default function ReceiptPanel({
                 </td>
                 <td className="p-4 text-right w-10">
                   {canEdit && (
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon-sm"
                       disabled={isPending}
                       aria-label={`Remove ${receipt.fileName}`}
                       onClick={() => {
-                        setError(null);
                         const formData = new FormData();
                         formData.set("id", receipt.id);
                         formData.set("expense_id", expenseId);
-                        startTransition(async () => {
-                          try {
-                            await remove(formData);
-                          } catch (e) {
-                            setError(e instanceof Error ? e.message : "Could not remove");
-                          }
-                        });
+                        run(remove, formData);
                       }}
-                      className="text-gray-400 hover:text-red-600 transition-colors cursor-pointer disabled:opacity-40"
+                      className="text-gray-400 hover:text-destructive"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
+                      <XIcon />
+                    </Button>
                   )}
                 </td>
               </tr>
@@ -124,6 +112,6 @@ export default function ReceiptPanel({
       ) : (
         <p className="p-5 text-sm text-gray-500">No receipt attached yet.</p>
       )}
-    </div>
+    </Card>
   );
 }

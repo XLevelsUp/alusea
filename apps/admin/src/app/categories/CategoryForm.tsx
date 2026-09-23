@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { addCategory, updateCategory } from "../actions";
 import Link from "next/link";
+import { FormError, TextField } from "@/components/form-fields";
+import { Button } from "@/components/ui/button";
+import { FieldGroup } from "@/components/ui/field";
+import { useAction } from "@/hooks/use-action";
+import { addCategory, updateCategory } from "../actions";
 
 type Category = {
   id: string;
@@ -10,52 +13,44 @@ type Category = {
 };
 
 export default function CategoryForm({ initialData, cancelUrl }: { initialData?: Category, cancelUrl?: string }) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { run, isPending, error } = useAction(initialData ? updateCategory : addCategory);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    const formData = new FormData(e.currentTarget);
+    // Captured now: React clears currentTarget once the handler returns, before the action resolves.
+    const form = e.currentTarget;
 
-    try {
-      if (initialData) {
-        await updateCategory(formData);
-        alert('Category updated successfully!');
-      } else {
-        await addCategory(formData);
-        alert('Category added successfully!');
-      }
+    run(new FormData(form)).then((result) => {
+      if (!result.ok) return;
+      alert(initialData ? "Category updated successfully!" : "Category added successfully!");
       if (cancelUrl) {
         window.location.href = cancelUrl;
       } else {
-        e.currentTarget.reset();
+        form.reset();
       }
-    } catch (error: unknown) {
-      alert(`Error: ${(error as Error).message || 'Something went wrong.'}`);
-    } finally {
-      setIsSubmitting(false);
-    }
+    });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {initialData && <input type="hidden" name="id" value={initialData.id} />}
+    <form onSubmit={handleSubmit}>
+      <FieldGroup>
+        {initialData && <input type="hidden" name="id" value={initialData.id} />}
 
-      <div>
-        <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Category Name</label>
-        <input required name="name" defaultValue={initialData?.name} type="text" className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-sm text-gray-900" placeholder="e.g. Windows" />
-      </div>
+        <TextField label="Category Name" name="name" required defaultValue={initialData?.name} placeholder="e.g. Windows" />
 
-      <div className="flex gap-3 mt-6">
-        {cancelUrl && (
-          <Link href={cancelUrl} className="w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-md uppercase tracking-widest text-xs font-bold transition-colors shadow-sm flex items-center justify-center">
-            Cancel
-          </Link>
-        )}
-        <button type="submit" disabled={isSubmitting} className="flex-1 bg-[#A67C52] hover:bg-[#8e6944] text-white py-3 rounded-md uppercase tracking-widest text-xs font-bold transition-colors shadow-md disabled:opacity-50">
-          {isSubmitting ? "Saving..." : (initialData ? "Update Category" : "Add Category")}
-        </button>
-      </div>
+        <FormError error={error} />
+
+        <div className="flex gap-3">
+          {cancelUrl && (
+            <Button asChild variant="secondary" className="w-1/3">
+              <Link href={cancelUrl}>Cancel</Link>
+            </Button>
+          )}
+          <Button type="submit" variant="brand" disabled={isPending} className="flex-1">
+            {isPending ? "Saving…" : initialData ? "Update Category" : "Add Category"}
+          </Button>
+        </div>
+      </FieldGroup>
     </form>
   );
 }

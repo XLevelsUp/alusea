@@ -1,5 +1,7 @@
 'use server'
 
+import { ActionError, defineAction } from '@/lib/actions'
+
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { assertRole } from '@/lib/auth/session'
@@ -17,12 +19,12 @@ function text(formData: FormData, field: string): string {
 }
 
 // Creates the run and seeds a row per active employee, pre-filled from their stored default.
-export async function createPayrollRun(formData: FormData) {
+export const createPayrollRun = defineAction(async function createPayrollRun(formData: FormData) {
   const profile = await assertRole(...HR)
 
   const period = text(formData, 'period_month')
   if (!/^\d{4}-\d{2}$/.test(period)) {
-    throw new Error('Choose a month')
+    throw new ActionError('Choose a month')
   }
 
   const periodMonth = `${period}-01`
@@ -45,7 +47,7 @@ export async function createPayrollRun(formData: FormData) {
     .order('employee_code')
 
   if (!employees || employees.length === 0) {
-    throw new Error('Add at least one active employee before running payroll')
+    throw new ActionError('Add at least one active employee before running payroll')
   }
 
   const { data: run, error } = await supabase
@@ -55,7 +57,7 @@ export async function createPayrollRun(formData: FormData) {
     .single()
 
   if (error || !run) {
-    throw new Error('Could not create the payroll run: ' + (error?.message ?? 'unknown error'))
+    throw new ActionError('Could not create the payroll run: ' + (error?.message ?? 'unknown error'))
   }
 
   // Seeded with zero days worked, so nothing is paid until someone actually enters attendance.
@@ -88,7 +90,7 @@ export async function createPayrollRun(formData: FormData) {
 
   if (slipError) {
     await supabase.from('payroll_runs').delete().eq('id', run.id)
-    throw new Error('Could not set up the payroll rows: ' + slipError.message)
+    throw new ActionError('Could not set up the payroll rows: ' + slipError.message)
   }
 
   await supabase
@@ -98,23 +100,23 @@ export async function createPayrollRun(formData: FormData) {
 
   revalidatePath('/payroll')
   redirect(`/payroll/${run.id}`)
-}
+})
 
 // Saves the whole entry grid in one go, recomputing every row server-side rather than trusting the numbers the browser sent.
-export async function savePayrollEntries(formData: FormData) {
+export const savePayrollEntries = defineAction(async function savePayrollEntries(formData: FormData) {
   await assertRole(...HR)
 
   const runId = text(formData, 'run_id')
-  if (!runId) throw new Error('Payroll run is required')
+  if (!runId) throw new ActionError('Payroll run is required')
 
   const supabase = await createClient()
   const { data: run } = await supabase.from('payroll_runs').select('*').eq('id', runId).single()
 
-  if (!run) throw new Error('Payroll run not found')
-  if (run.status !== 'draft') throw new Error('This run has been approved and can no longer be edited')
+  if (!run) throw new ActionError('Payroll run not found')
+  if (run.status !== 'draft') throw new ActionError('This run has been approved and can no longer be edited')
 
   const { data: payslips } = await supabase.from('payslips').select('*').eq('run_id', runId)
-  if (!payslips) throw new Error('Could not load the payroll rows')
+  if (!payslips) throw new ActionError('Could not load the payroll rows')
 
   const updates = payslips.map((slip) => {
     const daysRaw = text(formData, `days[${slip.id}]`)
@@ -124,12 +126,12 @@ export async function savePayrollEntries(formData: FormData) {
 
     const daysWorked = daysRaw ? Number(daysRaw) : 0
     if (!Number.isFinite(daysWorked) || daysWorked < 0 || daysWorked > 31) {
-      throw new Error(`${slip.employee_name}: days worked must be between 0 and 31`)
+      throw new ActionError(`${slip.employee_name}: days worked must be between 0 and 31`)
     }
 
     const enteredAmount = parseRupeesToPaise(amountRaw)
     if (enteredAmount < 0) {
-      throw new Error(`${slip.employee_name}: amount cannot be negative`)
+      throw new ActionError(`${slip.employee_name}: amount cannot be negative`)
     }
 
     const computed = computePayslip({
@@ -156,7 +158,7 @@ export async function savePayrollEntries(formData: FormData) {
   for (const update of updates) {
     const { id, ...fields } = update
     const { error } = await supabase.from('payslips').update(fields).eq('id', id)
-    if (error) throw new Error('Could not save a payroll row: ' + error.message)
+    if (error) throw new ActionError('Could not save a payroll row: ' + error.message)
   }
 
   const totals = computeRunTotals(
@@ -183,28 +185,28 @@ export async function savePayrollEntries(formData: FormData) {
 
   revalidatePath('/payroll')
   revalidatePath(`/payroll/${runId}`)
-}
+})
 
-export async function approvePayrollRun(formData: FormData) {
+export const approvePayrollRun = defineAction(async function approvePayrollRun(formData: FormData) {
   await assertRole(...HR)
 
   const runId = text(formData, 'run_id')
-  if (!runId) throw new Error('Payroll run is required')
+  if (!runId) throw new ActionError('Payroll run is required')
 
   const supabase = await createClient()
   const { data: run } = await supabase.from('payroll_runs').select('*').eq('id', runId).single()
 
-  if (!run) throw new Error('Payroll run not found')
-  if (run.status !== 'draft') throw new Error('This run has already been approved')
+  if (!run) throw new ActionError('Payroll run not found')
+  if (run.status !== 'draft') throw new ActionError('This run has already been approved')
 
   const { data: payslips } = await supabase.from('payslips').select('*').eq('run_id', runId)
 
   if (!payslips || payslips.length === 0) {
-    throw new Error('This run has no employees')
+    throw new ActionError('This run has no employees')
   }
 
   if (payslips.every((slip) => slip.days_worked === 0)) {
-    throw new Error('No days worked have been entered, so this run would pay nothing')
+    throw new ActionError('No days worked have been entered, so this run would pay nothing')
   }
 
   const { error } = await supabase
@@ -212,7 +214,7 @@ export async function approvePayrollRun(formData: FormData) {
     .update({ status: 'approved', approved_at: new Date().toISOString() })
     .eq('id', runId)
 
-  if (error) throw new Error('Could not approve the run: ' + error.message)
+  if (error) throw new ActionError('Could not approve the run: ' + error.message)
 
   try {
     await generatePayslipPdfs(runId)
@@ -222,13 +224,13 @@ export async function approvePayrollRun(formData: FormData) {
 
   revalidatePath('/payroll')
   revalidatePath(`/payroll/${runId}`)
-}
+})
 
-export async function markPayrollPaid(formData: FormData) {
+export const markPayrollPaid = defineAction(async function markPayrollPaid(formData: FormData) {
   await assertRole(...HR)
 
   const runId = text(formData, 'run_id')
-  if (!runId) throw new Error('Payroll run is required')
+  if (!runId) throw new ActionError('Payroll run is required')
 
   const supabase = await createClient()
   const { error } = await supabase
@@ -237,11 +239,11 @@ export async function markPayrollPaid(formData: FormData) {
     .eq('id', runId)
     .eq('status', 'approved')
 
-  if (error) throw new Error('Could not mark the run paid: ' + error.message)
+  if (error) throw new ActionError('Could not mark the run paid: ' + error.message)
 
   revalidatePath('/payroll')
   revalidatePath(`/payroll/${runId}`)
-}
+})
 
 async function generatePayslipPdfs(runId: string) {
   const supabase = await createClient()
@@ -286,27 +288,27 @@ async function generatePayslipPdfs(runId: string) {
   }
 }
 
-export async function regeneratePayslips(formData: FormData) {
+export const regeneratePayslips = defineAction(async function regeneratePayslips(formData: FormData) {
   await assertRole(...HR)
 
   const runId = text(formData, 'run_id')
-  if (!runId) throw new Error('Payroll run is required')
+  if (!runId) throw new ActionError('Payroll run is required')
 
   await generatePayslipPdfs(runId)
   revalidatePath(`/payroll/${runId}`)
-}
+})
 
-export async function deletePayrollRun(formData: FormData) {
+export const deletePayrollRun = defineAction(async function deletePayrollRun(formData: FormData) {
   await assertRole(...HR)
 
   const runId = text(formData, 'run_id')
-  if (!runId) throw new Error('Payroll run is required')
+  if (!runId) throw new ActionError('Payroll run is required')
 
   const supabase = await createClient()
   const { error } = await supabase.from('payroll_runs').delete().eq('id', runId).eq('status', 'draft')
 
-  if (error) throw new Error('Could not delete the run: ' + error.message)
+  if (error) throw new ActionError('Could not delete the run: ' + error.message)
 
   revalidatePath('/payroll')
   redirect('/payroll')
-}
+})

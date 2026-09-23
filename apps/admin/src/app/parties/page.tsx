@@ -2,7 +2,9 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import PartyForm from "./PartyForm";
-import PartyStatusButton from "./PartyStatusButton";
+import StatusToggleButton from "@/components/StatusToggleButton";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { addParty, updateParty, setPartyActive } from "./actions";
 
 type SearchParams = { edit?: string; add?: string; filter?: string; q?: string };
@@ -65,18 +67,17 @@ export default async function PartiesPage(props: { searchParams: Promise<SearchP
         </div>
         <form className="flex-1 flex gap-2" action="/parties">
           <input type="hidden" name="filter" value={filter} />
-          <input
+          <Input
+            type="search"
             name="q"
             defaultValue={query}
             placeholder="Search by name…"
-            className="flex-1 rounded-md px-4 py-2 bg-white border border-gray-200 text-black text-sm focus:outline-none focus:ring-2 focus:ring-[#A67C52]/40"
+            aria-label="Search parties by name"
+            className="flex-1 bg-white"
           />
-          <button
-            type="submit"
-            className="px-4 py-2 border border-gray-200 bg-white text-gray-600 text-xs font-bold uppercase tracking-wider rounded hover:bg-gray-50 transition-colors cursor-pointer"
-          >
+          <Button type="submit" size="lg" variant="outline">
             Search
-          </button>
+          </Button>
         </form>
       </div>
 
@@ -132,7 +133,7 @@ export default async function PartiesPage(props: { searchParams: Promise<SearchP
                       >
                         Edit
                       </Link>
-                      <PartyStatusButton id={party.id} isActive={party.is_active} setActive={setPartyActive} />
+                      <StatusToggleButton id={party.id} isActive={party.is_active} setActive={setPartyActive} />
                     </div>
                   </td>
                 </tr>

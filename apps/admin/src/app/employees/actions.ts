@@ -1,5 +1,7 @@
 'use server'
 
+import { ActionError, defineAction } from '@/lib/actions'
+
 import { revalidatePath } from 'next/cache'
 import { assertRole } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
@@ -17,14 +19,14 @@ function readEmployeeFields(formData: FormData) {
   const name = text(formData, 'full_name')
   const workerType = text(formData, 'worker_type')
 
-  if (!code) throw new Error('Employee code is required')
-  if (!name) throw new Error('Name is required')
+  if (!code) throw new ActionError('Employee code is required')
+  if (!name) throw new ActionError('Name is required')
   if (workerType !== 'monthly' && workerType !== 'daily') {
-    throw new Error('Choose whether this person is on a monthly salary or a daily rate')
+    throw new ActionError('Choose whether this person is on a monthly salary or a daily rate')
   }
 
   const amountPaise = parseRupeesToPaise(text(formData, 'default_amount'))
-  if (amountPaise < 0) throw new Error('Amount cannot be negative')
+  if (amountPaise < 0) throw new ActionError('Amount cannot be negative')
 
   return {
     employee_code: code,
@@ -42,7 +44,7 @@ function readEmployeeFields(formData: FormData) {
   }
 }
 
-export async function addEmployee(formData: FormData) {
+export const addEmployee = defineAction(async function addEmployee(formData: FormData) {
   const profile = await assertRole(...HR)
 
   const supabase = await createClient()
@@ -52,47 +54,47 @@ export async function addEmployee(formData: FormData) {
 
   if (error) {
     if (error.code === '23505') {
-      throw new Error('That employee code is already in use')
+      throw new ActionError('That employee code is already in use')
     }
-    throw new Error('Could not add employee: ' + error.message)
+    throw new ActionError('Could not add employee: ' + error.message)
   }
 
   revalidatePath('/employees')
-}
+})
 
-export async function updateEmployee(formData: FormData) {
+export const updateEmployee = defineAction(async function updateEmployee(formData: FormData) {
   await assertRole(...HR)
 
   const id = text(formData, 'id')
-  if (!id) throw new Error('Employee is required')
+  if (!id) throw new ActionError('Employee is required')
 
   const supabase = await createClient()
   const { error } = await supabase.from('employees').update(readEmployeeFields(formData)).eq('id', id)
 
   if (error) {
     if (error.code === '23505') {
-      throw new Error('That employee code is already in use')
+      throw new ActionError('That employee code is already in use')
     }
-    throw new Error('Could not update employee: ' + error.message)
+    throw new ActionError('Could not update employee: ' + error.message)
   }
 
   revalidatePath('/employees')
   revalidatePath(`/employees/${id}`)
-}
+})
 
 // Employees are deactivated rather than deleted, so their historical payslips keep a valid reference.
-export async function setEmployeeActive(formData: FormData) {
+export const setEmployeeActive = defineAction(async function setEmployeeActive(formData: FormData) {
   await assertRole(...HR)
 
   const id = text(formData, 'id')
   const isActive = text(formData, 'is_active') === 'true'
-  if (!id) throw new Error('Employee is required')
+  if (!id) throw new ActionError('Employee is required')
 
   const supabase = await createClient()
   const { error } = await supabase.from('employees').update({ is_active: isActive }).eq('id', id)
 
-  if (error) throw new Error('Could not update employee: ' + error.message)
+  if (error) throw new ActionError('Could not update employee: ' + error.message)
 
   revalidatePath('/employees')
   revalidatePath(`/employees/${id}`)
-}
+})

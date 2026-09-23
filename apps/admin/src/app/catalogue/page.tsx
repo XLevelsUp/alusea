@@ -3,7 +3,7 @@ import { requireRole } from '@/lib/auth/session'
 import { deleteProduct } from '../actions'
 import Image from 'next/image'
 import AddProductForm from './AddProductForm'
-import DeleteProductButton from './DeleteProductButton'
+import DeleteButton from '@/components/DeleteButton'
 import Link from 'next/link'
 import type { ProductRow } from '@/lib/supabase/types'
 
@@ -78,7 +78,7 @@ export default async function AdminCataloguePage(props: { searchParams: Promise<
                       <Link href={`/catalogue?edit=${item.id}`} className="text-blue-500 hover:text-blue-700 text-xs font-semibold uppercase tracking-wider px-3 py-1 border border-blue-200 hover:bg-blue-50 rounded transition-colors">
                         Edit
                       </Link>
-                      <DeleteProductButton id={item.id} deleteAction={deleteProduct} />
+                      <DeleteButton id={item.id} itemLabel="product" deleteAction={deleteProduct} />
                     </div>
                   </td>
                 </tr>

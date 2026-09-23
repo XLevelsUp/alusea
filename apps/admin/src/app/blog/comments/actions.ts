@@ -1,5 +1,7 @@
 'use server'
 
+import { ActionError, defineAction } from '@/lib/actions'
+
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { assertRole } from '@/lib/auth/session'
@@ -9,7 +11,7 @@ async function requireUser() {
   return createClient()
 }
 
-export async function approveComment(id: string, postSlug: string) {
+export const approveComment = defineAction(async function approveComment(id: string, postSlug: string) {
   const supabase = await requireUser()
 
   const { error } = await supabase
@@ -18,14 +20,14 @@ export async function approveComment(id: string, postSlug: string) {
     .eq('id', id)
 
   if (error) {
-    throw new Error('Could not approve comment')
+    throw new ActionError('Could not approve comment')
   }
 
   revalidatePath(`/blog/${postSlug}`)
   revalidatePath('/blog/comments')
-}
+})
 
-export async function rejectComment(id: string, postSlug: string) {
+export const rejectComment = defineAction(async function rejectComment(id: string, postSlug: string) {
   const supabase = await requireUser()
 
   const { error } = await supabase
@@ -34,14 +36,14 @@ export async function rejectComment(id: string, postSlug: string) {
     .eq('id', id)
 
   if (error) {
-    throw new Error('Could not reject comment')
+    throw new ActionError('Could not reject comment')
   }
 
   revalidatePath(`/blog/${postSlug}`)
   revalidatePath('/blog/comments')
-}
+})
 
-export async function deleteComment(id: string, postSlug: string) {
+export const deleteComment = defineAction(async function deleteComment(id: string, postSlug: string) {
   const supabase = await requireUser()
 
   const { error } = await supabase
@@ -50,9 +52,9 @@ export async function deleteComment(id: string, postSlug: string) {
     .eq('id', id)
 
   if (error) {
-    throw new Error('Could not delete comment')
+    throw new ActionError('Could not delete comment')
   }
 
   revalidatePath(`/blog/${postSlug}`)
   revalidatePath('/blog/comments')
-}
+})

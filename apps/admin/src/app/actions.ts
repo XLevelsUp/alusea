@@ -1,5 +1,7 @@
 'use server'
 
+import { ActionError, defineAction } from '@/lib/actions'
+
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -36,7 +38,7 @@ export async function login(formData: FormData) {
   redirect(landingPageFor(profile.role))
 }
 
-export async function addProduct(formData: FormData) {
+export const addProduct = defineAction(async function addProduct(formData: FormData) {
   const supabase = await createClient()
 
   await assertRole('owner', 'sales')
@@ -55,7 +57,7 @@ export async function addProduct(formData: FormData) {
       if (specsRaw.trim().startsWith('{')) {
          specs = JSON.parse(specsRaw)
       } else {
-         throw new Error("Parse as plain text");
+         throw new ActionError("Parse as plain text");
       }
     } catch (e) {
       const lines = specsRaw.split('\n')
@@ -80,7 +82,7 @@ export async function addProduct(formData: FormData) {
   }
 
   if (uploadedUrls.length === 0) {
-    throw new Error('Please provide at least one image file')
+    throw new ActionError('Please provide at least one image file')
   }
 
   const finalImageUrl = uploadedUrls[0];
@@ -93,16 +95,16 @@ export async function addProduct(formData: FormData) {
 
   if (error) {
     console.error(error)
-    throw new Error('Could not add product: ' + error.message)
+    throw new ActionError('Could not add product: ' + error.message)
   }
 
   await syncProductToCatalog(inserted)
 
   revalidatePath('/catalogue')
   revalidatePath('/catalogue')
-}
+})
 
-export async function updateProduct(formData: FormData) {
+export const updateProduct = defineAction(async function updateProduct(formData: FormData) {
   const supabase = await createClient()
 
   await assertRole('owner', 'sales')
@@ -123,7 +125,7 @@ export async function updateProduct(formData: FormData) {
       if (specsRaw.trim().startsWith('{')) {
          specs = JSON.parse(specsRaw)
       } else {
-         throw new Error("Parse as plain text");
+         throw new ActionError("Parse as plain text");
       }
     } catch (e) {
       const lines = specsRaw.split('\n')
@@ -155,7 +157,7 @@ export async function updateProduct(formData: FormData) {
   }
 
   if (finalUrls.length === 0) {
-    throw new Error('Please provide at least one image file')
+    throw new ActionError('Please provide at least one image file')
   }
 
   const mainImageUrl = finalUrls[0];
@@ -169,16 +171,16 @@ export async function updateProduct(formData: FormData) {
 
   if (error) {
     console.error(error)
-    throw new Error('Could not update product: ' + error.message)
+    throw new ActionError('Could not update product: ' + error.message)
   }
 
   await syncProductToCatalog(updated)
 
   revalidatePath('/catalogue')
   revalidatePath('/catalogue')
-}
+})
 
-export async function deleteProduct(id: string) {
+export const deleteProduct = defineAction(async function deleteProduct(id: string) {
   const supabase = await createClient()
 
   await assertRole('owner', 'sales')
@@ -189,23 +191,23 @@ export async function deleteProduct(id: string) {
     .eq('id', id)
 
   if (error) {
-    throw new Error('Could not delete product')
+    throw new ActionError('Could not delete product')
   }
 
   await removeProductFromCatalog(id)
 
   revalidatePath('/catalogue')
   revalidatePath('/catalogue')
-}
+})
 
-export async function addCategory(formData: FormData) {
+export const addCategory = defineAction(async function addCategory(formData: FormData) {
   const supabase = await createClient()
 
   await assertRole('owner', 'sales')
 
   const name = (formData.get('name') as string)?.trim()
   if (!name) {
-    throw new Error('Category name is required')
+    throw new ActionError('Category name is required')
   }
 
   const { error } = await supabase
@@ -214,16 +216,16 @@ export async function addCategory(formData: FormData) {
 
   if (error) {
     console.error(error)
-    throw new Error('Could not add category: ' + error.message)
+    throw new ActionError('Could not add category: ' + error.message)
   }
 
   revalidatePath('/')
   revalidatePath('/catalogue')
   revalidatePath('/catalogue')
   revalidatePath('/categories')
-}
+})
 
-export async function updateCategory(formData: FormData) {
+export const updateCategory = defineAction(async function updateCategory(formData: FormData) {
   const supabase = await createClient()
 
   await assertRole('owner', 'sales')
@@ -231,7 +233,7 @@ export async function updateCategory(formData: FormData) {
   const id = formData.get('id') as string
   const name = (formData.get('name') as string)?.trim()
   if (!name) {
-    throw new Error('Category name is required')
+    throw new ActionError('Category name is required')
   }
 
   const { data: existing, error: fetchError } = await supabase
@@ -241,7 +243,7 @@ export async function updateCategory(formData: FormData) {
     .single()
 
   if (fetchError || !existing) {
-    throw new Error('Could not find category')
+    throw new ActionError('Could not find category')
   }
 
   const { error } = await supabase
@@ -251,7 +253,7 @@ export async function updateCategory(formData: FormData) {
 
   if (error) {
     console.error(error)
-    throw new Error('Could not update category: ' + error.message)
+    throw new ActionError('Could not update category: ' + error.message)
   }
 
   if (existing.name !== name) {
@@ -262,7 +264,7 @@ export async function updateCategory(formData: FormData) {
 
     if (productsError) {
       console.error(productsError)
-      throw new Error('Category renamed, but failed to update existing products: ' + productsError.message)
+      throw new ActionError('Category renamed, but failed to update existing products: ' + productsError.message)
     }
   }
 
@@ -270,9 +272,9 @@ export async function updateCategory(formData: FormData) {
   revalidatePath('/catalogue')
   revalidatePath('/catalogue')
   revalidatePath('/categories')
-}
+})
 
-export async function deleteCategory(id: string) {
+export const deleteCategory = defineAction(async function deleteCategory(id: string) {
   const supabase = await createClient()
 
   await assertRole('owner', 'sales')
@@ -284,7 +286,7 @@ export async function deleteCategory(id: string) {
     .single()
 
   if (fetchError || !category) {
-    throw new Error('Could not find category')
+    throw new ActionError('Could not find category')
   }
 
   const { count, error: countError } = await supabase
@@ -293,11 +295,11 @@ export async function deleteCategory(id: string) {
     .eq('category', category.name)
 
   if (countError) {
-    throw new Error('Could not verify category usage')
+    throw new ActionError('Could not verify category usage')
   }
 
   if (count && count > 0) {
-    throw new Error(`Cannot delete "${category.name}" — ${count} product(s) still use this category.`)
+    throw new ActionError(`Cannot delete "${category.name}" — ${count} product(s) still use this category.`)
   }
 
   const { error } = await supabase
@@ -306,14 +308,14 @@ export async function deleteCategory(id: string) {
     .eq('id', id)
 
   if (error) {
-    throw new Error('Could not delete category')
+    throw new ActionError('Could not delete category')
   }
 
   revalidatePath('/')
   revalidatePath('/catalogue')
   revalidatePath('/catalogue')
   revalidatePath('/categories')
-}
+})
 
 export async function signOut() {
   const supabase = await createClient();

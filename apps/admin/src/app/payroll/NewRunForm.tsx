@@ -1,56 +1,26 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { TextField } from "@/components/form-fields";
+import { Button } from "@/components/ui/button";
+import { useAction } from "@/hooks/use-action";
+import type { Action } from "@/lib/actions";
 
-function isRedirect(error: unknown): boolean {
-  return !!error && typeof error === "object" && "digest" in error && String(error.digest).startsWith("NEXT_REDIRECT");
-}
+export default function NewRunForm({ defaultMonth, create }: { defaultMonth: string; create: Action }) {
+  // Success redirects to the new run from the server, so only a failure needs handling here.
+  const { run, isPending, error } = useAction(create);
 
-export default function NewRunForm({
-  defaultMonth,
-  create,
-}: {
-  defaultMonth: string;
-  create: (formData: FormData) => Promise<void>;
-}) {
-  const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-
-  function onSubmit(formData: FormData) {
-    setError(null);
-    startTransition(async () => {
-      try {
-        await create(formData);
-      } catch (e) {
-        if (isRedirect(e)) throw e;
-        setError(e instanceof Error ? e.message : "Could not start the run");
-      }
-    });
+  function onSubmit(e: React.SubmitEvent<HTMLFormElement>) {
+    e.preventDefault();
+    run(new FormData(e.currentTarget));
   }
 
   return (
-    <form action={onSubmit} className="flex flex-wrap items-end gap-3">
-      <div>
-        <label className="block text-xs font-medium text-gray-700 mb-1" htmlFor="period_month">
-          Month
-        </label>
-        <input
-          id="period_month"
-          name="period_month"
-          type="month"
-          defaultValue={defaultMonth}
-          required
-          className="rounded-md px-4 py-2 bg-gray-50 border border-gray-200 text-black"
-        />
-      </div>
-      <button
-        type="submit"
-        disabled={isPending}
-        className="px-5 py-2.5 bg-[#A67C52] text-white text-xs font-bold uppercase tracking-wider rounded-sm hover:bg-[#8e6944] transition-colors cursor-pointer disabled:opacity-50"
-      >
+    <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-3">
+      <TextField label="Month" name="period_month" type="month" defaultValue={defaultMonth} required className="w-auto" />
+      <Button type="submit" size="lg" variant="brand" disabled={isPending}>
         {isPending ? "Starting…" : "Start Payroll Run"}
-      </button>
-      {error && <p className="w-full text-sm text-red-600">{error}</p>}
+      </Button>
+      {error && <p role="alert" className="w-full text-sm text-destructive">{error}</p>}
     </form>
   );
 }
