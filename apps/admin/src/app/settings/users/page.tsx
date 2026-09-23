@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS, type Role } from "@/lib/auth/roles";
-import { updateUserRole, setUserActive } from "./actions";
+import { inviteUser, updateUserRole, setUserActive } from "./actions";
 import UserRow from "./UserRow";
 import AddUserForm from "./AddUserForm";
 
@@ -100,7 +100,7 @@ export default async function UsersPage(props: {
                 </svg>
               </Link>
             </div>
-            <AddUserForm />
+            <AddUserForm add={inviteUser} cancelUrl="/settings/users" />
           </div>
         </div>
       )}

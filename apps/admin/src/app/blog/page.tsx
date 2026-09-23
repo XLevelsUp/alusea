@@ -3,7 +3,7 @@ import { requireRole } from '@/lib/auth/session'
 import { deleteBlogPost } from './actions'
 import Image from 'next/image'
 import Link from 'next/link'
-import DeleteBlogPostButton from './DeleteBlogPostButton'
+import DeleteButton from '@/components/DeleteButton'
 
 const MARKETING_URL = process.env.NEXT_PUBLIC_MARKETING_URL || 'https://www.alusea.in'
 
@@ -82,7 +82,7 @@ export default async function AdminBlogPage() {
                       <Link href={`/blog/${post.id}/edit`} className="text-blue-500 hover:text-blue-700 text-xs font-semibold uppercase tracking-wider px-3 py-1 border border-blue-200 hover:bg-blue-50 rounded transition-colors">
                         Edit
                       </Link>
-                      <DeleteBlogPostButton id={post.id} deleteAction={deleteBlogPost} />
+                      <DeleteButton id={post.id} itemLabel="blog post" deleteAction={deleteBlogPost} />
                     </div>
                   </td>
                 </tr>

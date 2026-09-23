@@ -1,5 +1,6 @@
 // Document numbers come from the database, never from application code. Allocating here would produce duplicate invoice numbers under concurrent use.
 
+import { ActionError } from '@/lib/actionError'
 import { createClient } from '@/lib/supabase/server'
 
 export { financialYearOf } from './financial-year'
@@ -28,7 +29,7 @@ export async function allocateDocumentNumber(docType: DocType, date?: Date): Pro
   })
 
   if (error || !data) {
-    throw new Error('Could not allocate a document number: ' + (error?.message ?? 'no number returned'))
+    throw new ActionError('Could not allocate a document number: ' + (error?.message ?? 'no number returned'))
   }
 
   return data

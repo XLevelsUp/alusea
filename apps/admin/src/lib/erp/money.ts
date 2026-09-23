@@ -1,6 +1,8 @@
 // All money in the ERP is integer paise. Float rupees accumulate rounding error that surfaces as invoices whose lines do not sum to their total, and payslips off by a rupee.
 // Convert at the edges only: parse on input, format on output, integers everywhere between.
 
+import { ActionError } from '../actionError.ts'
+
 export const PAISE_PER_RUPEE = 100
 
 // Parses user input into paise. Accepts "1,500.50", "1500.5", "₹1500" and blank.
@@ -12,10 +14,19 @@ export function parseRupeesToPaise(input: string | number | null | undefined): n
 
   const value = Number(cleaned)
   if (!Number.isFinite(value)) {
-    throw new Error(`Not a valid amount: ${input}`)
+    throw new ActionError(`Not a valid amount: ${input}`)
   }
 
   return Math.round(value * PAISE_PER_RUPEE)
+}
+
+// For live previews while someone is still typing: unparseable input counts as zero instead of throwing mid-render.
+export function previewRupeesToPaise(input: string | number | null | undefined): number {
+  try {
+    return parseRupeesToPaise(input)
+  } catch {
+    return 0
+  }
 }
 
 // Plain decimal string for input fields: 150050 -> "1500.50".

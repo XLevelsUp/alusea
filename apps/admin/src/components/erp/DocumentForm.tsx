@@ -1,7 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import { FormError, SelectField, TextareaField, TextField } from "@/components/form-fields";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { useAction } from "@/hooks/use-action";
+import type { Action } from "@/lib/actions";
 import LineItemsEditor, { type EditorLine, type ProductOption } from "./LineItemsEditor";
 
 export type PartyOption = {
@@ -28,7 +36,7 @@ type Props = {
     notes: string;
     lines: EditorLine[];
   };
-  save: (formData: FormData) => Promise<void>;
+  save: Action;
   cancelUrl: string;
 };
 
@@ -46,173 +54,129 @@ export default function DocumentForm({
   const [partyId, setPartyId] = useState(initial.partyId);
   const [isGst, setIsGst] = useState(initial.isGstApplicable);
   const [gstRate, setGstRate] = useState(initial.gstRate);
-  const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const { run, isPending, error } = useAction(save);
 
   const party = parties.find((p) => p.id === partyId);
   const secondDateLabel = kind === "quote" ? "Valid until" : "Due date";
   const secondDateName = kind === "quote" ? "valid_until" : "due_date";
 
-  function onSubmit(formData: FormData) {
-    setError(null);
-    startTransition(async () => {
-      try {
-        await save(formData);
-      } catch (e) {
-        // A redirect from a server action surfaces here as an error, so it is re-thrown rather than shown.
-        if (e && typeof e === "object" && "digest" in e && String(e.digest).startsWith("NEXT_REDIRECT")) {
-          throw e;
-        }
-        setError(e instanceof Error ? e.message : "Could not save");
-      }
+  function onSubmit(e: React.SubmitEvent<HTMLFormElement>) {
+    e.preventDefault();
+    // Creating redirects to the new document from the server; saving an edit returns to where it came from.
+    run(new FormData(e.currentTarget)).then((result) => {
+      if (result.ok) window.location.href = cancelUrl;
     });
   }
 
   return (
-    <form action={onSubmit} className="space-y-6">
+    <form onSubmit={onSubmit} className="space-y-6">
       {documentId && <input type="hidden" name="id" value={documentId} />}
       {quoteId && <input type="hidden" name="quote_id" value={quoteId} />}
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="party_id">
-              Client <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="party_id"
+      <Card>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <SelectField
+              label="Client"
               name="party_id"
               required
               value={partyId}
               onChange={(e) => setPartyId(e.target.value)}
-              className="rounded-md px-4 py-2 bg-gray-50 border border-gray-200 w-full text-black"
+              className="sm:col-span-2"
+              hint={
+                party && !party.stateCode ? (
+                  <span className="text-amber-600">
+                    This client has no state set, so the tax will be treated as same-state. Add one on their record.
+                  </span>
+                ) : undefined
+              }
             >
-              <option value="">Select a client…</option>
+              <NativeSelectOption value="">Select a client…</NativeSelectOption>
               {parties.map((option) => (
-                <option key={option.id} value={option.id}>
+                <NativeSelectOption key={option.id} value={option.id}>
                   {option.name}
                   {option.stateName ? ` — ${option.stateName}` : ""}
-                </option>
+                </NativeSelectOption>
               ))}
-            </select>
-            {party && !party.stateCode && (
-              <p className="text-xs text-amber-600 mt-1">
-                This client has no state set, so the tax will be treated as same-state. Add one on their record.
-              </p>
+            </SelectField>
+
+            <TextField label="Date" name="issue_date" type="date" defaultValue={initial.issueDate} />
+            <TextField label={secondDateLabel} name={secondDateName} type="date" defaultValue={initial.secondDate} />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-6 mt-5 pt-5 border-t">
+            {/* Radix omits an unchecked box from the submitted form, so the hidden field carries the value either way. */}
+            <input type="hidden" name="is_gst_applicable" value={isGst ? "on" : "off"} />
+            <Field orientation="horizontal" className="w-auto">
+              <Checkbox id="apply_gst" checked={isGst} onCheckedChange={(checked) => setIsGst(checked === true)} />
+              <FieldLabel htmlFor="apply_gst" className="font-normal">Apply GST</FieldLabel>
+            </Field>
+
+            {isGst && (
+              <Field orientation="horizontal" className="w-auto">
+                <FieldLabel htmlFor="gst_rate" className="font-normal">Rate</FieldLabel>
+                <NativeSelect
+                  id="gst_rate"
+                  name="gst_rate"
+                  size="sm"
+                  value={gstRate}
+                  onChange={(e) => setGstRate(Number(e.target.value))}
+                  className="w-24"
+                >
+                  {[5, 12, 18, 28].map((rate) => (
+                    <NativeSelectOption key={rate} value={rate}>
+                      {rate}%
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+              </Field>
             )}
+
+            {!isGst && <p className="text-xs text-muted-foreground">No tax will be charged on this document.</p>}
           </div>
+        </CardContent>
+      </Card>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="issue_date">
-              Date
-            </label>
-            <input
-              id="issue_date"
-              name="issue_date"
-              type="date"
-              defaultValue={initial.issueDate}
-              className="rounded-md px-4 py-2 bg-gray-50 border border-gray-200 w-full text-black"
-            />
-          </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-bold uppercase tracking-wider text-matte-black">Line items</CardTitle>
+          <CardDescription className="text-xs">
+            Enter width and height to price by square foot, or leave them blank and type a quantity.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <LineItemsEditor
+            initialLines={initial.lines}
+            products={products}
+            companyStateCode={companyStateCode}
+            partyStateCode={party?.stateCode ?? ""}
+            isGstApplicable={isGst}
+            gstRate={gstRate}
+          />
+        </CardContent>
+      </Card>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor={secondDateName}>
-              {secondDateLabel}
-            </label>
-            <input
-              id={secondDateName}
-              name={secondDateName}
-              type="date"
-              defaultValue={initial.secondDate}
-              className="rounded-md px-4 py-2 bg-gray-50 border border-gray-200 w-full text-black"
-            />
-          </div>
-        </div>
+      <Card>
+        <CardContent>
+          <TextareaField
+            label="Notes"
+            name="notes"
+            rows={3}
+            defaultValue={initial.notes}
+            placeholder="Anything the client should see on this document"
+          />
+        </CardContent>
+      </Card>
 
-        <div className="flex flex-wrap items-center gap-6 mt-5 pt-5 border-t border-gray-100">
-          {/* A controlled checkbox sets the DOM property but not the HTML attribute, so the browser omits it from the submitted form. The hidden field carries the real value. */}
-          <input type="hidden" name="is_gst_applicable" value={isGst ? "on" : "off"} />
-          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isGst}
-              onChange={(e) => setIsGst(e.target.checked)}
-              className="w-4 h-4 accent-[#A67C52]"
-            />
-            Apply GST
-          </label>
-
-          {isGst && (
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-700" htmlFor="gst_rate">
-                Rate
-              </label>
-              <select
-                id="gst_rate"
-                name="gst_rate"
-                value={gstRate}
-                onChange={(e) => setGstRate(Number(e.target.value))}
-                className="rounded-md px-3 py-1.5 bg-gray-50 border border-gray-200 text-black text-sm"
-              >
-                {[5, 12, 18, 28].map((rate) => (
-                  <option key={rate} value={rate}>
-                    {rate}%
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {!isGst && <p className="text-xs text-gray-400">No tax will be charged on this document.</p>}
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-matte-black mb-1">Line items</h2>
-        <p className="text-xs text-gray-400 mb-4">
-          Enter width and height to price by square foot, or leave them blank and type a quantity.
-        </p>
-
-        <LineItemsEditor
-          initialLines={initial.lines}
-          products={products}
-          companyStateCode={companyStateCode}
-          partyStateCode={party?.stateCode ?? ""}
-          isGstApplicable={isGst}
-          gstRate={gstRate}
-        />
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="notes">
-          Notes
-        </label>
-        <textarea
-          id="notes"
-          name="notes"
-          rows={3}
-          defaultValue={initial.notes}
-          placeholder="Anything the client should see on this document"
-          className="rounded-md px-4 py-2 bg-gray-50 border border-gray-200 w-full text-black"
-        />
-      </div>
-
-      {error && <p className="p-4 bg-red-50 text-red-600 text-sm rounded-md border border-red-100">{error}</p>}
+      <FormError error={error} />
 
       <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={isPending}
-          className="px-6 py-3 bg-[#A67C52] text-white text-xs font-bold uppercase tracking-wider rounded-sm hover:bg-[#8e6944] transition-colors shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <Button type="submit" variant="brand" disabled={isPending}>
           {isPending ? "Saving…" : documentId ? "Save Changes" : `Create ${kind === "quote" ? "Quotation" : "Invoice"}`}
-        </button>
-        <Link
-          href={cancelUrl}
-          className="px-5 py-3 border border-gray-200 text-gray-600 rounded-md uppercase tracking-widest text-xs font-bold hover:bg-gray-50 transition-colors"
-        >
-          Cancel
-        </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href={cancelUrl}>Cancel</Link>
+        </Button>
       </div>
     </form>
   );

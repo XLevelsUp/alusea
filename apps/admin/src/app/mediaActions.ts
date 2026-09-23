@@ -1,10 +1,12 @@
 'use server'
 
+import { ActionError, defineAction } from '@/lib/actions'
+
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { assertRole } from '@/lib/auth/session'
 
-export async function addPageMedia(formData: FormData) {
+export const addPageMedia = defineAction(async function addPageMedia(formData: FormData) {
   const supabase = await createClient()
 
   await assertRole('owner', 'sales')
@@ -17,7 +19,7 @@ export async function addPageMedia(formData: FormData) {
   const sortOrder   = parseInt(formData.get('sort_order') as string || '0', 10)
   const newUploadedUrl = formData.get('new_uploaded_url') as string
   if (!newUploadedUrl) {
-    throw new Error('Please select and upload an image file')
+    throw new ActionError('Please select and upload an image file')
   }
 
   const { error: insertError } = await supabase
@@ -34,14 +36,14 @@ export async function addPageMedia(formData: FormData) {
 
   if (insertError) {
     console.error('Insert error:', insertError)
-    throw new Error('Could not save media entry: ' + insertError.message)
+    throw new ActionError('Could not save media entry: ' + insertError.message)
   }
 
   revalidatePath('/media')
   revalidatePath('/experience-center')
-}
+})
 
-export async function deletePageMedia(id: string, imageUrl: string) {
+export const deletePageMedia = defineAction(async function deletePageMedia(id: string, imageUrl: string) {
   const supabase = await createClient()
 
   await assertRole('owner', 'sales')
@@ -52,7 +54,7 @@ export async function deletePageMedia(id: string, imageUrl: string) {
     .delete()
     .eq('id', id)
 
-  if (deleteError) throw new Error('Could not delete media entry')
+  if (deleteError) throw new ActionError('Could not delete media entry')
 
   // Try to remove from storage (extract file path from URL)
   try {
@@ -68,4 +70,4 @@ export async function deletePageMedia(id: string, imageUrl: string) {
 
   revalidatePath('/media')
   revalidatePath('/experience-center')
-}
+})

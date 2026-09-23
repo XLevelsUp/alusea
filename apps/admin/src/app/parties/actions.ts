@@ -1,5 +1,7 @@
 'use server'
 
+import { ActionError, defineAction } from '@/lib/actions'
+
 import { revalidatePath } from 'next/cache'
 import { assertRole } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
@@ -14,13 +16,13 @@ function text(formData: FormData, field: string): string {
 function readPartyFields(formData: FormData) {
   const name = text(formData, 'name')
   if (!name) {
-    throw new Error('Name is required')
+    throw new ActionError('Name is required')
   }
 
   const isClient = formData.get('is_client') === 'on'
   const isVendor = formData.get('is_vendor') === 'on'
   if (!isClient && !isVendor) {
-    throw new Error('A party must be a client, a vendor, or both')
+    throw new ActionError('A party must be a client, a vendor, or both')
   }
 
   const gstin = text(formData, 'gstin').toUpperCase()
@@ -28,21 +30,21 @@ function readPartyFields(formData: FormData) {
   const stateCode = text(formData, 'billing_state_code')
 
   if (gstin && !isValidGstin(gstin)) {
-    throw new Error('GSTIN must be 15 characters in the standard format, for example 33ABCDE1234F1Z5')
+    throw new ActionError('GSTIN must be 15 characters in the standard format, for example 33ABCDE1234F1Z5')
   }
 
   if (pan && !isValidPan(pan)) {
-    throw new Error('PAN must be 10 characters in the standard format, for example ABCDE1234F')
+    throw new ActionError('PAN must be 10 characters in the standard format, for example ABCDE1234F')
   }
 
   // The state code drives IGST versus CGST+SGST, so a GSTIN disagreeing with the selected state would produce wrong tax.
   if (gstin && stateCode && gstin.slice(0, 2) !== stateCode) {
-    throw new Error(`GSTIN starts with state code ${gstin.slice(0, 2)} but the selected state is ${stateCode}`)
+    throw new ActionError(`GSTIN starts with state code ${gstin.slice(0, 2)} but the selected state is ${stateCode}`)
   }
 
   const terms = Number(text(formData, 'payment_terms_days') || '0')
   if (!Number.isFinite(terms) || terms < 0) {
-    throw new Error('Payment terms must be zero or more days')
+    throw new ActionError('Payment terms must be zero or more days')
   }
 
   return {
@@ -66,7 +68,7 @@ function readPartyFields(formData: FormData) {
   }
 }
 
-export async function addParty(formData: FormData) {
+export const addParty = defineAction(async function addParty(formData: FormData) {
   const profile = await assertRole(...ERP_WRITERS)
 
   const supabase = await createClient()
@@ -75,42 +77,42 @@ export async function addParty(formData: FormData) {
     .insert([{ ...readPartyFields(formData), created_by: profile.id }])
 
   if (error) {
-    throw new Error('Could not add party: ' + error.message)
+    throw new ActionError('Could not add party: ' + error.message)
   }
 
   revalidatePath('/parties')
-}
+})
 
-export async function updateParty(formData: FormData) {
+export const updateParty = defineAction(async function updateParty(formData: FormData) {
   await assertRole(...ERP_WRITERS)
 
   const id = text(formData, 'id')
-  if (!id) throw new Error('Party is required')
+  if (!id) throw new ActionError('Party is required')
 
   const supabase = await createClient()
   const { error } = await supabase.from('parties').update(readPartyFields(formData)).eq('id', id)
 
   if (error) {
-    throw new Error('Could not update party: ' + error.message)
+    throw new ActionError('Could not update party: ' + error.message)
   }
 
   revalidatePath('/parties')
-}
+})
 
 // Parties are deactivated rather than deleted, so invoices and expenses keep a valid reference.
-export async function setPartyActive(formData: FormData) {
+export const setPartyActive = defineAction(async function setPartyActive(formData: FormData) {
   await assertRole(...ERP_WRITERS)
 
   const id = text(formData, 'id')
   const isActive = text(formData, 'is_active') === 'true'
-  if (!id) throw new Error('Party is required')
+  if (!id) throw new ActionError('Party is required')
 
   const supabase = await createClient()
   const { error } = await supabase.from('parties').update({ is_active: isActive }).eq('id', id)
 
   if (error) {
-    throw new Error('Could not update party: ' + error.message)
+    throw new ActionError('Could not update party: ' + error.message)
   }
 
   revalidatePath('/parties')
-}
+})

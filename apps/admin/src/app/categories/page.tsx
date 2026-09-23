@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/session'
 import { deleteCategory } from '../actions'
 import CategoryForm from './CategoryForm'
-import DeleteCategoryButton from './DeleteCategoryButton'
+import DeleteButton from '@/components/DeleteButton'
 import Link from 'next/link'
 
 export default async function AdminCategoriesPage(props: { searchParams: Promise<{ edit?: string; add?: string }> | { edit?: string; add?: string } }) {
@@ -72,7 +72,7 @@ export default async function AdminCategoriesPage(props: { searchParams: Promise
                       <Link href={`/categories?edit=${item.id}`} className="text-blue-500 hover:text-blue-700 text-xs font-semibold uppercase tracking-wider px-3 py-1 border border-blue-200 hover:bg-blue-50 rounded transition-colors">
                         Edit
                       </Link>
-                      <DeleteCategoryButton id={item.id} deleteAction={deleteCategory} />
+                      <DeleteButton id={item.id} itemLabel="category" deleteAction={deleteCategory} />
                     </div>
                   </td>
                 </tr>

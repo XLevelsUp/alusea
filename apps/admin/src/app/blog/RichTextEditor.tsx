@@ -5,6 +5,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
+import { Button } from "@/components/ui/button";
 
 function ToolbarButton({
   onClick,
@@ -18,17 +19,18 @@ function ToolbarButton({
   children: React.ReactNode;
 }) {
   return (
-    <button
+    <Button
       type="button"
+      size="sm"
+      variant={active ? "brand" : "ghost"}
       onClick={onClick}
       aria-label={label}
+      aria-pressed={!!active}
       title={label}
-      className={`px-2.5 py-1.5 text-xs font-bold rounded transition-colors ${
-        active ? "bg-[#A67C52] text-white" : "text-gray-600 hover:bg-gray-200"
-      }`}
+      className={`normal-case tracking-normal ${active ? "shadow-none" : "text-gray-600 hover:bg-gray-200"}`}
     >
       {children}
-    </button>
+    </Button>
   );
 }
 

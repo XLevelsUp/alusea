@@ -1,5 +1,7 @@
 'use server'
 
+import { ActionError, defineAction } from '@/lib/actions'
+
 import { revalidatePath } from 'next/cache'
 import { assertRole } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
@@ -9,7 +11,7 @@ function text(formData: FormData, field: string): string {
   return String(formData.get(field) ?? '').trim()
 }
 
-export async function updateCompanyProfile(formData: FormData) {
+export const updateCompanyProfile = defineAction(async function updateCompanyProfile(formData: FormData) {
   await assertRole('owner')
 
   const gstin = text(formData, 'gstin').toUpperCase()
@@ -18,25 +20,25 @@ export async function updateCompanyProfile(formData: FormData) {
   const legalName = text(formData, 'legal_name')
 
   if (!legalName) {
-    throw new Error('Legal name is required — it prints on every invoice')
+    throw new ActionError('Legal name is required — it prints on every invoice')
   }
 
   if (gstin && !isValidGstin(gstin)) {
-    throw new Error('GSTIN must be 15 characters in the standard format, for example 33ABCDE1234F1Z5')
+    throw new ActionError('GSTIN must be 15 characters in the standard format, for example 33ABCDE1234F1Z5')
   }
 
   if (pan && !isValidPan(pan)) {
-    throw new Error('PAN must be 10 characters in the standard format, for example ABCDE1234F')
+    throw new ActionError('PAN must be 10 characters in the standard format, for example ABCDE1234F')
   }
 
   // A GSTIN starts with its own state code, so a mismatch means one of the two fields is wrong.
   if (gstin && stateCode && gstin.slice(0, 2) !== stateCode) {
-    throw new Error(`GSTIN starts with state code ${gstin.slice(0, 2)} but the selected state is ${stateCode}`)
+    throw new ActionError(`GSTIN starts with state code ${gstin.slice(0, 2)} but the selected state is ${stateCode}`)
   }
 
   const rate = Number(text(formData, 'default_gst_rate') || '18')
   if (!Number.isFinite(rate) || rate < 0 || rate > 100) {
-    throw new Error('Default GST rate must be between 0 and 100')
+    throw new ActionError('Default GST rate must be between 0 and 100')
   }
 
   const supabase = await createClient()
@@ -68,8 +70,8 @@ export async function updateCompanyProfile(formData: FormData) {
     .eq('id', 1)
 
   if (error) {
-    throw new Error('Could not save company details: ' + error.message)
+    throw new ActionError('Could not save company details: ' + error.message)
   }
 
   revalidatePath('/settings/company')
-}
+})

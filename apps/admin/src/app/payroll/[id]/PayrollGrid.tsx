@@ -1,7 +1,16 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { formatPaise, parseRupeesToPaise } from "@/lib/erp/money";
+import { useState } from "react";
+import { FormError, TextareaField } from "@/components/form-fields";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { useAction } from "@/hooks/use-action";
+import type { Action } from "@/lib/actions";
+import { formatPaise, previewRupeesToPaise } from "@/lib/erp/money";
 import { computePayslip } from "@/lib/erp/payroll";
 import type { WorkerType } from "@/lib/supabase/types";
 
@@ -30,11 +39,10 @@ export default function PayrollGrid({
   daysInPeriod: number;
   initialRows: GridRow[];
   notes: string;
-  save: (formData: FormData) => Promise<void>;
+  save: Action;
 }) {
   const [rows, setRows] = useState<GridRow[]>(initialRows);
-  const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const { run, isPending, error } = useAction(save);
   const [saved, setSaved] = useState(false);
 
   function update(id: string, patch: Partial<GridRow>) {
@@ -45,35 +53,30 @@ export default function PayrollGrid({
   const computed = rows.map((row) =>
     computePayslip({
       workerType: row.workerType,
-      enteredAmountPaise: parseRupeesToPaise(row.amount),
+      enteredAmountPaise: previewRupeesToPaise(row.amount),
       daysWorked: Number(row.daysWorked) || 0,
       daysInPeriod,
-      overtimePaise: parseRupeesToPaise(row.overtime),
-      bonusPaise: parseRupeesToPaise(row.bonus),
+      overtimePaise: previewRupeesToPaise(row.overtime),
+      bonusPaise: previewRupeesToPaise(row.bonus),
     })
   );
 
   const runTotal = computed.reduce((sum, slip) => sum + slip.netPaise, 0);
   const paidCount = computed.filter((slip) => slip.netPaise > 0).length;
 
-  function onSubmit(formData: FormData) {
-    setError(null);
+  function onSubmit(e: React.SubmitEvent<HTMLFormElement>) {
+    e.preventDefault();
     setSaved(false);
-    startTransition(async () => {
-      try {
-        await save(formData);
-        setSaved(true);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Could not save");
-      }
+    run(new FormData(e.currentTarget)).then((result) => {
+      if (result.ok) setSaved(true);
     });
   }
 
   return (
-    <form action={onSubmit}>
+    <form onSubmit={onSubmit}>
       <input type="hidden" name="run_id" value={runId} />
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+      <Card className="gap-0 py-0 mb-6">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[900px]">
             <thead>
@@ -89,7 +92,7 @@ export default function PayrollGrid({
             <tbody className="divide-y divide-gray-100">
               {rows.map((row, index) => {
                 const slip = computed[index];
-                const amountChanged = parseRupeesToPaise(row.amount) !== row.storedDefaultPaise;
+                const amountChanged = previewRupeesToPaise(row.amount) !== row.storedDefaultPaise;
 
                 return (
                   <tr key={row.id} className="align-top hover:bg-gray-50/30">
@@ -106,63 +109,61 @@ export default function PayrollGrid({
                     </td>
 
                     <td className="p-3">
-                      <input
+                      <Input
                         name={`days[${row.id}]`}
                         value={row.daysWorked}
                         onChange={(e) => update(row.id, { daysWorked: e.target.value })}
                         inputMode="decimal"
                         aria-label={`Days worked by ${row.name}`}
-                        className="w-20 rounded px-2 py-1.5 bg-gray-50 border border-gray-200 text-sm text-black"
+                        className="h-9 w-20 px-2"
                       />
                       <span className="block text-[10px] text-gray-400 mt-1">of {daysInPeriod}</span>
                     </td>
 
                     <td className="p-3">
                       {/* The column is labelled per row, so a daily rate is never mistaken for a monthly salary. */}
-                      <input
+                      <Input
                         name={`amount[${row.id}]`}
                         value={row.amount}
                         onChange={(e) => update(row.id, { amount: e.target.value })}
                         inputMode="decimal"
                         aria-label={`${row.workerType === "monthly" ? "Monthly salary" : "Daily rate"} for ${row.name}`}
-                        className="w-28 rounded px-2 py-1.5 bg-gray-50 border border-gray-200 text-sm text-black"
+                        className="h-9 w-28 px-2"
                       />
                       <span className="block text-[10px] text-gray-400 mt-1">
                         {row.workerType === "monthly" ? "per month" : "per day"}
                       </span>
                       {amountChanged && (
-                        <label className="flex items-center gap-1.5 mt-1.5 text-[10px] text-gray-600 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            name={`update_default[${row.id}]`}
-                            className="w-3 h-3 accent-[#A67C52]"
-                          />
-                          Update their default
-                        </label>
+                        <Field orientation="horizontal" className="mt-1.5 gap-1.5">
+                          <Checkbox id={`update_default_${row.id}`} name={`update_default[${row.id}]`} className="size-3" />
+                          <FieldLabel htmlFor={`update_default_${row.id}`} className="text-[10px] font-normal text-gray-600">
+                            Update their default
+                          </FieldLabel>
+                        </Field>
                       )}
                     </td>
 
                     <td className="p-3">
-                      <input
+                      <Input
                         name={`overtime[${row.id}]`}
                         value={row.overtime}
                         onChange={(e) => update(row.id, { overtime: e.target.value })}
                         inputMode="decimal"
                         placeholder="0"
                         aria-label={`Overtime for ${row.name}`}
-                        className="w-24 rounded px-2 py-1.5 bg-gray-50 border border-gray-200 text-sm text-black"
+                        className="h-9 w-24 px-2"
                       />
                     </td>
 
                     <td className="p-3">
-                      <input
+                      <Input
                         name={`bonus[${row.id}]`}
                         value={row.bonus}
                         onChange={(e) => update(row.id, { bonus: e.target.value })}
                         inputMode="decimal"
                         placeholder="0"
                         aria-label={`Bonus for ${row.name}`}
-                        className="w-24 rounded px-2 py-1.5 bg-gray-50 border border-gray-200 text-sm text-black"
+                        className="h-9 w-24 px-2"
                       />
                     </td>
 
@@ -186,35 +187,26 @@ export default function PayrollGrid({
             <p className="text-2xl font-bold text-matte-black">{formatPaise(runTotal)}</p>
           </div>
         </div>
-      </div>
+      </Card>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="notes">
-          Notes for this run
-        </label>
-        <textarea
-          id="notes"
-          name="notes"
-          rows={2}
-          defaultValue={notes}
-          className="rounded-md px-4 py-2 bg-gray-50 border border-gray-200 w-full text-black"
-        />
-      </div>
+      <Card className="mb-6">
+        <CardContent>
+          <TextareaField label="Notes for this run" name="notes" rows={2} defaultValue={notes} />
+        </CardContent>
+      </Card>
 
-      {error && <p className="mb-4 p-4 bg-red-50 text-red-600 text-sm rounded-md border border-red-100">{error}</p>}
+      <FormError error={error} className="mb-4" />
       {saved && !error && (
-        <p className="mb-4 p-4 bg-green-50 text-green-700 text-sm rounded-md border border-green-100">
-          Saved. Review the total, then approve the run when it looks right.
-        </p>
+        <Alert className="mb-4 border-green-100 bg-green-50 text-green-700">
+          <AlertDescription className="text-green-700">
+            Saved. Review the total, then approve the run when it looks right.
+          </AlertDescription>
+        </Alert>
       )}
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="px-6 py-3 bg-[#A67C52] text-white text-xs font-bold uppercase tracking-wider rounded-sm hover:bg-[#8e6944] transition-colors shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-      >
+      <Button type="submit" variant="brand" disabled={isPending}>
         {isPending ? "Saving…" : "Save Payroll"}
-      </button>
+      </Button>
     </form>
   );
 }

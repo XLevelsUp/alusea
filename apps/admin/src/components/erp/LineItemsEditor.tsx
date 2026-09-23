@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { formatPaise, parseRupeesToPaise } from "@/lib/erp/money";
+import { XIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { formatPaise, previewRupeesToPaise } from "@/lib/erp/money";
 import { areaSqFt, lineAmountPaise, computeTax } from "@/lib/erp/tax";
 
 export type EditorLine = {
@@ -108,7 +112,7 @@ export default function LineItemsEditor({
     });
   }
 
-  const amounts = lines.map((line) => lineAmountPaise(effectiveQuantity(line), parseRupeesToPaise(line.rate)));
+  const amounts = lines.map((line) => lineAmountPaise(effectiveQuantity(line), previewRupeesToPaise(line.rate)));
 
   const totals = computeTax({
     lineAmountsPaise: amounts,
@@ -143,81 +147,80 @@ export default function LineItemsEditor({
                 <tr key={line.key} className="align-top">
                   <td className="p-2">
                     {products.length > 0 && (
-                      <select
+                      <NativeSelect
+                        size="sm"
                         value={line.productId}
                         onChange={(e) => applyProduct(line.key, e.target.value)}
-                        className="w-full mb-1 rounded px-2 py-1 bg-gray-50 border border-gray-200 text-xs text-gray-600"
+                        className="mb-1 [&_select]:text-xs [&_select]:text-muted-foreground"
                         aria-label={`Product for line ${index + 1}`}
                       >
-                        <option value="">Pick from catalogue…</option>
+                        <NativeSelectOption value="">Pick from catalogue…</NativeSelectOption>
                         {products.map((product) => (
-                          <option key={product.id} value={product.id}>
+                          <NativeSelectOption key={product.id} value={product.id}>
                             {product.name}
-                          </option>
+                          </NativeSelectOption>
                         ))}
-                      </select>
+                      </NativeSelect>
                     )}
-                    <input
+                    <Input
                       name={`items[${index}][description]`}
                       value={line.description}
                       onChange={(e) => update(line.key, { description: e.target.value })}
                       placeholder="Description"
-                      className="w-full rounded px-2 py-1.5 bg-gray-50 border border-gray-200 text-sm text-black"
+                      className="h-9 px-2"
                       aria-label={`Description for line ${index + 1}`}
                     />
                     <input type="hidden" name={`items[${index}][product_id]`} value={line.productId} />
                   </td>
                   <td className="p-2">
-                    <input
+                    <Input
                       name={`items[${index}][width_ft]`}
                       value={line.widthFt}
                       onChange={(e) => update(line.key, { widthFt: e.target.value })}
                       inputMode="decimal"
-                      className="w-20 rounded px-2 py-1.5 bg-gray-50 border border-gray-200 text-sm text-black"
+                      className="h-9 w-20 px-2"
                       aria-label={`Width for line ${index + 1}`}
                     />
                   </td>
                   <td className="p-2">
-                    <input
+                    <Input
                       name={`items[${index}][height_ft]`}
                       value={line.heightFt}
                       onChange={(e) => update(line.key, { heightFt: e.target.value })}
                       inputMode="decimal"
-                      className="w-20 rounded px-2 py-1.5 bg-gray-50 border border-gray-200 text-sm text-black"
+                      className="h-9 w-20 px-2"
                       aria-label={`Height for line ${index + 1}`}
                     />
                   </td>
                   <td className="p-2">
-                    <input
+                    <Input
                       name={`items[${index}][quantity]`}
                       value={derived ? quantity.toString() : line.quantity}
                       onChange={(e) => update(line.key, { quantity: e.target.value })}
                       readOnly={derived}
                       inputMode="decimal"
                       title={derived ? "Calculated from width x height" : undefined}
-                      className={`w-20 rounded px-2 py-1.5 border border-gray-200 text-sm text-black ${
-                        derived ? "bg-gray-100 text-gray-500" : "bg-gray-50"
-                      }`}
+                      className={`h-9 w-20 px-2 ${derived ? "bg-gray-100 text-muted-foreground" : ""}`}
                       aria-label={`Quantity for line ${index + 1}`}
                     />
                   </td>
                   <td className="p-2">
-                    <input
+                    <Input
                       name={`items[${index}][unit]`}
                       value={line.unit}
                       onChange={(e) => update(line.key, { unit: e.target.value })}
-                      className="w-20 rounded px-2 py-1.5 bg-gray-50 border border-gray-200 text-sm text-black"
+                      className="h-9 w-20 px-2"
                       aria-label={`Unit for line ${index + 1}`}
                     />
                   </td>
                   <td className="p-2">
-                    <input
+                    <Input
                       name={`items[${index}][rate]`}
                       value={line.rate}
                       onChange={(e) => update(line.key, { rate: e.target.value })}
                       inputMode="decimal"
                       placeholder="0.00"
-                      className="w-28 rounded px-2 py-1.5 bg-gray-50 border border-gray-200 text-sm text-black"
+                      className="h-9 w-28 px-2"
                       aria-label={`Rate for line ${index + 1}`}
                     />
                   </td>
@@ -226,16 +229,16 @@ export default function LineItemsEditor({
                   </td>
                   <td className="p-2 pt-4">
                     {lines.length > 1 && (
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="icon-sm"
                         onClick={() => setLines((current) => current.filter((l) => l.key !== line.key))}
                         aria-label={`Remove line ${index + 1}`}
-                        className="text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+                        className="text-gray-400 hover:text-destructive"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
+                        <XIcon />
+                      </Button>
                     )}
                   </td>
                 </tr>
@@ -245,13 +248,15 @@ export default function LineItemsEditor({
         </table>
       </div>
 
-      <button
+      <Button
         type="button"
+        variant="outline"
+        size="lg"
         onClick={() => setLines((current) => [...current, blankLine()])}
-        className="mt-3 px-4 py-2 border border-gray-200 bg-white text-gray-600 text-xs font-bold uppercase tracking-wider rounded hover:bg-gray-50 transition-colors cursor-pointer"
+        className="mt-3"
       >
         + Add Line
-      </button>
+      </Button>
 
       <div className="mt-6 ml-auto max-w-sm space-y-1">
         <div className="flex justify-between text-sm">

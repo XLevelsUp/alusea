@@ -1,5 +1,7 @@
 'use server'
 
+import { ActionError, defineAction } from '@/lib/actions'
+
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { assertRole } from '@/lib/auth/session'
@@ -31,14 +33,14 @@ async function computeTotals(formData: FormData, partyId: string) {
     supabase.from('parties').select('*').eq('id', partyId).single(),
   ])
 
-  if (!party) throw new Error('Select a client for this quotation')
+  if (!party) throw new ActionError('Select a client for this quotation')
 
   const items = parseLineItems(formData)
   const isGstApplicable = formData.get('is_gst_applicable') === 'on'
   const gstRate = Number(text(formData, 'gst_rate') || String(company?.default_gst_rate ?? 18))
 
   if (!Number.isFinite(gstRate) || gstRate < 0 || gstRate > 100) {
-    throw new Error('GST rate must be between 0 and 100')
+    throw new ActionError('GST rate must be between 0 and 100')
   }
 
   const tax = computeTax({
@@ -52,11 +54,11 @@ async function computeTotals(formData: FormData, partyId: string) {
   return { items, party, tax, isGstApplicable, gstRate }
 }
 
-export async function createQuote(formData: FormData) {
+export const createQuote = defineAction(async function createQuote(formData: FormData) {
   const profile = await assertRole(...SALES)
 
   const partyId = text(formData, 'party_id')
-  if (!partyId) throw new Error('Select a client')
+  if (!partyId) throw new ActionError('Select a client')
 
   const { items, tax, isGstApplicable, gstRate } = await computeTotals(formData, partyId)
 
@@ -84,7 +86,7 @@ export async function createQuote(formData: FormData) {
     .single()
 
   if (error || !quote) {
-    throw new Error('Could not create quotation: ' + (error?.message ?? 'unknown error'))
+    throw new ActionError('Could not create quotation: ' + (error?.message ?? 'unknown error'))
   }
 
   const { error: itemsError } = await supabase
@@ -93,20 +95,20 @@ export async function createQuote(formData: FormData) {
 
   if (itemsError) {
     await supabase.from('quotes').delete().eq('id', quote.id)
-    throw new Error('Could not save quotation lines: ' + itemsError.message)
+    throw new ActionError('Could not save quotation lines: ' + itemsError.message)
   }
 
   revalidatePath('/quotes')
   redirect(`/quotes/${quote.id}`)
-}
+})
 
-export async function updateQuote(formData: FormData) {
+export const updateQuote = defineAction(async function updateQuote(formData: FormData) {
   await assertRole(...SALES)
 
   const id = text(formData, 'id')
   const partyId = text(formData, 'party_id')
-  if (!id) throw new Error('Quotation is required')
-  if (!partyId) throw new Error('Select a client')
+  if (!id) throw new ActionError('Quotation is required')
+  if (!partyId) throw new ActionError('Select a client')
 
   const { items, tax, isGstApplicable, gstRate } = await computeTotals(formData, partyId)
 
@@ -129,29 +131,29 @@ export async function updateQuote(formData: FormData) {
     })
     .eq('id', id)
 
-  if (error) throw new Error('Could not update quotation: ' + error.message)
+  if (error) throw new ActionError('Could not update quotation: ' + error.message)
 
   await supabase.from('quote_items').delete().eq('quote_id', id)
   const { error: itemsError } = await supabase
     .from('quote_items')
     .insert(items.map((item) => ({ ...item, quote_id: id })))
 
-  if (itemsError) throw new Error('Could not save quotation lines: ' + itemsError.message)
+  if (itemsError) throw new ActionError('Could not save quotation lines: ' + itemsError.message)
 
   revalidatePath('/quotes')
   revalidatePath(`/quotes/${id}`)
-}
+})
 
 // A quotation is not a legal record, so it keeps a simple status flow rather than the invoice's freeze-on-issue rule.
-export async function setQuoteStatus(formData: FormData) {
+export const setQuoteStatus = defineAction(async function setQuoteStatus(formData: FormData) {
   await assertRole(...SALES)
 
   const id = text(formData, 'id')
   const status = text(formData, 'status') as QuoteStatus
-  if (!id) throw new Error('Quotation is required')
+  if (!id) throw new ActionError('Quotation is required')
 
   const allowed: QuoteStatus[] = ['draft', 'sent', 'accepted', 'rejected', 'expired']
-  if (!allowed.includes(status)) throw new Error('Unknown status')
+  if (!allowed.includes(status)) throw new ActionError('Unknown status')
 
   const supabase = await createClient()
 
@@ -166,7 +168,7 @@ export async function setQuoteStatus(formData: FormData) {
   }
 
   const { error } = await supabase.from('quotes').update(patch).eq('id', id)
-  if (error) throw new Error('Could not update status: ' + error.message)
+  if (error) throw new ActionError('Could not update status: ' + error.message)
 
   if (status === 'sent') {
     try {
@@ -178,7 +180,7 @@ export async function setQuoteStatus(formData: FormData) {
 
   revalidatePath('/quotes')
   revalidatePath(`/quotes/${id}`)
-}
+})
 
 async function renderQuotePdf(id: string) {
   const supabase = await createClient()
@@ -228,25 +230,25 @@ async function renderQuotePdf(id: string) {
   await supabase.from('quotes').update({ pdf_path: path }).eq('id', id)
 }
 
-export async function regenerateQuotePdf(formData: FormData) {
+export const regenerateQuotePdf = defineAction(async function regenerateQuotePdf(formData: FormData) {
   await assertRole(...SALES)
   const id = text(formData, 'id')
-  if (!id) throw new Error('Quotation is required')
+  if (!id) throw new ActionError('Quotation is required')
 
   await renderQuotePdf(id)
   revalidatePath(`/quotes/${id}`)
-}
+})
 
 // Copies the quotation into a draft invoice. The invoice is a fresh document: it recomputes nothing and takes no number until it is issued.
-export async function convertQuoteToInvoice(formData: FormData) {
+export const convertQuoteToInvoice = defineAction(async function convertQuoteToInvoice(formData: FormData) {
   const profile = await assertRole('owner', 'accounts', 'sales')
 
   const id = text(formData, 'id')
-  if (!id) throw new Error('Quotation is required')
+  if (!id) throw new ActionError('Quotation is required')
 
   const supabase = await createClient()
   const { data: quote } = await supabase.from('quotes').select('*').eq('id', id).single()
-  if (!quote) throw new Error('Quotation not found')
+  if (!quote) throw new ActionError('Quotation not found')
 
   const { data: existing } = await supabase.from('invoices').select('id').eq('quote_id', id).limit(1)
   if (existing && existing.length > 0) {
@@ -254,7 +256,7 @@ export async function convertQuoteToInvoice(formData: FormData) {
   }
 
   const { data: items } = await supabase.from('quote_items').select('*').eq('quote_id', id).order('position')
-  if (!items || items.length === 0) throw new Error('This quotation has no lines')
+  if (!items || items.length === 0) throw new ActionError('This quotation has no lines')
 
   const { data: party } = await supabase
     .from('parties')
@@ -294,7 +296,7 @@ export async function convertQuoteToInvoice(formData: FormData) {
     .single()
 
   if (error || !invoice) {
-    throw new Error('Could not create the invoice: ' + (error?.message ?? 'unknown error'))
+    throw new ActionError('Could not create the invoice: ' + (error?.message ?? 'unknown error'))
   }
 
   const { error: itemsError } = await supabase.from('invoice_items').insert(
@@ -314,7 +316,7 @@ export async function convertQuoteToInvoice(formData: FormData) {
 
   if (itemsError) {
     await supabase.from('invoices').delete().eq('id', invoice.id)
-    throw new Error('Could not copy the lines across: ' + itemsError.message)
+    throw new ActionError('Could not copy the lines across: ' + itemsError.message)
   }
 
   if (quote.status !== 'accepted') {
@@ -324,19 +326,19 @@ export async function convertQuoteToInvoice(formData: FormData) {
   revalidatePath('/quotes')
   revalidatePath('/invoices')
   redirect(`/invoices/${invoice.id}`)
-}
+})
 
-export async function deleteQuote(formData: FormData) {
+export const deleteQuote = defineAction(async function deleteQuote(formData: FormData) {
   await assertRole(...SALES)
 
   const id = text(formData, 'id')
-  if (!id) throw new Error('Quotation is required')
+  if (!id) throw new ActionError('Quotation is required')
 
   const supabase = await createClient()
   const { error } = await supabase.from('quotes').delete().eq('id', id).eq('status', 'draft')
 
-  if (error) throw new Error('Could not delete quotation: ' + error.message)
+  if (error) throw new ActionError('Could not delete quotation: ' + error.message)
 
   revalidatePath('/quotes')
   redirect('/quotes')
-}
+})
