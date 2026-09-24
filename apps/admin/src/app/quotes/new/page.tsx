@@ -2,6 +2,10 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth/session";
 import { loadDocumentFormData } from "@/lib/erp/formData";
 import DocumentForm from "@/components/erp/DocumentForm";
+import { FormDialog } from "@/components/FormDialog";
+import { Button } from "@/components/ui/button";
+import PartyForm from "@/app/parties/PartyForm";
+import { addParty, updateParty } from "@/app/parties/actions";
 import { createQuote } from "../actions";
 
 export default async function NewQuotePage() {
@@ -24,12 +28,10 @@ export default async function NewQuotePage() {
       {parties.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
           <p className="text-gray-600 mb-4">You need at least one client before raising a quotation.</p>
-          <Link
-            href="/parties?add=true"
-            className="inline-flex items-center justify-center px-5 py-3 bg-[#A67C52] text-white text-xs font-bold uppercase tracking-wider rounded-sm hover:bg-[#8e6944] transition-colors"
-          >
-            Add a client
-          </Link>
+          {/* Adding the client here refreshes this page, which then shows the form with them in the list. */}
+          <FormDialog title="Add a client" trigger={<Button type="button" variant="brand">Add a client</Button>}>
+            <PartyForm add={addParty} update={updateParty} />
+          </FormDialog>
         </div>
       ) : (
         <DocumentForm

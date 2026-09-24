@@ -82,7 +82,7 @@ export default async function AdminBlogPage() {
                       <Link href={`/blog/${post.id}/edit`} className="text-blue-500 hover:text-blue-700 text-xs font-semibold uppercase tracking-wider px-3 py-1 border border-blue-200 hover:bg-blue-50 rounded transition-colors">
                         Edit
                       </Link>
-                      <DeleteButton id={post.id} itemLabel="blog post" deleteAction={deleteBlogPost} />
+                      <DeleteButton id={post.id} itemLabel="blog post" name={post.title} deleteAction={deleteBlogPost} />
                     </div>
                   </td>
                 </tr>

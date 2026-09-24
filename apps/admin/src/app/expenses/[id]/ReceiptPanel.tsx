@@ -4,6 +4,7 @@ import { XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { useActionRunner } from "@/hooks/use-action";
 import type { Action } from "@/lib/actions";
 
@@ -33,6 +34,7 @@ export default function ReceiptPanel({
   remove: Action;
 }) {
   const { run, isPending, error } = useActionRunner();
+  const confirm = useConfirm();
 
   function onUpload(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -93,7 +95,13 @@ export default function ReceiptPanel({
                       size="icon-sm"
                       disabled={isPending}
                       aria-label={`Remove ${receipt.fileName}`}
-                      onClick={() => {
+                      onClick={async () => {
+                        const ok = await confirm({
+                          title: `Remove ${receipt.fileName || "this receipt"}?`,
+                          description: "The file is deleted from storage. This cannot be undone.",
+                          confirmLabel: "Remove",
+                        });
+                        if (!ok) return;
                         const formData = new FormData();
                         formData.set("id", receipt.id);
                         formData.set("expense_id", expenseId);

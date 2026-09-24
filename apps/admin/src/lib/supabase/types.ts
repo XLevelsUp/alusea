@@ -532,6 +532,8 @@ export type Database = {
           worker_type: WorkerType
           default_amount_paise: number
           phone: string
+          aadhaar_file_name: string | null
+          aadhaar_path: string | null
           address: string
           joining_date: string | null
           bank_account_name: string
@@ -551,6 +553,8 @@ export type Database = {
           worker_type?: WorkerType
           default_amount_paise?: number
           phone?: string
+          aadhaar_file_name?: string | null
+          aadhaar_path?: string | null
           address?: string
           joining_date?: string | null
           bank_account_name?: string
@@ -570,6 +574,8 @@ export type Database = {
           worker_type?: WorkerType
           default_amount_paise?: number
           phone?: string
+          aadhaar_file_name?: string | null
+          aadhaar_path?: string | null
           address?: string
           joining_date?: string | null
           bank_account_name?: string

@@ -6,6 +6,7 @@ import { SelectField, TextField } from "@/components/form-fields";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { NativeSelectOption } from "@/components/ui/native-select";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { useActionRunner } from "@/hooks/use-action";
 import type { Action } from "@/lib/actions";
 import { formatPaise } from "@/lib/erp/money";
@@ -45,6 +46,7 @@ export default function PaymentPanel({
   remove: Action;
 }) {
   const { run, isPending, error, setError } = useActionRunner();
+  const confirm = useConfirm();
   const [isAdding, setIsAdding] = useState(false);
 
   function submit(e: React.SubmitEvent<HTMLFormElement>) {
@@ -147,7 +149,13 @@ export default function PaymentPanel({
                       size="icon-sm"
                       disabled={isPending}
                       aria-label="Remove payment"
-                      onClick={() => {
+                      onClick={async () => {
+                        const ok = await confirm({
+                          title: `Remove the ${formatPaise(payment.amountPaise)} payment?`,
+                          description: "The invoice's outstanding balance goes back up by this amount.",
+                          confirmLabel: "Remove payment",
+                        });
+                        if (!ok) return;
                         const fd = new FormData();
                         fd.set("id", payment.id);
                         fd.set("invoice_id", invoiceId);

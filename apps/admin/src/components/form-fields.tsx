@@ -1,5 +1,7 @@
-import Link from "next/link";
+"use client";
+
 import type { ComponentProps, ReactNode } from "react";
+import { CancelButton } from "@/components/FormDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -138,11 +140,7 @@ export function FormActions({ submitLabel, pendingLabel = "Saving…", isPending
       <Button type="submit" disabled={isPending} className="flex-1">
         {isPending ? pendingLabel : submitLabel}
       </Button>
-      {cancelUrl && (
-        <Button asChild variant="outline">
-          <Link href={cancelUrl}>Cancel</Link>
-        </Button>
-      )}
+      <CancelButton cancelUrl={cancelUrl} />
     </div>
   );
 }

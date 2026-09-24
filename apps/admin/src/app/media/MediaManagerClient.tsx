@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { NativeSelectOption } from "@/components/ui/native-select";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { useAction } from "@/hooks/use-action";
 
 type MediaItem = {
@@ -49,6 +50,7 @@ export default function MediaManagerClient({ initialMedia }: { initialMedia: Med
   const [preview, setPreview] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const confirm = useConfirm();
 
   const pageConfig = PAGES.find((p) => p.key === activePage)!;
   const filteredMedia = initialMedia.filter((m) => m.page === activePage);
@@ -109,7 +111,13 @@ export default function MediaManagerClient({ initialMedia }: { initialMedia: Med
   };
 
   const handleDelete = async (item: MediaItem) => {
-    if (!confirm(`Delete image for "${item.section}"?`)) return;
+    const sectionLabel = pageConfig.sections.find((s) => s.value === item.section)?.label ?? item.section;
+    const ok = await confirm({
+      title: `Delete ${item.title ? `“${item.title}”` : "this image"}?`,
+      description: `It will disappear from ${sectionLabel} on the website straight away. This cannot be undone.`,
+      confirmLabel: "Delete",
+    });
+    if (!ok) return;
     setDeletingId(item.id);
     await deleteAction.run(item.id, item.image_url);
     setDeletingId(null);

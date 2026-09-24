@@ -3,12 +3,10 @@ import { requireRole } from '@/lib/auth/session'
 import { deleteCategory } from '../actions'
 import CategoryForm from './CategoryForm'
 import DeleteButton from '@/components/DeleteButton'
-import Link from 'next/link'
+import { FormDialog } from '@/components/FormDialog'
+import { Button } from '@/components/ui/button'
 
-export default async function AdminCategoriesPage(props: { searchParams: Promise<{ edit?: string; add?: string }> | { edit?: string; add?: string } }) {
-  const resolvedSearchParams = await props.searchParams;
-  const editId = resolvedSearchParams?.edit;
-
+export default async function AdminCategoriesPage() {
   const supabase = await createClient()
   await requireRole('owner', 'sales')
 
@@ -26,9 +24,6 @@ export default async function AdminCategoriesPage(props: { searchParams: Promise
     usageCounts[p.category] = (usageCounts[p.category] || 0) + 1;
   });
 
-  const isAddOpen = resolvedSearchParams?.add === 'true';
-  const isModalOpen = !!editId || isAddOpen;
-  const editingCategory = editId ? categories?.find(c => c.id === editId) : null;
 
   return (
     <div className="p-8 max-w-4xl mx-auto w-full relative">
@@ -38,12 +33,9 @@ export default async function AdminCategoriesPage(props: { searchParams: Promise
           <p className="text-gray-500 mt-2">Add, rename, and manage your product categories.</p>
         </div>
         <div>
-          <Link
-            href="/categories?add=true"
-            className="inline-flex items-center justify-center px-5 py-3 bg-[#A67C52] text-white text-xs font-bold uppercase tracking-wider rounded-sm hover:bg-[#8e6944] transition-colors shadow-md"
-          >
-            + Add New Category
-          </Link>
+          <FormDialog title="Add New Category" size="md" trigger={<Button type="button" variant="brand">+ Add New Category</Button>}>
+            <CategoryForm />
+          </FormDialog>
         </div>
       </div>
 
@@ -69,10 +61,10 @@ export default async function AdminCategoriesPage(props: { searchParams: Promise
                   </td>
                   <td className="p-4 align-top text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Link href={`/categories?edit=${item.id}`} className="text-blue-500 hover:text-blue-700 text-xs font-semibold uppercase tracking-wider px-3 py-1 border border-blue-200 hover:bg-blue-50 rounded transition-colors">
-                        Edit
-                      </Link>
-                      <DeleteButton id={item.id} itemLabel="category" deleteAction={deleteCategory} />
+                      <FormDialog title="Edit Category" size="md" trigger={<Button type="button" variant="outline" size="sm" className="border-blue-200 text-blue-500 hover:bg-blue-50 hover:text-blue-700">Edit</Button>}>
+                        <CategoryForm initialData={item} />
+                      </FormDialog>
+                      <DeleteButton id={item.id} itemLabel="category" name={item.name} deleteAction={deleteCategory} />
                     </div>
                   </td>
                 </tr>
@@ -88,27 +80,6 @@ export default async function AdminCategoriesPage(props: { searchParams: Promise
           </table>
         </div>
       </div>
-
-      {/* MODAL OVERLAY FOR ADD / EDIT */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-xl shadow-2xl border border-gray-100 max-w-md w-full max-h-[90vh] flex flex-col relative animate-scaleIn">
-            <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-white rounded-t-xl">
-              <h2 className="text-lg font-bold uppercase tracking-wider text-matte-black">
-                {editingCategory ? 'Edit Category' : 'Add New Category'}
-              </h2>
-              <Link href="/categories" className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-matte-black">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </Link>
-            </div>
-            <div className="p-6 overflow-y-auto flex-1">
-              <CategoryForm key={editId ?? 'new'} initialData={editingCategory || undefined} cancelUrl="/categories" />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

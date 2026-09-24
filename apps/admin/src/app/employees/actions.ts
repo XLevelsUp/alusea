@@ -6,6 +6,8 @@ import { revalidatePath } from 'next/cache'
 import { assertRole } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 import { parseRupeesToPaise } from '@/lib/erp/money'
+import { aadhaarFileProblem } from '@/lib/erp/aadhaar'
+import { DOCUMENTS_BUCKET } from '@/lib/pdf/render'
 import type { WorkerType } from '@/lib/supabase/types'
 
 const HR = ['owner', 'hr'] as const
@@ -44,19 +46,64 @@ function readEmployeeFields(formData: FormData) {
   }
 }
 
+// An empty file input still submits a zero-byte File, which means "no new scan", not an invalid one.
+function readAadhaarFile(formData: FormData): File | null {
+  const file = formData.get('aadhaar')
+  if (!(file instanceof File) || file.size === 0) return null
+
+  const problem = aadhaarFileProblem(file)
+  if (problem) throw new ActionError(problem)
+  return file
+}
+
+const AADHAAR_REQUIRED = "Upload the employee's Aadhaar card before saving"
+
+type Supabase = Awaited<ReturnType<typeof createClient>>
+
+// Stored under employees/<id>/ in the private bucket, which only owner and HR can read.
+async function uploadAadhaar(supabase: Supabase, employeeId: string, file: File) {
+  const extension = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z]/g, '') || 'jpg'
+  const path = `employees/${employeeId}/aadhaar-${Date.now()}.${extension}`
+
+  const { error } = await supabase.storage
+    .from(DOCUMENTS_BUCKET)
+    .upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false })
+
+  if (error) throw new ActionError('Could not upload the Aadhaar card: ' + error.message)
+  return path
+}
+
+function employeeWriteError(error: { code?: string; message: string }, verb: 'add' | 'update'): ActionError {
+  if (error.code === '23505') return new ActionError('That employee code is already in use')
+  return new ActionError(`Could not ${verb} employee: ` + error.message)
+}
+
 export const addEmployee = defineAction(async function addEmployee(formData: FormData) {
   const profile = await assertRole(...HR)
 
+  // Validated before anything is uploaded, so a bad form never leaves a stray file behind.
+  const fields = readEmployeeFields(formData)
+  const aadhaar = readAadhaarFile(formData)
+  if (!aadhaar) throw new ActionError(AADHAAR_REQUIRED)
+
+  // The id is chosen here so the scan can be filed under it before the row exists.
+  const id = crypto.randomUUID()
   const supabase = await createClient()
-  const { error } = await supabase
-    .from('employees')
-    .insert([{ ...readEmployeeFields(formData), created_by: profile.id }])
+  const aadhaarPath = await uploadAadhaar(supabase, id, aadhaar)
+
+  const { error } = await supabase.from('employees').insert([
+    {
+      id,
+      ...fields,
+      aadhaar_path: aadhaarPath,
+      aadhaar_file_name: aadhaar.name,
+      created_by: profile.id,
+    },
+  ])
 
   if (error) {
-    if (error.code === '23505') {
-      throw new ActionError('That employee code is already in use')
-    }
-    throw new ActionError('Could not add employee: ' + error.message)
+    await supabase.storage.from(DOCUMENTS_BUCKET).remove([aadhaarPath])
+    throw employeeWriteError(error, 'add')
   }
 
   revalidatePath('/employees')
@@ -68,14 +115,36 @@ export const updateEmployee = defineAction(async function updateEmployee(formDat
   const id = text(formData, 'id')
   if (!id) throw new ActionError('Employee is required')
 
-  const supabase = await createClient()
-  const { error } = await supabase.from('employees').update(readEmployeeFields(formData)).eq('id', id)
+  const fields = readEmployeeFields(formData)
+  const aadhaar = readAadhaarFile(formData)
 
-  if (error) {
-    if (error.code === '23505') {
-      throw new ActionError('That employee code is already in use')
+  const supabase = await createClient()
+
+  if (!aadhaar) {
+    // Employees added before the card was required must get one the next time they are edited.
+    const { data: existing } = await supabase.from('employees').select('aadhaar_path').eq('id', id).single()
+    if (!existing?.aadhaar_path) throw new ActionError(AADHAAR_REQUIRED)
+
+    const { error } = await supabase.from('employees').update(fields).eq('id', id)
+    if (error) throw employeeWriteError(error, 'update')
+  } else {
+    const { data: existing } = await supabase.from('employees').select('aadhaar_path').eq('id', id).single()
+    const newPath = await uploadAadhaar(supabase, id, aadhaar)
+
+    const { error } = await supabase
+      .from('employees')
+      .update({ ...fields, aadhaar_path: newPath, aadhaar_file_name: aadhaar.name })
+      .eq('id', id)
+
+    if (error) {
+      await supabase.storage.from(DOCUMENTS_BUCKET).remove([newPath])
+      throw employeeWriteError(error, 'update')
     }
-    throw new ActionError('Could not update employee: ' + error.message)
+
+    // The old scan goes only once the row points at the new one, so a failed save never leaves the employee without a card.
+    if (existing?.aadhaar_path) {
+      await supabase.storage.from(DOCUMENTS_BUCKET).remove([existing.aadhaar_path])
+    }
   }
 
   revalidatePath('/employees')

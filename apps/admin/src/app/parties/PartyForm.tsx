@@ -4,6 +4,7 @@ import { FormActions, FormError, FormSection, SelectField, TextareaField, TextFi
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
 import { NativeSelectOption } from "@/components/ui/native-select";
+import { useFormDone } from "@/components/FormDialog";
 import { useAction } from "@/hooks/use-action";
 import type { Action } from "@/lib/actions";
 import { INDIAN_STATES } from "@/lib/erp/states";
@@ -13,17 +14,18 @@ type Props = {
   initialData?: Party;
   add: Action;
   update: Action;
-  cancelUrl: string;
+  cancelUrl?: string;
 };
 
 export default function PartyForm({ initialData, add, update, cancelUrl }: Props) {
   const isEdit = !!initialData;
   const { run, isPending, error } = useAction(isEdit ? update : add);
+  const done = useFormDone(cancelUrl);
 
   function onSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     run(new FormData(e.currentTarget)).then((result) => {
-      if (result.ok) window.location.href = cancelUrl;
+      if (result.ok) done();
     });
   }
 

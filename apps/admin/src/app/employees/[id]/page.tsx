@@ -4,6 +4,10 @@ import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { formatPaise } from "@/lib/erp/money";
 import { formatPeriod } from "@/lib/erp/payroll";
+import { FormDialog } from "@/components/FormDialog";
+import { Button } from "@/components/ui/button";
+import EmployeeForm from "../EmployeeForm";
+import { addEmployee, updateEmployee } from "../actions";
 
 export default async function EmployeeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   await requireRole("owner", "hr");
@@ -40,13 +44,20 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
           </Link>
           <h1 className="text-3xl font-bold uppercase tracking-tight text-matte-black mt-2">{employee.full_name}</h1>
           <p className="text-gray-500 mt-1 font-mono text-sm">{employee.employee_code}</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Aadhaar:{" "}
+            {employee.aadhaar_path ? (
+              <a href={`/employees/${id}/aadhaar`} target="_blank" rel="noopener noreferrer" className="font-semibold text-[#A67C52] hover:underline">
+                View card
+              </a>
+            ) : (
+              "not uploaded"
+            )}
+          </p>
         </div>
-        <Link
-          href={`/employees?edit=${id}`}
-          className="px-4 py-2.5 border border-gray-200 text-gray-600 text-xs font-bold uppercase tracking-wider rounded hover:bg-gray-50 transition-colors"
-        >
-          Edit
-        </Link>
+        <FormDialog title="Edit Employee" trigger={<Button type="button" size="lg" variant="outline">Edit</Button>}>
+          <EmployeeForm initialData={employee} add={addEmployee} update={updateEmployee} />
+        </FormDialog>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">

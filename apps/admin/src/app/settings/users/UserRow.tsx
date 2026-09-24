@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { useAction } from "@/hooks/use-action";
 import type { Action } from "@/lib/actions";
-import { ROLES, ROLE_LABELS, type Role } from "@/lib/auth/roles";
+import { ROLES, ROLE_DESCRIPTIONS, ROLE_LABELS, type Role } from "@/lib/auth/roles";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 type Props = {
   id: string;
@@ -23,6 +24,8 @@ export default function UserRow({ id, email, fullName, role, isActive, isSelf, u
   const [selectedRole, setSelectedRole] = useState(role);
   const roleAction = useAction(updateRole);
   const activeAction = useAction(setActive);
+  const confirm = useConfirm();
+  const displayName = fullName || email;
   const isPending = roleAction.isPending || activeAction.isPending;
   const error = roleAction.error ?? activeAction.error;
 
@@ -42,9 +45,21 @@ export default function UserRow({ id, email, fullName, role, isActive, isSelf, u
           disabled={isPending || isSelf}
           aria-label={`Role for ${email}`}
           className="w-44"
-          onChange={(e) => {
+          onChange={async (e) => {
             const next = e.target.value as Role;
             setSelectedRole(next);
+            // Any role change alters what this person can reach, so it is confirmed; cancelling puts the dropdown back.
+            const ok = await confirm({
+              title: `Change ${displayName}'s role to ${ROLE_LABELS[next]}?`,
+              description: ROLE_DESCRIPTIONS[next],
+              confirmLabel: "Change role",
+              // Removing owner or dropping to staff takes access away, so those read as a warning.
+              tone: role === "owner" || next === "staff" ? "danger" : "neutral",
+            });
+            if (!ok) {
+              setSelectedRole(role);
+              return;
+            }
             activeAction.setError(null);
             const fd = new FormData();
             fd.set("user_id", id);
@@ -76,7 +91,15 @@ export default function UserRow({ id, email, fullName, role, isActive, isSelf, u
           variant="outline"
           size="sm"
           disabled={isPending || isSelf}
-          onClick={() => {
+          onClick={async () => {
+            if (isActive) {
+              const ok = await confirm({
+                title: `Deactivate ${displayName}?`,
+                description: "They will be signed out and cannot sign in again until an owner reactivates them.",
+                confirmLabel: "Deactivate",
+              });
+              if (!ok) return;
+            }
             roleAction.setError(null);
             const fd = new FormData();
             fd.set("user_id", id);
