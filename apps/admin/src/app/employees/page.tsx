@@ -4,16 +4,16 @@ import { createClient } from "@/lib/supabase/server";
 import { formatPaise } from "@/lib/erp/money";
 import EmployeeForm from "./EmployeeForm";
 import StatusToggleButton from "@/components/StatusToggleButton";
+import { FormDialog } from "@/components/FormDialog";
+import { Button } from "@/components/ui/button";
 import { addEmployee, updateEmployee, setEmployeeActive } from "./actions";
 
 export default async function EmployeesPage(props: {
-  searchParams: Promise<{ add?: string; edit?: string; show?: string }>;
+  searchParams: Promise<{ show?: string }>;
 }) {
   await requireRole("owner", "hr");
 
   const searchParams = await props.searchParams;
-  const isAddOpen = searchParams?.add === "true";
-  const editId = searchParams?.edit;
   const showInactive = searchParams?.show === "all";
 
   const supabase = await createClient();
@@ -21,9 +21,6 @@ export default async function EmployeesPage(props: {
   if (!showInactive) request = request.eq("is_active", true);
 
   const { data: employees } = await request;
-
-  const editingEmployee = editId ? employees?.find((employee) => employee.id === editId) : undefined;
-  const isModalOpen = isAddOpen || !!editingEmployee;
 
   const monthlyCount = employees?.filter((e) => e.worker_type === "monthly").length ?? 0;
   const dailyCount = employees?.filter((e) => e.worker_type === "daily").length ?? 0;
@@ -37,12 +34,9 @@ export default async function EmployeesPage(props: {
             {monthlyCount} on monthly salary, {dailyCount} on a daily rate.
           </p>
         </div>
-        <Link
-          href="/employees?add=true"
-          className="inline-flex items-center justify-center px-5 py-3 bg-[#A67C52] text-white text-xs font-bold uppercase tracking-wider rounded-sm hover:bg-[#8e6944] transition-colors shadow-md"
-        >
-          + Add Employee
-        </Link>
+        <FormDialog title="Add Employee" trigger={<Button type="button" variant="brand">+ Add Employee</Button>}>
+          <EmployeeForm add={addEmployee} update={updateEmployee} />
+        </FormDialog>
       </div>
 
       <div className="flex gap-2 mb-6">
@@ -109,16 +103,16 @@ export default async function EmployeesPage(props: {
                   </td>
                   <td className="p-4 text-right">
                     <div className="flex items-start justify-end gap-2">
-                      <Link
-                        href={`/employees?edit=${employee.id}`}
-                        className="text-blue-500 hover:text-blue-700 text-xs font-semibold uppercase tracking-wider px-3 py-1 border border-blue-200 hover:bg-blue-50 rounded transition-colors"
-                      >
-                        Edit
-                      </Link>
+                      <FormDialog title="Edit Employee" trigger={<Button type="button" variant="outline" size="sm" className="border-blue-200 text-blue-500 hover:bg-blue-50 hover:text-blue-700">Edit</Button>}>
+                        <EmployeeForm initialData={employee} add={addEmployee} update={updateEmployee} />
+                      </FormDialog>
                       <StatusToggleButton
                         id={employee.id}
                         isActive={employee.is_active}
                         setActive={setEmployeeActive}
+                        name={employee.full_name}
+                        itemLabel="employee"
+                        deactivateNote="They will be left out of new payroll runs. Their past payslips and pay history stay on record."
                       />
                     </div>
                   </td>
@@ -135,32 +129,6 @@ export default async function EmployeesPage(props: {
           </table>
         </div>
       </div>
-
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-xl shadow-2xl border border-gray-100 max-w-2xl w-full max-h-[90vh] flex flex-col relative">
-            <div className="flex justify-between items-center p-6 border-b border-gray-100">
-              <h2 className="text-lg font-bold uppercase tracking-wider text-matte-black">
-                {editingEmployee ? "Edit Employee" : "Add Employee"}
-              </h2>
-              <Link href="/employees" className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-matte-black">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </Link>
-            </div>
-            <div className="p-6 overflow-y-auto flex-1">
-              <EmployeeForm
-                key={editId ?? "new"}
-                initialData={editingEmployee}
-                add={addEmployee}
-                update={updateEmployee}
-                cancelUrl="/employees"
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import ConfirmPanel from "@/components/ConfirmPanel";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { FormError } from "@/components/form-fields";
 import { Button } from "@/components/ui/button";
 import { useActionRunner } from "@/hooks/use-action";
@@ -28,20 +27,32 @@ export default function ExpenseActions({
   remove: Action;
 }) {
   const { run: runAction, isPending, error } = useActionRunner();
-  const [confirming, setConfirming] = useState<"reject" | "delete" | null>(null);
-  const [reason, setReason] = useState("");
+  const confirm = useConfirm();
 
   function run(action: Action, extra?: Record<string, string>) {
     const formData = new FormData();
     formData.set("id", expenseId);
     for (const [key, value] of Object.entries(extra ?? {})) formData.set(key, value);
+    runAction(action, formData);
+  }
 
-    runAction(action, formData).then((result) => {
-      if (result.ok) {
-        setConfirming(null);
-        setReason("");
-      }
+  async function onReject() {
+    const answer = await confirm({
+      title: status === "approved" ? "Unapprove this expense?" : "Reject this expense?",
+      description: "The reason is shown to whoever filed it.",
+      reason: { label: "Reason", placeholder: "What needs fixing?" },
+      confirmLabel: status === "approved" ? "Unapprove" : "Reject",
     });
+    if (answer) run(reject, { reason: answer.reason });
+  }
+
+  async function onDelete() {
+    const ok = await confirm({
+      title: "Delete this expense and its receipts?",
+      description: "The expense and every receipt attached to it are removed permanently.",
+      confirmLabel: "Delete",
+    });
+    if (ok) run(remove);
   }
 
   return (
@@ -52,14 +63,14 @@ export default function ExpenseActions({
             <Button type="button" size="lg" variant="brand" disabled={isPending} onClick={() => run(approve)}>
               {isPending ? "Working…" : "Approve"}
             </Button>
-            <Button type="button" size="lg" variant="destructive" disabled={isPending} onClick={() => setConfirming("reject")}>
+            <Button type="button" size="lg" variant="destructive" disabled={isPending} onClick={onReject}>
               Reject
             </Button>
           </>
         )}
 
         {canApprove && status === "approved" && (
-          <Button type="button" size="lg" variant="destructive" disabled={isPending} onClick={() => setConfirming("reject")}>
+          <Button type="button" size="lg" variant="destructive" disabled={isPending} onClick={onReject}>
             Unapprove
           </Button>
         )}
@@ -71,37 +82,13 @@ export default function ExpenseActions({
         )}
 
         {canEdit && status !== "approved" && (
-          <Button type="button" size="lg" variant="destructive" disabled={isPending} onClick={() => setConfirming("delete")}>
+          <Button type="button" size="lg" variant="destructive" disabled={isPending} onClick={onDelete}>
             Delete
           </Button>
         )}
       </div>
 
       <FormError error={error} className="mt-3" />
-
-      {confirming === "reject" && (
-        <ConfirmPanel
-          title={status === "approved" ? "Unapprove this expense?" : "Reject this expense?"}
-          description="The reason is shown to whoever filed it."
-          reason={{ value: reason, onChange: setReason, placeholder: "What needs fixing?", label: "Reason" }}
-          confirmLabel="Confirm"
-          cancelLabel="Cancel"
-          isPending={isPending}
-          onConfirm={() => run(reject, { reason })}
-          onCancel={() => setConfirming(null)}
-        />
-      )}
-
-      {confirming === "delete" && (
-        <ConfirmPanel
-          title="Delete this expense and its receipts?"
-          confirmLabel="Delete"
-          pendingLabel="Deleting…"
-          isPending={isPending}
-          onConfirm={() => run(remove)}
-          onCancel={() => setConfirming(null)}
-        />
-      )}
     </div>
   );
 }

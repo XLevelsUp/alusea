@@ -4,13 +4,11 @@ import { deleteProduct } from '../actions'
 import Image from 'next/image'
 import AddProductForm from './AddProductForm'
 import DeleteButton from '@/components/DeleteButton'
-import Link from 'next/link'
+import { FormDialog } from '@/components/FormDialog'
+import { Button } from '@/components/ui/button'
 import type { ProductRow } from '@/lib/supabase/types'
 
-export default async function AdminCataloguePage(props: { searchParams: Promise<{ edit?: string; add?: string }> | { edit?: string; add?: string } }) {
-  const resolvedSearchParams = await props.searchParams;
-  const editId = resolvedSearchParams?.edit;
-
+export default async function AdminCataloguePage() {
   const supabase = await createClient()
   await requireRole('owner', 'sales')
 
@@ -24,9 +22,7 @@ export default async function AdminCataloguePage(props: { searchParams: Promise<
     .select('name')
     .order('sort_order', { ascending: true })
 
-  const isAddOpen = resolvedSearchParams?.add === 'true';
-  const isModalOpen = !!editId || isAddOpen;
-  const editingProduct = editId ? (products?.find(p => p.id === editId) as ProductRow | undefined) : null;
+  const categoryNames = categories?.map(c => c.name) || []
 
   return (
     <div className="p-8 max-w-7xl mx-auto w-full relative">
@@ -36,12 +32,9 @@ export default async function AdminCataloguePage(props: { searchParams: Promise<
           <p className="text-gray-500 mt-2">Add, remove, and manage your products.</p>
         </div>
         <div>
-          <Link 
-            href="/catalogue?add=true" 
-            className="inline-flex items-center justify-center px-5 py-3 bg-[#A67C52] text-white text-xs font-bold uppercase tracking-wider rounded-sm hover:bg-[#8e6944] transition-colors shadow-md"
-          >
-            + Add New Product
-          </Link>
+          <FormDialog title="Add New Product" trigger={<Button type="button" variant="brand">+ Add New Product</Button>}>
+            <AddProductForm categories={categoryNames} />
+          </FormDialog>
         </div>
       </div>
 
@@ -75,10 +68,10 @@ export default async function AdminCataloguePage(props: { searchParams: Promise<
                   </td>
                   <td className="p-4 align-top text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Link href={`/catalogue?edit=${item.id}`} className="text-blue-500 hover:text-blue-700 text-xs font-semibold uppercase tracking-wider px-3 py-1 border border-blue-200 hover:bg-blue-50 rounded transition-colors">
-                        Edit
-                      </Link>
-                      <DeleteButton id={item.id} itemLabel="product" deleteAction={deleteProduct} />
+                      <FormDialog title="Edit Product Details" trigger={<Button type="button" variant="outline" size="sm" className="border-blue-200 text-blue-500 hover:bg-blue-50 hover:text-blue-700">Edit</Button>}>
+                        <AddProductForm initialData={item as ProductRow} categories={categoryNames} />
+                      </FormDialog>
+                      <DeleteButton id={item.id} itemLabel="product" name={item.name} deleteAction={deleteProduct} />
                     </div>
                   </td>
                 </tr>
@@ -94,27 +87,6 @@ export default async function AdminCataloguePage(props: { searchParams: Promise<
           </table>
         </div>
       </div>
-
-      {/* MODAL OVERLAY FOR ADD / EDIT */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-xl shadow-2xl border border-gray-100 max-w-2xl w-full max-h-[90vh] flex flex-col relative animate-scaleIn">
-            <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-white rounded-t-xl">
-              <h2 className="text-lg font-bold uppercase tracking-wider text-matte-black">
-                {editingProduct ? 'Edit Product Details' : 'Add New Product'}
-              </h2>
-              <Link href="/catalogue" className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-matte-black">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </Link>
-            </div>
-            <div className="p-6 overflow-y-auto flex-1">
-              <AddProductForm key={editId ?? 'new'} initialData={editingProduct || undefined} cancelUrl="/catalogue" categories={categories?.map(c => c.name) || []} />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

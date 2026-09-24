@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useConfirm } from "@/components/ConfirmProvider";
+import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { navFor, ROLE_LABELS, type Role } from "@/lib/auth/roles";
 
@@ -21,6 +23,8 @@ function isActive(pathname: string, href: string): boolean {
 export default function AdminNav({ role, email, fullName, signOut }: Props) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isSigningOut, startSignOut] = useTransition();
+  const confirm = useConfirm();
   const groups = navFor(role);
 
   const navBody = (
@@ -53,23 +57,36 @@ export default function AdminNav({ role, email, fullName, signOut }: Props) {
   );
 
   const userBlock = (
-    <div className="border-t border-white/10 pt-4">
+    <div className="shrink-0 border-t border-white/10 pt-4 mt-4">
       <p className="text-sm text-white truncate">{fullName || email}</p>
       <p className="text-xs text-white/50 truncate mb-1">{email}</p>
       <p className="text-[10px] uppercase tracking-widest text-[#A67C52] mb-3">{ROLE_LABELS[role]}</p>
-      <form action={signOut}>
-        <button className="text-sm text-white/70 hover:text-white transition-colors cursor-pointer" type="submit">
-          Sign Out
-        </button>
-      </form>
+      <Button
+        type="button"
+        variant="link"
+        disabled={isSigningOut}
+        onClick={async () => {
+          const ok = await confirm({
+            title: "Sign out of Alusea Admin?",
+            description: "Anything you have not saved on this page will be lost.",
+            confirmLabel: "Sign out",
+          });
+          if (ok) startSignOut(() => signOut());
+        }}
+        className="h-auto p-0 normal-case tracking-normal font-normal text-sm text-white/70 hover:text-white hover:no-underline"
+      >
+        {isSigningOut ? "Signing out…" : "Sign Out"}
+      </Button>
     </div>
   );
 
   return (
     <>
-      <aside className="w-64 bg-matte-black text-white p-6 hidden md:flex md:flex-col md:justify-between shrink-0">
-        <div>
-          <h2 className="text-xl font-bold tracking-widest uppercase mb-8 mt-2">Alusea ERP</h2>
+      <aside className="w-64 h-screen sticky top-0 bg-matte-black text-white p-6 hidden md:flex md:flex-col shrink-0 overflow-hidden">
+        <div className="shrink-0 mb-6 mt-2">
+          <h2 className="text-xl font-bold tracking-widest uppercase">Alusea ERP</h2>
+        </div>
+        <div className="flex-1 min-h-0 overflow-y-auto sidebar-scroll pr-1">
           {navBody}
         </div>
         {userBlock}
@@ -96,8 +113,10 @@ export default function AdminNav({ role, email, fullName, signOut }: Props) {
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden bg-matte-black text-white px-6 pb-6 pt-2 space-y-6 sticky top-[52px] z-40">
-          {navBody}
+        <div className="md:hidden bg-matte-black text-white px-6 pb-6 pt-2 space-y-4 sticky top-[52px] z-40 max-h-[calc(100vh-52px)] flex flex-col overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-y-auto sidebar-scroll pr-1">
+            {navBody}
+          </div>
           {userBlock}
         </div>
       )}

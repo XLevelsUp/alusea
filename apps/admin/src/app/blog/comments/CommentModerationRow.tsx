@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { useConfirm, type ConfirmOptions } from '@/components/ConfirmProvider';
 import { useActionRunner } from '@/hooks/use-action';
 import type { Action } from '@/lib/actions';
 import { approveComment, rejectComment, deleteComment } from './actions';
@@ -19,8 +20,10 @@ export default function CommentModerationRow({ comment }: { comment: Comment }) 
   const { run, isPending, error } = useActionRunner();
   const postSlug = comment.blog_posts?.slug || '';
 
-  const handle = (action: Action<[string, string]>, confirmMsg?: string) => {
-    if (confirmMsg && !window.confirm(confirmMsg)) return;
+  const confirm = useConfirm();
+
+  const handle = async (action: Action<[string, string]>, question?: ConfirmOptions) => {
+    if (question && !(await confirm(question))) return;
     run(action, comment.id, postSlug);
   };
 
@@ -74,7 +77,13 @@ export default function CommentModerationRow({ comment }: { comment: Comment }) 
               variant="outline"
               size="sm"
               disabled={isPending}
-              onClick={() => handle(rejectComment)}
+              onClick={() =>
+                handle(rejectComment, {
+                  title: `Reject ${comment.name}'s comment?`,
+                  description: 'It will be hidden from the blog post. You can approve it again later.',
+                  confirmLabel: 'Reject',
+                })
+              }
               className="border-amber-200 text-amber-600 hover:bg-amber-50 hover:text-amber-800"
             >
               Reject
@@ -85,7 +94,13 @@ export default function CommentModerationRow({ comment }: { comment: Comment }) 
             variant="destructive"
             size="sm"
             disabled={isPending}
-            onClick={() => handle(deleteComment, 'Permanently delete this comment?')}
+            onClick={() =>
+              handle(deleteComment, {
+                title: `Delete ${comment.name}'s comment?`,
+                description: 'It is removed permanently. This cannot be undone.',
+                confirmLabel: 'Delete',
+              })
+            }
           >
             Delete
           </Button>

@@ -4,13 +4,13 @@ import { useState, useRef, useEffect } from "react";
 import { PlusIcon, XIcon } from "lucide-react";
 import { addProduct, updateProduct } from "../actions";
 import Image from "next/image";
-import Link from "next/link";
 import { createClient } from '@/lib/supabase/client';
 import { FormError, SelectField, TextareaField, TextField } from "@/components/form-fields";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NativeSelectOption } from "@/components/ui/native-select";
+import { CancelButton, useFormDone } from "@/components/FormDialog";
 import { useAction } from "@/hooks/use-action";
 
 type Product = {
@@ -32,6 +32,7 @@ export default function ProductForm({ initialData, cancelUrl, categories = [] }:
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const { run, isPending, error: actionError } = useAction(initialData ? updateProduct : addProduct);
+  const done = useFormDone(cancelUrl);
   const [existingUrls, setExistingUrls] = useState<string[]>(() => {
     const raw = initialData?.image_urls;
     if (Array.isArray(raw) && raw.length > 0) return raw;
@@ -55,9 +56,7 @@ export default function ProductForm({ initialData, cancelUrl, categories = [] }:
       setUploadError('Please keep or upload at least one image.');
       return;
     }
-    // Captured now: React clears currentTarget once the handler returns, before the uploads finish.
-    const form = e.currentTarget;
-    const formData = new FormData(form);
+    const formData = new FormData(e.currentTarget);
     formData.set('existing_urls', JSON.stringify(existingUrls));
     formData.delete('image_files'); // We handle files client-side now
 
@@ -94,13 +93,7 @@ export default function ProductForm({ initialData, cancelUrl, categories = [] }:
     if (!result.ok) return;
 
     alert(initialData ? 'Product updated successfully!' : 'Product added successfully!');
-    if (cancelUrl) {
-      window.location.href = cancelUrl;
-    } else if (!initialData) {
-      form.reset();
-      setFiles([]);
-      setSpecs([{ key: "", value: "" }]);
-    }
+    done();
   };
 
   useEffect(() => {
@@ -309,11 +302,7 @@ export default function ProductForm({ initialData, cancelUrl, categories = [] }:
         <FormError error={error} />
 
         <div className="flex gap-3">
-          {cancelUrl && (
-            <Button asChild variant="secondary" className="w-1/3">
-              <Link href={cancelUrl}>Cancel</Link>
-            </Button>
-          )}
+          <CancelButton cancelUrl={cancelUrl} className="w-1/3" />
           <Button type="submit" variant="brand" disabled={isSubmitting} className="flex-1">
             {isUploading ? "Uploading…" : isPending ? "Saving…" : initialData ? "Update Product" : "Add Product"}
           </Button>
