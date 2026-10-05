@@ -1,3 +1,4 @@
+import { todayInIndia } from "@/lib/erp/dates";
 import Link from "next/link";
 import { requireRole } from "@/lib/auth/session";
 import { loadDocumentFormData } from "@/lib/erp/formData";
@@ -11,13 +12,13 @@ import { createQuote } from "../actions";
 export default async function NewQuotePage() {
   await requireRole("owner", "sales");
 
-  const { parties, products, companyStateCode, defaultGstRate } = await loadDocumentFormData();
+  const { parties, companyStateCode, defaultGstRate } = await loadDocumentFormData();
 
   return (
-    <div className="p-8 max-w-6xl mx-auto w-full">
+    <div className="p-4 sm:p-8 max-w-6xl mx-auto w-full">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold uppercase tracking-tight text-matte-black">New Quotation</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-matte-black">New Quotation</h1>
           <p className="text-gray-500 mt-2">Saved as a draft. It takes a number when you mark it sent.</p>
         </div>
         <Link href="/quotes" className="text-sm text-gray-500 hover:text-matte-black transition-colors">
@@ -37,11 +38,10 @@ export default async function NewQuotePage() {
         <DocumentForm
           kind="quote"
           parties={parties}
-          products={products}
           companyStateCode={companyStateCode}
           initial={{
             partyId: "",
-            issueDate: new Date().toISOString().slice(0, 10),
+            issueDate: todayInIndia(),
             secondDate: "",
             isGstApplicable: true,
             gstRate: defaultGstRate,

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireRole } from "@/lib/auth/session";
+import { isOwnerLevel } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 import { formatPaise, paiseToWords } from "@/lib/erp/money";
 import QuoteActions from "./QuoteActions";
@@ -26,21 +27,21 @@ export default async function QuoteDetailPage({ params }: { params: Promise<{ id
 
   const { data: party } = await supabase.from("parties").select("*").eq("id", quote.party_id).single();
 
-  const canEdit = profile.role === "owner" || profile.role === "sales";
-  const canConvert = profile.role === "owner" || profile.role === "accounts" || profile.role === "sales";
+  const canEdit = isOwnerLevel(profile.role) || profile.role === "sales";
+  const canConvert = isOwnerLevel(profile.role) || profile.role === "accounts" || profile.role === "sales";
   const linkedInvoice = invoices?.[0];
 
   return (
-    <div className="p-8 max-w-5xl mx-auto w-full">
+    <div className="p-4 sm:p-8 max-w-5xl mx-auto w-full">
       <div className="flex items-start justify-between mb-6 gap-4 flex-wrap">
         <div>
           <Link href="/quotes" className="text-sm text-gray-500 hover:text-matte-black transition-colors">
             ← Back to Quotations
           </Link>
-          <h1 className="text-3xl font-bold uppercase tracking-tight text-matte-black mt-2">
+          <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-matte-black mt-2">
             {quote.quote_number ?? "Draft Quotation"}
           </h1>
-          <span className="inline-block mt-2 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-600">
+          <span className="inline-block mt-2 px-2 py-1 rounded text-[11px] font-bold uppercase tracking-wider bg-gray-100 text-gray-600">
             {quote.status}
           </span>
         </div>
@@ -95,7 +96,7 @@ export default async function QuoteDetailPage({ params }: { params: Promise<{ id
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <p className="text-xs uppercase tracking-wider text-gray-400 mb-2">Quoted to</p>
+          <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Quoted to</p>
           <p className="font-bold text-gray-900">{party?.name ?? "—"}</p>
           {party?.billing_city && (
             <p className="text-sm text-gray-600">
@@ -134,7 +135,7 @@ export default async function QuoteDetailPage({ params }: { params: Promise<{ id
                   <td className="p-4 text-sm text-gray-900">
                     {item.description}
                     {item.width_ft && item.height_ft && (
-                      <span className="block text-xs text-gray-400">
+                      <span className="block text-xs text-gray-500">
                         {item.width_ft} ft × {item.height_ft} ft
                       </span>
                     )}
@@ -176,15 +177,15 @@ export default async function QuoteDetailPage({ params }: { params: Promise<{ id
             )}
             {quote.rounding_paise !== 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Rounding</span>
-                <span className="text-gray-400">{formatPaise(quote.rounding_paise)}</span>
+                <span className="text-gray-500">Rounding</span>
+                <span className="text-gray-500">{formatPaise(quote.rounding_paise)}</span>
               </div>
             )}
             <div className="flex justify-between pt-2 mt-2 border-t border-gray-300">
               <span className="font-bold uppercase text-sm tracking-wide text-gray-900">Total</span>
               <span className="font-bold text-lg text-gray-900">{formatPaise(quote.total_paise)}</span>
             </div>
-            <p className="text-xs text-gray-400 pt-3 border-t border-gray-100 mt-3">
+            <p className="text-xs text-gray-500 pt-3 border-t border-gray-100 mt-3">
               {paiseToWords(quote.total_paise)}
             </p>
           </div>

@@ -1,5 +1,6 @@
 'use server'
 
+import { todayInIndia } from '@/lib/erp/dates'
 import { ActionError, defineAction } from '@/lib/actions'
 
 import { revalidatePath } from 'next/cache'
@@ -68,7 +69,7 @@ export const createQuote = defineAction(async function createQuote(formData: For
     .insert([
       {
         party_id: partyId,
-        issue_date: text(formData, 'issue_date') || new Date().toISOString().slice(0, 10),
+        issue_date: text(formData, 'issue_date') || todayInIndia(),
         valid_until: text(formData, 'valid_until') || null,
         is_gst_applicable: isGstApplicable,
         gst_rate: gstRate,
@@ -117,7 +118,7 @@ export const updateQuote = defineAction(async function updateQuote(formData: For
     .from('quotes')
     .update({
       party_id: partyId,
-      issue_date: text(formData, 'issue_date') || new Date().toISOString().slice(0, 10),
+      issue_date: text(formData, 'issue_date') || todayInIndia(),
       valid_until: text(formData, 'valid_until') || null,
       is_gst_applicable: isGstApplicable,
       gst_rate: gstRate,
@@ -264,7 +265,7 @@ export const convertQuoteToInvoice = defineAction(async function convertQuoteToI
     .eq('id', quote.party_id)
     .single()
 
-  const issueDate = new Date().toISOString().slice(0, 10)
+  const issueDate = todayInIndia()
   let dueDate: string | null = null
   if (party && party.payment_terms_days > 0) {
     const due = new Date(issueDate)
@@ -304,6 +305,7 @@ export const convertQuoteToInvoice = defineAction(async function convertQuoteToI
       invoice_id: invoice.id,
       position: item.position,
       description: item.description,
+      hsn_code: item.hsn_code,
       width_ft: item.width_ft,
       height_ft: item.height_ft,
       quantity: item.quantity,

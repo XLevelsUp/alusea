@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { FormError } from "@/components/form-fields";
 import { Button } from "@/components/ui/button";
@@ -30,11 +31,13 @@ export default function InvoiceActions({
   const { run: runAction, isPending, error } = useActionRunner();
   const confirm = useConfirm();
 
-  function run(action: Action, extra?: Record<string, string>) {
+  function run(action: Action, done: string, extra?: Record<string, string>) {
     const formData = new FormData();
     formData.set("id", invoiceId);
     for (const [key, value] of Object.entries(extra ?? {})) formData.set(key, value);
-    runAction(action, formData);
+    runAction(action, formData).then((result) => {
+      if (result.ok) toast.success(done);
+    });
   }
 
   async function onIssue() {
@@ -45,7 +48,7 @@ export default function InvoiceActions({
       confirmLabel: "Yes, issue it",
       cancelLabel: "Not yet",
     });
-    if (ok) run(issue);
+    if (ok) run(issue, "Invoice issued");
   }
 
   async function onCancel() {
@@ -56,7 +59,7 @@ export default function InvoiceActions({
       confirmLabel: "Yes, cancel it",
       cancelLabel: "Keep it",
     });
-    if (answer) run(cancel, { reason: answer.reason });
+    if (answer) run(cancel, "Invoice cancelled", { reason: answer.reason });
   }
 
   async function onDelete() {
@@ -66,7 +69,7 @@ export default function InvoiceActions({
       confirmLabel: "Delete draft",
       cancelLabel: "Keep it",
     });
-    if (ok) run(deleteDraft);
+    if (ok) run(deleteDraft, "Draft deleted");
   }
 
   if (!canWrite) return null;
@@ -82,7 +85,7 @@ export default function InvoiceActions({
 
         {status === "issued" && (
           <>
-            <Button type="button" size="lg" variant="outline" disabled={isPending} onClick={() => run(regenerate)}>
+            <Button type="button" size="lg" variant="outline" disabled={isPending} onClick={() => run(regenerate, "PDF regenerated")}>
               {isPending ? "Working…" : hasPdf ? "Regenerate PDF" : "Generate PDF"}
             </Button>
             <Button type="button" size="lg" variant="destructive" disabled={isPending} onClick={onCancel}>
