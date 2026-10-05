@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { FormError } from "@/components/form-fields";
 import { Button } from "@/components/ui/button";
@@ -29,10 +30,12 @@ export default function RunActions({
 
   if (!canWrite) return null;
 
-  function run(action: Action) {
+  function run(action: Action, done: string) {
     const formData = new FormData();
     formData.set("run_id", runId);
-    runAction(action, formData);
+    runAction(action, formData).then((result) => {
+      if (result.ok) toast.success(done);
+    });
   }
 
   async function onApprove() {
@@ -43,7 +46,7 @@ export default function RunActions({
       confirmLabel: "Yes, approve",
       cancelLabel: "Not yet",
     });
-    if (ok) run(approve);
+    if (ok) run(approve, "Payroll run approved");
   }
 
   async function onMarkPaid() {
@@ -53,7 +56,7 @@ export default function RunActions({
       description: "Record this only once the salaries have actually been transferred. It cannot be undone.",
       confirmLabel: "Mark as paid",
     });
-    if (ok) run(markPaid);
+    if (ok) run(markPaid, "Payroll marked as paid");
   }
 
   async function onDelete() {
@@ -63,7 +66,7 @@ export default function RunActions({
       confirmLabel: "Delete run",
       cancelLabel: "Keep it",
     });
-    if (ok) run(remove);
+    if (ok) run(remove, "Draft run deleted");
   }
 
   return (
@@ -87,7 +90,7 @@ export default function RunActions({
         )}
 
         {status !== "draft" && (
-          <Button type="button" size="lg" variant="outline" disabled={isPending} onClick={() => run(regenerate)}>
+          <Button type="button" size="lg" variant="outline" disabled={isPending} onClick={() => run(regenerate, "Payslips regenerated")}>
             {isPending ? "Working…" : "Regenerate Payslips"}
           </Button>
         )}

@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireRole } from "@/lib/auth/session";
+import { isOwnerLevel } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 import { formatPaise } from "@/lib/erp/money";
-import { formatPeriod } from "@/lib/erp/payroll";
+import { calendarDaysInMonth, formatPeriod, sundaysInMonth, workingDaysInMonth } from "@/lib/erp/payroll";
+import { createAdminClient } from "@/lib/supabase/admin";
 import PayrollGrid from "./PayrollGrid";
 import RunActions from "./RunActions";
 import {
@@ -32,11 +34,11 @@ export default async function PayrollRunPage({ params }: { params: Promise<{ id:
 
   if (!run) notFound();
 
-  const canWrite = profile.role === "owner" || profile.role === "hr";
+  const canWrite = isOwnerLevel(profile.role) || profile.role === "hr";
   const isDraft = run.status === "draft";
 
   // accounts can see run totals for cashflow but not who was paid what, so the grid is hidden from them.
-  const canSeeDetail = profile.role === "owner" || profile.role === "hr";
+  const canSeeDetail = isOwnerLevel(profile.role) || profile.role === "hr";
 
   const employeeIds = (payslips ?? []).map((slip) => slip.employee_id);
   const { data: employees } = employeeIds.length
@@ -45,18 +47,48 @@ export default async function PayrollRunPage({ params }: { params: Promise<{ id:
 
   const defaultById = new Map((employees ?? []).map((employee) => [employee.id, employee.default_amount_paise]));
 
+  // Runs created since Sundays were excluded store the month's working days; older runs stored a flat 30 and say so.
+  const usesWorkingDays = run.days_in_period === workingDaysInMonth(run.period_month);
+  const dayBasisNote = usesWorkingDays
+    ? `${calendarDaysInMonth(run.period_month)} days − ${sundaysInMonth(run.period_month)} Sundays`
+    : "Flat day basis from before Sundays were excluded";
+
+  // Names for the trail. Profiles are readable only by their owner, so they are looked up with the service client, limited to the people on this run.
+  const actorIds = [run.created_by, run.approved_by, run.paid_by].filter((value): value is string => !!value);
+  let actors: { id: string; full_name: string; email: string }[] = [];
+  if (actorIds.length > 0) {
+    try {
+      const { data } = await createAdminClient().from("profiles").select("id, full_name, email").in("id", actorIds);
+      actors = data ?? [];
+    } catch {
+      // Without the service key the trail still shows the dates, just not the names.
+    }
+  }
+  const nameOf = (userId: string | null) => {
+    const actor = actors.find((row) => row.id === userId);
+    return actor ? actor.full_name || actor.email : "";
+  };
+  const formatDate = (value: string) =>
+    new Date(value).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+
+  const trail = [
+    { label: "Generated", at: run.created_at, by: nameOf(run.created_by) },
+    { label: "Approved", at: run.approved_at, by: nameOf(run.approved_by) },
+    { label: "Paid", at: run.paid_at, by: nameOf(run.paid_by) },
+  ];
+
   return (
-    <div className="p-8 max-w-6xl mx-auto w-full">
+    <div className="p-4 sm:p-8 max-w-6xl mx-auto w-full">
       <div className="flex items-start justify-between mb-6 gap-4 flex-wrap">
         <div>
           <Link href="/payroll" className="text-sm text-gray-500 hover:text-matte-black transition-colors">
             ← Back to Payroll
           </Link>
-          <h1 className="text-3xl font-bold uppercase tracking-tight text-matte-black mt-2">
+          <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-matte-black mt-2">
             {formatPeriod(run.period_month)}
           </h1>
           <span
-            className={`inline-block mt-2 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
+            className={`inline-block mt-2 px-2 py-1 rounded text-[11px] font-bold uppercase tracking-wider ${
               STATUS_STYLES[run.status] ?? "bg-gray-100 text-gray-600"
             }`}
           >
@@ -75,9 +107,32 @@ export default async function PayrollRunPage({ params }: { params: Promise<{ id:
           <p className="text-2xl font-bold text-matte-black">{formatPaise(run.total_net_paise)}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Day basis</p>
+          <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">{usesWorkingDays ? "Working days" : "Day basis"}</p>
           <p className="text-2xl font-bold text-matte-black">{run.days_in_period}</p>
+          <p className="text-xs text-gray-500 mt-1">{dayBasisNote}</p>
         </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-matte-black mb-3">Trail</h2>
+        <ol className="flex flex-col sm:flex-row sm:gap-8 gap-2">
+          {trail.map((step) => (
+            <li key={step.label} className="flex items-start gap-2 text-sm">
+              <span className={`mt-1.5 size-2.5 shrink-0 rounded-full ${step.at ? "bg-green-500" : "bg-gray-200"}`} aria-hidden="true" />
+              <span className={step.at ? "text-gray-900" : "text-gray-500"}>
+                <span className="font-semibold">{step.label}</span>
+                {step.at ? (
+                  <span className="block text-xs text-gray-500">
+                    {formatDate(step.at)}
+                    {step.by && <> by {step.by}</>}
+                  </span>
+                ) : (
+                  <span className="block text-xs">Not yet</span>
+                )}
+              </span>
+            </li>
+          ))}
+        </ol>
       </div>
 
       <div className="mb-6">
@@ -95,7 +150,7 @@ export default async function PayrollRunPage({ params }: { params: Promise<{ id:
       {!canSeeDetail ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
           <p className="text-gray-600">Individual pay is visible to owners and HR only.</p>
-          <p className="text-sm text-gray-400 mt-1">The run total above is what you need for cashflow.</p>
+          <p className="text-sm text-gray-500 mt-1">The run total above is what you need for cashflow.</p>
         </div>
       ) : isDraft && canWrite ? (
         <PayrollGrid

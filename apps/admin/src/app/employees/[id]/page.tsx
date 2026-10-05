@@ -36,13 +36,13 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
   }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto w-full">
+    <div className="p-4 sm:p-8 max-w-4xl mx-auto w-full">
       <div className="flex items-start justify-between mb-6 gap-4 flex-wrap">
         <div>
           <Link href="/employees" className="text-sm text-gray-500 hover:text-matte-black transition-colors">
             ← Back to Employees
           </Link>
-          <h1 className="text-3xl font-bold uppercase tracking-tight text-matte-black mt-2">{employee.full_name}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-matte-black mt-2">{employee.full_name}</h1>
           <p className="text-gray-500 mt-1 font-mono text-sm">{employee.employee_code}</p>
           <p className="text-sm text-gray-500 mt-1">
             Aadhaar:{" "}
@@ -88,7 +88,7 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-5 border-b border-gray-100">
           <h2 className="text-sm font-bold uppercase tracking-wider text-matte-black">Pay history</h2>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-gray-500 mt-1">
             Every month this person has been paid, read from their payslips.
           </p>
         </div>
@@ -112,13 +112,13 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
                     <td className="p-4 text-sm text-gray-900">
                       {formatPeriod(row.period_month)}
                       {row.run_status === "draft" && (
-                        <span className="ml-2 text-[10px] uppercase tracking-wider text-gray-400">Draft</span>
+                        <span className="ml-2 text-[11px] uppercase tracking-wider text-gray-500">Draft</span>
                       )}
                     </td>
                     <td className="p-4 text-sm text-right">
                       {formatPaise(row.entered_amount_paise)}
                       {changes.has(row.period_month) && (
-                        <span className="block text-[10px] uppercase tracking-wider text-[#A67C52]">Changed</span>
+                        <span className="block text-[11px] uppercase tracking-wider text-[#A67C52]">Changed</span>
                       )}
                     </td>
                     <td className="p-4 text-sm text-gray-600 text-right">{Number(row.days_worked)}</td>

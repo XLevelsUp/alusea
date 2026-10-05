@@ -100,7 +100,7 @@ export default function PayrollGrid({
                       <span className="font-semibold text-gray-900 text-sm block">{row.name}</span>
                       <span className="text-xs text-gray-500 font-mono">{row.code}</span>
                       <span
-                        className={`block mt-1 text-[10px] font-bold uppercase tracking-wider ${
+                        className={`block mt-1 text-[11px] font-bold uppercase tracking-wider ${
                           row.workerType === "monthly" ? "text-blue-600" : "text-amber-600"
                         }`}
                       >
@@ -117,7 +117,7 @@ export default function PayrollGrid({
                         aria-label={`Days worked by ${row.name}`}
                         className="h-9 w-20 px-2"
                       />
-                      <span className="block text-[10px] text-gray-400 mt-1">of {daysInPeriod}</span>
+                      <span className="block text-[11px] text-gray-500 mt-1">of {daysInPeriod}</span>
                     </td>
 
                     <td className="p-3">
@@ -130,13 +130,13 @@ export default function PayrollGrid({
                         aria-label={`${row.workerType === "monthly" ? "Monthly salary" : "Daily rate"} for ${row.name}`}
                         className="h-9 w-28 px-2"
                       />
-                      <span className="block text-[10px] text-gray-400 mt-1">
+                      <span className="block text-[11px] text-gray-500 mt-1">
                         {row.workerType === "monthly" ? "per month" : "per day"}
                       </span>
                       {amountChanged && (
                         <Field orientation="horizontal" className="mt-1.5 gap-1.5">
                           <Checkbox id={`update_default_${row.id}`} name={`update_default[${row.id}]`} className="size-3" />
-                          <FieldLabel htmlFor={`update_default_${row.id}`} className="text-[10px] font-normal text-gray-600">
+                          <FieldLabel htmlFor={`update_default_${row.id}`} className="text-[11px] font-normal text-gray-600">
                             Update their default
                           </FieldLabel>
                         </Field>
@@ -169,7 +169,7 @@ export default function PayrollGrid({
 
                     <td className="p-3 text-right">
                       <span className="font-semibold text-gray-900 text-sm">{formatPaise(slip.netPaise)}</span>
-                      <span className="block text-[10px] text-gray-400 mt-1">{slip.baseExplanation}</span>
+                      <span className="block text-[11px] text-gray-500 mt-1">{slip.baseExplanation}</span>
                     </td>
                   </tr>
                 );

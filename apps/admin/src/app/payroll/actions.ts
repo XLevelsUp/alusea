@@ -7,7 +7,7 @@ import { redirect } from 'next/navigation'
 import { assertRole } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 import { parseRupeesToPaise } from '@/lib/erp/money'
-import { computePayslip, computeRunTotals, formatPeriod, STANDARD_DAYS_IN_MONTH } from '@/lib/erp/payroll'
+import { computePayslip, computeRunTotals, formatPeriod, workingDaysInMonth } from '@/lib/erp/payroll'
 import { renderAndStore } from '@/lib/pdf/render'
 import { PayslipDocument } from '@/lib/pdf/templates/PayslipDocument'
 import type { WorkerType } from '@/lib/supabase/types'
@@ -28,6 +28,7 @@ export const createPayrollRun = defineAction(async function createPayrollRun(for
   }
 
   const periodMonth = `${period}-01`
+  const workingDays = workingDaysInMonth(periodMonth)
   const supabase = await createClient()
 
   const { data: existing } = await supabase
@@ -52,7 +53,8 @@ export const createPayrollRun = defineAction(async function createPayrollRun(for
 
   const { data: run, error } = await supabase
     .from('payroll_runs')
-    .insert([{ period_month: periodMonth, days_in_period: STANDARD_DAYS_IN_MONTH, created_by: profile.id }])
+    // The day basis is fixed on the run when it is created, so a later rule change never rewrites an old month.
+    .insert([{ period_month: periodMonth, days_in_period: workingDays, created_by: profile.id }])
     .select()
     .single()
 
@@ -66,7 +68,7 @@ export const createPayrollRun = defineAction(async function createPayrollRun(for
       workerType: employee.worker_type,
       enteredAmountPaise: employee.default_amount_paise,
       daysWorked: 0,
-      daysInPeriod: STANDARD_DAYS_IN_MONTH,
+      daysInPeriod: workingDays,
     })
 
     return {
@@ -188,7 +190,7 @@ export const savePayrollEntries = defineAction(async function savePayrollEntries
 })
 
 export const approvePayrollRun = defineAction(async function approvePayrollRun(formData: FormData) {
-  await assertRole(...HR)
+  const profile = await assertRole(...HR)
 
   const runId = text(formData, 'run_id')
   if (!runId) throw new ActionError('Payroll run is required')
@@ -211,7 +213,7 @@ export const approvePayrollRun = defineAction(async function approvePayrollRun(f
 
   const { error } = await supabase
     .from('payroll_runs')
-    .update({ status: 'approved', approved_at: new Date().toISOString() })
+    .update({ status: 'approved', approved_at: new Date().toISOString(), approved_by: profile.id })
     .eq('id', runId)
 
   if (error) throw new ActionError('Could not approve the run: ' + error.message)
@@ -227,7 +229,7 @@ export const approvePayrollRun = defineAction(async function approvePayrollRun(f
 })
 
 export const markPayrollPaid = defineAction(async function markPayrollPaid(formData: FormData) {
-  await assertRole(...HR)
+  const profile = await assertRole(...HR)
 
   const runId = text(formData, 'run_id')
   if (!runId) throw new ActionError('Payroll run is required')
@@ -235,7 +237,7 @@ export const markPayrollPaid = defineAction(async function markPayrollPaid(formD
   const supabase = await createClient()
   const { error } = await supabase
     .from('payroll_runs')
-    .update({ status: 'paid', paid_at: new Date().toISOString() })
+    .update({ status: 'paid', paid_at: new Date().toISOString(), paid_by: profile.id })
     .eq('id', runId)
     .eq('status', 'approved')
 

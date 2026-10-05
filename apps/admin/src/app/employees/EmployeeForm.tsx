@@ -76,7 +76,7 @@ export default function EmployeeForm({ initialData, add, update, cancelUrl }: Pr
   function onSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     run(new FormData(e.currentTarget)).then((result) => {
-      if (result.ok) done();
+      if (result.ok) done(isEdit ? "Employee updated" : "Employee added");
     });
   }
 
