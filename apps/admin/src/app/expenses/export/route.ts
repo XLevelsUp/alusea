@@ -1,8 +1,10 @@
 // CSV export of expenses for the accountant. Rupee amounts here, not paise, since this is read by a person and by Excel.
 
+import { todayInIndia } from '@/lib/erp/dates'
 import { requireProfile } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 import { paiseToRupeeString } from '@/lib/erp/money'
+import { SETTLEMENT, settlementOf } from '@/lib/erp/expenses'
 
 // A leading =, +, - or @ makes Excel treat a cell as a formula, so those are neutralised.
 function csvCell(value: string | number | null | undefined): string {
@@ -11,12 +13,17 @@ function csvCell(value: string | number | null | undefined): string {
   return `"${safe.replace(/"/g, '""')}"`
 }
 
+function settlementLabel(row: Parameters<typeof settlementOf>[0]): string {
+  const settlement = settlementOf(row)
+  return settlement ? SETTLEMENT[settlement].label : ''
+}
+
 export async function GET(request: Request) {
   await requireProfile()
 
   const url = new URL(request.url)
   const from = url.searchParams.get('from') ?? '1900-01-01'
-  const to = url.searchParams.get('to') ?? new Date().toISOString().slice(0, 10)
+  const to = url.searchParams.get('to') ?? todayInIndia()
   const categoryId = url.searchParams.get('category')
 
   const supabase = await createClient()
@@ -61,9 +68,11 @@ export async function GET(request: Request) {
     'GST',
     'Net of GST',
     'Paid by',
+    'Payment mode',
     'Reference',
     'Project',
     'Status',
+    'Payment',
     'Notes',
   ]
 
@@ -78,10 +87,12 @@ export async function GET(request: Request) {
         paiseToRupeeString(row.amount_paise),
         paiseToRupeeString(row.tax_paise),
         paiseToRupeeString(row.amount_paise - row.tax_paise),
+        row.paid_by === 'person' ? row.paid_by_name : 'Company',
         row.payment_method.replace('_', ' '),
         row.reference,
         row.project_tag,
         row.status,
+        settlementLabel(row),
         row.notes,
       ]
         .map(csvCell)

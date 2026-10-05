@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { XIcon } from "lucide-react";
+import ReceiptPicker from "@/components/ReceiptPicker";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { useActionRunner } from "@/hooks/use-action";
 import type { Action } from "@/lib/actions";
@@ -35,12 +36,16 @@ export default function ReceiptPanel({
 }) {
   const { run, isPending, error } = useActionRunner();
   const confirm = useConfirm();
+  const [file, setFile] = useState<File | null>(null);
 
   function onUpload(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
-    const form = e.currentTarget;
-    run(upload, new FormData(form)).then((result) => {
-      if (result.ok) form.reset();
+    if (!file) return;
+    const formData = new FormData();
+    formData.set("expense_id", expenseId);
+    formData.set("receipt", file);
+    run(upload, formData).then((result) => {
+      if (result.ok) setFile(null);
     });
   }
 
@@ -53,20 +58,12 @@ export default function ReceiptPanel({
 
       {canEdit && (
         <form onSubmit={onUpload} className="p-5 bg-muted border-b">
-          <input type="hidden" name="expense_id" value={expenseId} />
-          <div className="flex flex-wrap gap-3 items-center">
-            <Input
-              type="file"
-              name="receipt"
-              required
-              accept="image/*,application/pdf"
-              aria-label="Receipt file"
-              className="w-auto flex-1 min-w-48 bg-white"
-            />
-            <Button type="submit" size="lg" disabled={isPending}>
+          <ReceiptPicker file={file} onChange={setFile} disabled={isPending} />
+          {file && (
+            <Button type="submit" size="lg" disabled={isPending} className="mt-3">
               {isPending ? "Uploading…" : "Upload"}
             </Button>
-          </div>
+          )}
           {error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}
         </form>
       )}
@@ -85,7 +82,7 @@ export default function ReceiptPanel({
                   >
                     {receipt.fileName || "Receipt"}
                   </a>
-                  <span className="block text-xs text-gray-400">{formatSize(receipt.sizeBytes)}</span>
+                  <span className="block text-xs text-gray-500">{formatSize(receipt.sizeBytes)}</span>
                 </td>
                 <td className="p-4 text-right w-10">
                   {canEdit && (
@@ -107,7 +104,7 @@ export default function ReceiptPanel({
                         formData.set("expense_id", expenseId);
                         run(remove, formData);
                       }}
-                      className="text-gray-400 hover:text-destructive"
+                      className="text-gray-500 hover:text-destructive"
                     >
                       <XIcon />
                     </Button>
