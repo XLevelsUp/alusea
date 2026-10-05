@@ -152,3 +152,10 @@ h1, h2, h3, h4, h5, h6 {
 .sidebar-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.4);
 }
+
+/* On a phone, table cells give up some padding so more of each row fits before sideways scrolling starts. */
+@media (max-width: 639px) {
+  main table :is(th, td) {
+    padding: 0.625rem 0.75rem;
+  }
+}

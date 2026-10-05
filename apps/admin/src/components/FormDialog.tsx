@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { createContext, useContext, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -42,15 +43,16 @@ export function FormDialog({ trigger, title, description, size = "xl", defaultOp
   );
 }
 
-// What a form does once it saves: inside a dialog it closes it and refreshes the page data in place; on its own page it goes back to cancelUrl.
+// What a form does once it saves: inside a dialog it closes it, refreshes the page data in place and confirms in the corner; on its own page it goes back to cancelUrl.
 export function useFormDone(cancelUrl?: string) {
   const dialog = useContext(FormDialogContext);
   const router = useRouter();
 
-  return () => {
+  return (message: string = "Saved") => {
     if (dialog) {
       dialog.close();
       router.refresh();
+      toast.success(message);
     } else if (cancelUrl) {
       window.location.href = cancelUrl;
     }

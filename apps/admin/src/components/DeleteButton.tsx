@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { Button } from "@/components/ui/button";
 import { useAction } from "@/hooks/use-action";
@@ -12,9 +14,13 @@ type Props = {
   // The record's own name, when it has one, so the question says exactly what goes.
   name?: string;
   deleteAction: Action<[string]>;
+  // Where to go once it is gone, for a delete button that sits on the record's own page.
+  redirectTo?: string;
+  size?: "sm" | "lg";
 };
 
-export default function DeleteButton({ id, itemLabel, name, deleteAction }: Props) {
+export default function DeleteButton({ id, itemLabel, name, deleteAction, redirectTo, size = "sm" }: Props) {
+  const router = useRouter();
   const { run, isPending, error } = useAction(deleteAction);
   const confirm = useConfirm();
 
@@ -24,12 +30,16 @@ export default function DeleteButton({ id, itemLabel, name, deleteAction }: Prop
       description: `This permanently removes the ${itemLabel}. It cannot be undone.`,
       confirmLabel: "Delete",
     });
-    if (ok) run(id);
+    if (!ok) return;
+    const result = await run(id);
+    if (!result.ok) return;
+    toast.success(`${itemLabel.charAt(0).toUpperCase()}${itemLabel.slice(1)} deleted`);
+    if (redirectTo) router.push(redirectTo);
   }
 
   return (
     <span className="inline-flex flex-col items-end">
-      <Button type="button" variant="destructive" size="sm" disabled={isPending} onClick={onDelete}>
+      <Button type="button" variant="destructive" size={size} disabled={isPending} onClick={onDelete}>
         {isPending ? "Deleting…" : "Delete"}
       </Button>
       {error && <span role="alert" className="text-xs text-destructive mt-1 max-w-56 text-right">{error}</span>}

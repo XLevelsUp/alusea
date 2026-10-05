@@ -1,128 +1,102 @@
-// Loads the dashboard figures. Every query runs under the caller's RLS, so a role that cannot see payroll simply gets nothing back rather than an error.
+// Loads the dashboard's headline counts and its "waiting on you" queue in one parallel round of head-only count queries.
 
 import { createClient } from '@/lib/supabase/server'
-import type { AgeingBucket } from '@/lib/supabase/types'
+import { todayInIndia } from '@/lib/erp/dates'
+import { fetchAll } from '@/lib/erp/fetchAll'
 
-export function currentPeriodMonth(): string {
-  const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+export type WaitingItem = {
+  key: string
+  label: string
+  count: number
+  // Optional rupee total, shown beside the count when the queue is about money.
+  amountPaise?: number
+  href: string
 }
-
-export function previousPeriodMonth(): string {
-  const now = new Date()
-  const previous = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-  return `${previous.getFullYear()}-${String(previous.getMonth() + 1).padStart(2, '0')}-01`
-}
-
-export const AGEING_LABELS: Record<AgeingBucket, string> = {
-  current: 'Not yet due',
-  '1_30': '1–30 days',
-  '31_60': '31–60 days',
-  '61_90': '61–90 days',
-  over_90: 'Over 90 days',
-}
-
-export const AGEING_ORDER: AgeingBucket[] = ['current', '1_30', '31_60', '61_90', 'over_90']
 
 export type DashboardData = {
-  thisMonth: {
-    revenuePaise: number
-    collectedPaise: number
-    expensesPaise: number
-    payrollPaise: number
-    profitPaise: number
-  }
-  lastMonth: {
-    revenuePaise: number
-    profitPaise: number
-  }
-  receivables: {
-    totalPaise: number
-    overduePaise: number
-    buckets: { bucket: AgeingBucket; totalPaise: number; count: number }[]
-  }
-  pendingExpensesPaise: number
-  draftInvoiceCount: number
-  topCategories: { name: string; totalPaise: number }[]
-  trend: { periodMonth: string; revenuePaise: number; expensesPaise: number; payrollPaise: number; profitPaise: number }[]
+  clients: number
+  vendors: number
+  products: number
+  // Unpaid balance on issued invoices as of today, and how many invoices it is spread over.
+  outstanding: { paise: number; count: number }
+  // All three include GST, so billed and spent compare directly with money actually received.
+  thisMonth: { billedPaise: number; collectedPaise: number; spentPaise: number }
+  waiting: WaitingItem[]
+}
+
+export function currentPeriodMonth(): string {
+  return `${todayInIndia().slice(0, 8)}01`
 }
 
 export async function loadDashboard(): Promise<DashboardData> {
   const supabase = await createClient()
-  const thisMonth = currentPeriodMonth()
-  const lastMonth = previousPeriodMonth()
-
-  // Six months back, so the trend has enough points to be worth reading.
-  const trendStart = new Date()
-  trendStart.setMonth(trendStart.getMonth() - 5)
-  const trendFrom = `${trendStart.getFullYear()}-${String(trendStart.getMonth() + 1).padStart(2, '0')}-01`
+  const count = { count: 'exact' as const, head: true }
+  const month = currentPeriodMonth()
 
   const [
-    { data: pnl },
-    { data: collections },
-    { data: ageing },
-    { data: pendingExpenses },
-    { count: draftInvoiceCount },
-    { data: categories },
+    pnl,
+    collections,
+    clients,
+    vendors,
+    products,
+    submittedExpenses,
+    owedExpenses,
+    pendingEntries,
+    draftInvoices,
+    draftRuns,
+    approvedRuns,
+    unpaid,
   ] = await Promise.all([
-    supabase
-      .from('profit_and_loss_monthly')
-      .select('*')
-      .gte('period_month', trendFrom)
-      .order('period_month', { ascending: true }),
-    supabase.from('collections_monthly').select('*').eq('period_month', thisMonth).maybeSingle(),
-    supabase.from('receivables_ageing').select('*'),
+    supabase.from('profit_and_loss_monthly').select('*').eq('period_month', month).maybeSingle(),
+    supabase.from('collections_monthly').select('collected_paise').eq('period_month', month).maybeSingle(),
+    supabase.from('parties').select('id', count).eq('is_client', true).eq('is_active', true),
+    supabase.from('parties').select('id', count).eq('is_vendor', true).eq('is_active', true),
+    supabase.from('products').select('id', count),
+    // Amounts are needed for the rupee total, so this one fetches the column rather than a bare count.
     supabase.from('expenses').select('amount_paise').eq('status', 'submitted'),
-    supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('status', 'draft'),
-    supabase.from('expense_monthly_summary').select('*').eq('period_month', thisMonth),
+    supabase.from('expenses').select('amount_paise').eq('status', 'approved').eq('paid_by', 'person').is('reimbursed_at', null),
+    supabase.from('ledger_entries').select('id', count).eq('status', 'pending'),
+    supabase.from('invoices').select('id', count).eq('status', 'draft'),
+    supabase.from('payroll_runs').select('id', count).eq('status', 'draft'),
+    supabase.from('payroll_runs').select('id', count).eq('status', 'approved'),
+    fetchAll((first, last) =>
+      supabase.from('invoice_balances').select('invoice_id, balance_paise').eq('status', 'issued').gt('balance_paise', 0).order('invoice_id').range(first, last)
+    ),
   ])
 
-  const rows = pnl ?? []
-  const current = rows.find((row) => row.period_month === thisMonth)
-  const previous = rows.find((row) => row.period_month === lastMonth)
-
-  const ageingRows = ageing ?? []
-  const buckets = AGEING_ORDER.map((bucket) => {
-    const matching = ageingRows.filter((row) => row.ageing_bucket === bucket)
-    return {
-      bucket,
-      count: matching.length,
-      totalPaise: matching.reduce((sum, row) => sum + row.balance_paise, 0),
-    }
-  }).filter((entry) => entry.count > 0)
+  const expenseRows = submittedExpenses.data ?? []
+  const owedRows = owedExpenses.data ?? []
 
   return {
+    clients: clients.count ?? 0,
+    vendors: vendors.count ?? 0,
+    products: products.count ?? 0,
+    outstanding: { paise: unpaid.data.reduce((sum, row) => sum + row.balance_paise, 0), count: unpaid.data.length },
     thisMonth: {
-      revenuePaise: current?.revenue_paise ?? 0,
-      collectedPaise: collections?.collected_paise ?? 0,
-      expensesPaise: current?.expenses_paise ?? 0,
-      payrollPaise: current?.payroll_paise ?? 0,
-      profitPaise: current?.profit_paise ?? 0,
+      billedPaise: (pnl.data?.revenue_paise ?? 0) + (pnl.data?.output_tax_paise ?? 0),
+      collectedPaise: collections.data?.collected_paise ?? 0,
+      spentPaise: (pnl.data?.expenses_paise ?? 0) + (pnl.data?.input_tax_paise ?? 0) + (pnl.data?.payroll_paise ?? 0),
     },
-    lastMonth: {
-      revenuePaise: previous?.revenue_paise ?? 0,
-      profitPaise: previous?.profit_paise ?? 0,
-    },
-    receivables: {
-      totalPaise: ageingRows.reduce((sum, row) => sum + row.balance_paise, 0),
-      // "Overdue" excludes invoices not yet due, which is the figure worth chasing.
-      overduePaise: ageingRows
-        .filter((row) => row.ageing_bucket !== 'current')
-        .reduce((sum, row) => sum + row.balance_paise, 0),
-      buckets,
-    },
-    pendingExpensesPaise: (pendingExpenses ?? []).reduce((sum, row) => sum + row.amount_paise, 0),
-    draftInvoiceCount: draftInvoiceCount ?? 0,
-    topCategories: (categories ?? [])
-      .map((row) => ({ name: row.category_name, totalPaise: row.total_paise }))
-      .sort((a, b) => b.totalPaise - a.totalPaise)
-      .slice(0, 5),
-    trend: rows.map((row) => ({
-      periodMonth: row.period_month,
-      revenuePaise: row.revenue_paise,
-      expensesPaise: row.expenses_paise,
-      payrollPaise: row.payroll_paise,
-      profitPaise: row.profit_paise,
-    })),
+    waiting: [
+      {
+        key: 'expenses',
+        label: 'Expenses to approve',
+        count: expenseRows.length,
+        amountPaise: expenseRows.reduce((sum, row) => sum + row.amount_paise, 0),
+        // The expenses list defaults to this month, so the link opens the full history of anything still waiting.
+        href: '/expenses?status=submitted&from=2000-01-01',
+      },
+      {
+        key: 'reimburse',
+        label: 'Expenses to pay back',
+        count: owedRows.length,
+        amountPaise: owedRows.reduce((sum, row) => sum + row.amount_paise, 0),
+        href: '/expenses?payment=to_reimburse&from=2000-01-01',
+      },
+      { key: 'ledger', label: 'Ledger entries to approve', count: pendingEntries.count ?? 0, href: '/finances?tab=ledger' },
+      { key: 'draft-invoices', label: 'Draft invoices to issue', count: draftInvoices.count ?? 0, href: '/invoices?filter=draft' },
+      { key: 'payroll-approve', label: 'Payroll runs to approve', count: draftRuns.count ?? 0, href: '/payroll' },
+      { key: 'payroll-pay', label: 'Payroll runs to pay', count: approvedRuns.count ?? 0, href: '/payroll' },
+    ],
   }
 }

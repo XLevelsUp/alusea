@@ -6,7 +6,7 @@ import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/comp
 // Shown for unknown URLs and whenever a page calls notFound(), e.g. an invoice or employee id that does not exist.
 export default function NotFound() {
   return (
-    <div className="p-8 max-w-2xl mx-auto w-full">
+    <div className="p-4 sm:p-8 max-w-2xl mx-auto w-full">
       <Card>
         <CardHeader>
           <SearchXIcon className="size-8 text-muted-foreground mb-2" aria-hidden="true" />

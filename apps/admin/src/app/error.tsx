@@ -12,12 +12,12 @@ const SECTIONS: Record<string, { label: string; backHref?: string }> = {
   dashboard: { label: "the dashboard" },
   employees: { label: "employees", backHref: "/employees" },
   expenses: { label: "expenses", backHref: "/expenses" },
+  finances: { label: "finances", backHref: "/finances" },
   invoices: { label: "invoices", backHref: "/invoices" },
   media: { label: "page media", backHref: "/media" },
   parties: { label: "clients and vendors", backHref: "/parties" },
   payroll: { label: "payroll", backHref: "/payroll" },
   quotes: { label: "quotations", backHref: "/quotes" },
-  reports: { label: "reports", backHref: "/reports" },
   settings: { label: "settings" },
 };
 

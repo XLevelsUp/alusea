@@ -4,10 +4,20 @@ import { ActionError, defineAction } from '@/lib/actions'
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
+import { SIGNED_IN_COOKIE } from '@/lib/auth/flash'
 import { createClient } from '@/lib/supabase/server'
 import { syncProductToCatalog, removeProductFromCatalog } from '@/lib/metaCatalog'
 import { assertRole } from '@/lib/auth/session'
 import { landingPageFor } from '@/lib/auth/roles'
+
+// Wrong email and wrong password share one code, so the page never reveals which emails have an account.
+function loginErrorCode(code: string | undefined): string {
+  if (code === 'email_not_confirmed') return 'unconfirmed'
+  if (code === 'over_request_rate_limit' || code === 'over_email_send_rate_limit') return 'rate'
+  if (code === 'invalid_credentials' || code === 'user_not_found') return 'credentials'
+  return 'unknown'
+}
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
@@ -20,7 +30,9 @@ export async function login(formData: FormData) {
   const { data: session, error } = await supabase.auth.signInWithPassword(data)
 
   if (error || !session.user) {
-    redirect('/login?error=Could not authenticate user')
+    // The real reason goes to the server log; the page gets only a code, which it turns into wording of its own.
+    console.error('Login failed', { email: data.email, reason: error?.message ?? 'no user returned', code: error?.code })
+    redirect(`/login?error=${loginErrorCode(error?.code)}`)
   }
 
   const { data: profile } = await supabase
@@ -31,8 +43,12 @@ export async function login(formData: FormData) {
 
   if (!profile || !profile.is_active) {
     await supabase.auth.signOut()
-    redirect('/login?error=This account is not active. Ask an owner to enable it.')
+    redirect('/login?error=inactive')
   }
+
+  // Tells the next page to show a "Signed in" note once. Readable by the page so it can clear it, and short-lived in case it never does.
+  const cookieStore = await cookies()
+  cookieStore.set(SIGNED_IN_COOKIE, '1', { path: '/', maxAge: 60, sameSite: 'lax' })
 
   revalidatePath('/', 'layout')
   redirect(landingPageFor(profile.role))

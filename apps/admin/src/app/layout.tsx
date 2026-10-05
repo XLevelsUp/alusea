@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import { ReactNode } from "react";
 import { getProfile } from "@/lib/auth/session";
 import AdminNav from "@/components/AdminNav";
+import { cookies } from "next/headers";
 import { ConfirmProvider } from "@/components/ConfirmProvider";
+import SignInToast from "@/components/SignInToast";
+import { Toaster } from "@/components/ui/sonner";
+import { SIGNED_IN_COOKIE } from "@/lib/auth/flash";
 import { signOut } from "./actions";
 import "./globals.css";
 
@@ -17,6 +21,7 @@ export const metadata: Metadata = {
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const profile = await getProfile();
+  const justSignedIn = (await cookies()).has(SIGNED_IN_COOKIE);
 
   return (
     <html lang="en">
@@ -34,6 +39,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             <main className="flex-1 min-w-0 overflow-x-hidden">{children}</main>
           </div>
         </ConfirmProvider>
+        <Toaster position="bottom-right" richColors closeButton />
+        {profile && justSignedIn && <SignInToast name={profile.full_name || profile.email} />}
       </body>
     </html>
   );

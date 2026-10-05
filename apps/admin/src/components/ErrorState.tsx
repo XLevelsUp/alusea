@@ -32,7 +32,7 @@ export default function ErrorState({ error, reset, section, backHref = "/" }: Pr
     });
 
   return (
-    <div className="p-8 max-w-2xl mx-auto w-full">
+    <div className="p-4 sm:p-8 max-w-2xl mx-auto w-full">
       <Card role="alert">
         <CardHeader>
           <AlertTriangleIcon className="size-8 text-destructive mb-2" aria-hidden="true" />

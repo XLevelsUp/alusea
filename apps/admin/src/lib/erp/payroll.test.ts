@@ -149,7 +149,7 @@ describe('computePayslip', () => {
 
   test('the explanation says how the base was worked out', () => {
     const monthly = computePayslip({ workerType: 'monthly', enteredAmountPaise: 3000000, daysWorked: 26 })
-    assert.match(monthly.baseExplanation, /30-day month, 26 days worked/)
+    assert.match(monthly.baseExplanation, /26 of 30 days worked/)
 
     const daily = computePayslip({ workerType: 'daily', enteredAmountPaise: 80000, daysWorked: 24 })
     assert.match(daily.baseExplanation, /24 days at the daily rate/)
@@ -196,7 +196,7 @@ describe('period helpers', () => {
     assert.equal(calendarDaysInMonth('2026-01-01'), 31)
   })
 
-  test('the pay divisor is 30 regardless of the calendar', () => {
+  test('the fallback divisor for a run with no stored day basis is 30', () => {
     assert.equal(STANDARD_DAYS_IN_MONTH, 30)
   })
 })

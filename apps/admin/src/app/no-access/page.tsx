@@ -13,7 +13,7 @@ export default async function NoAccessPage() {
   const home = landingPageFor(profile.role);
 
   return (
-    <div className="p-8 max-w-2xl mx-auto w-full">
+    <div className="p-4 sm:p-8 max-w-2xl mx-auto w-full">
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 mt-16 text-center">
         <h1 className="text-2xl font-bold uppercase tracking-tight text-matte-black mb-3">
           No access to this page
@@ -22,11 +22,11 @@ export default async function NoAccessPage() {
           Your account is signed in as <span className="font-semibold">{ROLE_LABELS[profile.role]}</span>, which does not
           include this area.
         </p>
-        <p className="text-sm text-gray-400 mb-8">
+        <p className="text-sm text-gray-500 mb-8">
           If you need access, ask an owner to change your role in Settings.
         </p>
         {home === "/no-access" ? (
-          <p className="text-sm text-gray-400">There are no modules assigned to your role yet.</p>
+          <p className="text-sm text-gray-500">There are no modules assigned to your role yet.</p>
         ) : (
           <Link
             href={home}

@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
-import { AlertTriangleIcon, InfoIcon } from "lucide-react";
+import { AlertTriangleIcon, CheckCircle2Icon, InfoIcon } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,8 +21,10 @@ export type ConfirmOptions = {
   description?: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
-  // "danger" for anything that removes, deactivates or cannot be undone; "neutral" for a serious but constructive step like issuing.
-  tone?: "danger" | "neutral";
+  // "danger" for anything that removes, deactivates or cannot be undone; "neutral" for a serious but constructive step like issuing; "success" for a notice that something worked.
+  tone?: "danger" | "neutral" | "success";
+  // A notice has nothing to decide, so it shows a single button.
+  hideCancel?: boolean;
   // When set, the person must type a reason before they can confirm, and it is returned to the caller.
   reason?: { label: string; placeholder?: string };
 };
@@ -33,6 +35,12 @@ export type ConfirmResult = { reason: string } | null;
 type Pending = ConfirmOptions & { resolve: (result: ConfirmResult) => void };
 
 const ConfirmContext = createContext<((options: ConfirmOptions) => Promise<ConfirmResult>) | null>(null);
+
+const TONES = {
+  danger: { icon: AlertTriangleIcon, media: "bg-red-50 text-destructive", button: "danger" },
+  neutral: { icon: InfoIcon, media: "bg-muted text-matte-black", button: "default" },
+  success: { icon: CheckCircle2Icon, media: "bg-green-50 text-green-600", button: "default" },
+} as const;
 
 // One confirmation modal for the whole admin, mounted once in the layout and opened from anywhere with useConfirm().
 export function ConfirmProvider({ children }: { children: ReactNode }) {
@@ -57,7 +65,8 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     setPending(null);
   };
 
-  const danger = (pending?.tone ?? "danger") === "danger";
+  const tone = TONES[pending?.tone ?? "danger"];
+  const ToneIcon = tone.icon;
   const needsReason = !!pending?.reason;
   const canConfirm = !needsReason || reason.trim().length > 0;
 
@@ -69,8 +78,8 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
           {pending && (
             <>
               <AlertDialogHeader>
-                <AlertDialogMedia className={danger ? "bg-red-50 text-destructive" : "bg-muted text-matte-black"}>
-                  {danger ? <AlertTriangleIcon /> : <InfoIcon />}
+                <AlertDialogMedia className={tone.media}>
+                  <ToneIcon />
                 </AlertDialogMedia>
                 <AlertDialogTitle className="font-bold">{pending.title}</AlertDialogTitle>
                 {pending.description && <AlertDialogDescription>{pending.description}</AlertDialogDescription>}
@@ -96,10 +105,10 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
               )}
 
               <AlertDialogFooter>
-                <AlertDialogCancel size="lg">{pending.cancelLabel ?? "Cancel"}</AlertDialogCancel>
+                {!pending.hideCancel && <AlertDialogCancel size="lg">{pending.cancelLabel ?? "Cancel"}</AlertDialogCancel>}
                 <AlertDialogAction
                   size="lg"
-                  variant={danger ? "danger" : "default"}
+                  variant={tone.button}
                   disabled={!canConfirm}
                   onClick={(e) => {
                     // Radix closes on Action by itself; settling here first is what hands the answer back to the caller.
@@ -126,4 +135,12 @@ export function useConfirm() {
   const confirm = useContext(ConfirmContext);
   if (!confirm) throw new Error("useConfirm must be used inside <ConfirmProvider>");
   return confirm;
+}
+
+// const notify = useNotify(); await notify({ title: "Blog post updated" }); — a success notice with one OK button.
+export function useNotify() {
+  const confirm = useConfirm();
+  return async (options: Pick<ConfirmOptions, "title" | "description">) => {
+    await confirm({ ...options, tone: "success", hideCancel: true, confirmLabel: "OK" });
+  };
 }
