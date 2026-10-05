@@ -1,6 +1,6 @@
 import { requireRole } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS, type Role } from "@/lib/auth/roles";
+import { ROLE_LABELS, ROLE_DESCRIPTIONS, assignableRoles, type Role } from "@/lib/auth/roles";
 import { inviteUser, updateUserRole, setUserActive } from "./actions";
 import UserRow from "./UserRow";
 import AddUserForm from "./AddUserForm";
@@ -10,22 +10,28 @@ import { Button } from "@/components/ui/button";
 export default async function UsersPage() {
   const profile = await requireRole("owner");
 
+  // Developer accounts and the developer role are shown only to a developer; an owner's list simply does not include them.
+  const roles = assignableRoles(profile.role);
+
   const admin = createAdminClient();
-  const { data: users } = await admin
+  let request = admin
     .from("profiles")
     .select("id, email, full_name, role, is_active")
     .order("role", { ascending: true })
     .order("email", { ascending: true });
+  if (profile.role !== "developer") request = request.neq("role", "developer");
+
+  const { data: users } = await request;
 
   return (
-    <div className="p-8 max-w-5xl mx-auto w-full relative">
+    <div className="p-4 sm:p-8 max-w-5xl mx-auto w-full relative">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-4">
         <div>
-          <h1 className="text-3xl font-bold uppercase tracking-tight text-matte-black">Users &amp; Roles</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-matte-black">Users &amp; Roles</h1>
           <p className="text-gray-500 mt-2">Control who can sign in and what each person can reach.</p>
         </div>
         <FormDialog title="Add User" size="lg" trigger={<Button type="button" variant="brand">+ Add User</Button>}>
-          <AddUserForm add={inviteUser} />
+          <AddUserForm add={inviteUser} roles={roles} />
         </FormDialog>
       </div>
 
@@ -48,6 +54,7 @@ export default async function UsersPage() {
                   email={user.email}
                   fullName={user.full_name}
                   role={user.role as Role}
+                  roles={roles}
                   isActive={user.is_active}
                   isSelf={user.id === profile.id}
                   updateRole={updateUserRole}
@@ -69,7 +76,7 @@ export default async function UsersPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-sm font-bold uppercase tracking-wider text-matte-black mb-4">What each role can do</h2>
         <dl className="space-y-3">
-          {ROLES.map((role) => (
+          {roles.map((role) => (
             <div key={role} className="flex flex-col sm:flex-row sm:gap-4">
               <dt className="text-xs font-bold uppercase tracking-wider text-[#A67C52] sm:w-28 shrink-0 mb-1 sm:mb-0">
                 {ROLE_LABELS[role]}

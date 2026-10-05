@@ -3,7 +3,10 @@ import { requireRole } from '@/lib/auth/session'
 import { deleteBlogPost } from './actions'
 import Image from 'next/image'
 import Link from 'next/link'
+import CommentsPanel from './comments/CommentsPanel'
 import DeleteButton from '@/components/DeleteButton'
+import PageTabs from '@/components/PageTabs'
+import { Button } from '@/components/ui/button'
 
 const MARKETING_URL = process.env.NEXT_PUBLIC_MARKETING_URL || 'https://www.alusea.in'
 
@@ -21,30 +24,19 @@ export default async function AdminBlogPage() {
     .select('id', { count: 'exact', head: true })
     .eq('status', 'pending')
 
-  return (
-    <div className="p-8 max-w-7xl mx-auto w-full relative">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold uppercase tracking-tight text-matte-black">Blog Management</h1>
-          <p className="text-gray-500 mt-2">Write, edit, and publish articles for the Alusea blog.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/blog/comments"
-            className="inline-flex items-center justify-center px-5 py-3 border border-gray-300 text-gray-700 text-xs font-bold uppercase tracking-wider rounded-sm hover:bg-gray-100 transition-colors"
-          >
-            Moderate Comments
-          </Link>
-          <Link
-            href="/blog/new"
-            className="inline-flex items-center justify-center px-5 py-3 bg-[#A67C52] text-white text-xs font-bold uppercase tracking-wider rounded-sm hover:bg-[#8e6944] transition-colors shadow-md"
-          >
-            + New Post
-          </Link>
-        </div>
+  const newPostButton = (
+    <Button asChild variant="brand">
+      <Link href="/blog/new">+ New Post</Link>
+    </Button>
+  )
+
+  const postsPanel = (
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+        <p className="text-gray-500">Write, edit, and publish articles for the Alusea blog.</p>
+        {newPostButton}
       </div>
 
-      {/* POST LIST */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden w-full">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -76,12 +68,12 @@ export default async function AdminBlogPage() {
                   </td>
                   <td className="p-4 align-top text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <a href={`${MARKETING_URL}/blog/${post.slug}`} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-700 text-xs font-semibold uppercase tracking-wider px-3 py-1 border border-gray-200 hover:bg-gray-50 rounded transition-colors">
-                        View
-                      </a>
-                      <Link href={`/blog/${post.id}/edit`} className="text-blue-500 hover:text-blue-700 text-xs font-semibold uppercase tracking-wider px-3 py-1 border border-blue-200 hover:bg-blue-50 rounded transition-colors">
-                        Edit
-                      </Link>
+                      <Button asChild variant="outline" size="sm">
+                        <a href={`${MARKETING_URL}/blog/${post.slug}`} target="_blank" rel="noopener noreferrer">View</a>
+                      </Button>
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={`/blog/${post.id}/edit`}>Edit</Link>
+                      </Button>
                       <DeleteButton id={post.id} itemLabel="blog post" name={post.title} deleteAction={deleteBlogPost} />
                     </div>
                   </td>
@@ -91,6 +83,7 @@ export default async function AdminBlogPage() {
                 <tr>
                   <td colSpan={4} className="p-8 text-center text-gray-500">
                     No blog posts yet.
+                    <div className="mt-4">{newPostButton}</div>
                   </td>
                 </tr>
               )}
@@ -98,15 +91,22 @@ export default async function AdminBlogPage() {
           </table>
         </div>
       </div>
+    </div>
+  )
 
-      {!!pendingCommentsCount && pendingCommentsCount > 0 && (
-        <p className="mt-4 text-sm text-gray-500">
-          You have {pendingCommentsCount} comment{pendingCommentsCount === 1 ? '' : 's'} awaiting moderation.{' '}
-          <Link href="/blog/comments" className="text-[#A67C52] font-semibold hover:underline">
-            Review them
-          </Link>
-        </p>
-      )}
+  return (
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto w-full relative">
+      <div className="mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-matte-black">Blog</h1>
+        <p className="text-gray-500 mt-2">Articles on the website, and the comments visitors leave on them.</p>
+      </div>
+
+      <PageTabs
+        tabs={[
+          { key: 'posts', label: 'Posts', content: postsPanel },
+          { key: 'comments', label: 'Comments', badge: pendingCommentsCount ?? 0, content: <CommentsPanel /> },
+        ]}
+      />
     </div>
   )
 }

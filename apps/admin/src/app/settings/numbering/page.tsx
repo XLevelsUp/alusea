@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { DOC_TYPE_LABELS, peekDocumentNumber, financialYearOf, type DocType } from "@/lib/erp/numbering";
 
 export default async function NumberingSettingsPage() {
-  await requireRole("owner");
+  await requireRole("developer");
 
   const supabase = await createClient();
   const { data: series } = await supabase
@@ -19,9 +19,9 @@ export default async function NumberingSettingsPage() {
   );
 
   return (
-    <div className="p-8 max-w-4xl mx-auto w-full">
+    <div className="p-4 sm:p-8 max-w-4xl mx-auto w-full">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold uppercase tracking-tight text-matte-black">Document Numbering</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-matte-black">Document Numbering</h1>
         <p className="text-gray-500 mt-2">
           Numbers are allocated automatically when a document is issued. They cannot be typed or edited.
         </p>
@@ -29,7 +29,7 @@ export default async function NumberingSettingsPage() {
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
         <h2 className="text-sm font-bold uppercase tracking-wider text-matte-black mb-1">Next numbers</h2>
-        <p className="text-xs text-gray-400 mb-5">What the next document of each type will be given, in {currentYear}.</p>
+        <p className="text-xs text-gray-500 mb-5">What the next document of each type will be given, in {currentYear}.</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {previews.map(({ docType, preview }) => (
             <div key={docType} className="border border-gray-100 rounded-lg p-4 bg-gray-50">
@@ -43,7 +43,7 @@ export default async function NumberingSettingsPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
         <div className="p-6 border-b border-gray-100">
           <h2 className="text-sm font-bold uppercase tracking-wider text-matte-black">All series</h2>
-          <p className="text-xs text-gray-400 mt-1">One per document type per financial year.</p>
+          <p className="text-xs text-gray-500 mt-1">One per document type per financial year.</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -64,7 +64,7 @@ export default async function NumberingSettingsPage() {
                   <td className="p-4 text-sm text-gray-600">
                     {row.financial_year}
                     {row.financial_year === currentYear && (
-                      <span className="ml-2 text-[10px] uppercase tracking-wider text-[#A67C52]">Current</span>
+                      <span className="ml-2 text-[11px] uppercase tracking-wider text-[#A67C52]">Current</span>
                     )}
                   </td>
                   <td className="p-4 text-sm font-mono text-gray-600">{row.prefix}</td>

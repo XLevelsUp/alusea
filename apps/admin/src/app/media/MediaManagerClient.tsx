@@ -124,9 +124,9 @@ export default function MediaManagerClient({ initialMedia }: { initialMedia: Med
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto w-full">
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto w-full">
       <div className="mb-10">
-        <h1 className="text-3xl font-bold uppercase tracking-tight text-matte-black">
+        <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-matte-black">
           Page Media Manager
         </h1>
         <p className="text-gray-500 mt-2">
@@ -145,7 +145,7 @@ export default function MediaManagerClient({ initialMedia }: { initialMedia: Med
             className={`rounded-none border-b-2 -mb-px px-6 hover:bg-transparent ${
               activePage === p.key
                 ? "border-[#A67C52] text-[#A67C52] hover:text-[#A67C52]"
-                : "border-transparent text-gray-400 hover:text-gray-700"
+                : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           >
             {p.label}
@@ -194,8 +194,8 @@ export default function MediaManagerClient({ initialMedia }: { initialMedia: Med
                       onClick={() => fileInputRef.current?.click()}
                     >
                       <ImageIcon className="size-7 mx-auto text-gray-300 mb-1" aria-hidden="true" />
-                      <span className="block text-xs text-gray-400">Click to select image</span>
-                      <span className="block text-[10px] text-gray-300 mt-0.5">JPG, PNG, WebP recommended</span>
+                      <span className="block text-xs text-gray-500">Click to select image</span>
+                      <span className="block text-[11px] text-gray-300 mt-0.5">JPG, PNG, WebP recommended</span>
                     </button>
                     <input
                       id="image_file"
@@ -237,7 +237,7 @@ export default function MediaManagerClient({ initialMedia }: { initialMedia: Med
             <CardHeader className="border-b">
               <CardTitle className="text-base font-bold uppercase tracking-wider text-matte-black">
                 {pageConfig.label} — Uploaded Images
-                <span className="ml-2 text-xs font-normal text-gray-400 normal-case">
+                <span className="ml-2 text-xs font-normal text-gray-500 normal-case">
                   ({filteredMedia.length} image{filteredMedia.length !== 1 ? "s" : ""})
                 </span>
               </CardTitle>
@@ -248,7 +248,7 @@ export default function MediaManagerClient({ initialMedia }: { initialMedia: Med
               {filteredMedia.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <ImageIcon className="size-12 text-gray-200 mb-3" strokeWidth={1} aria-hidden="true" />
-                  <p className="text-sm text-gray-400">No images uploaded yet for this page.</p>
+                  <p className="text-sm text-gray-500">No images uploaded yet for this page.</p>
                   <p className="text-xs text-gray-300 mt-1">Use the form to upload your first image.</p>
                 </div>
               ) : (
@@ -285,17 +285,17 @@ export default function MediaManagerClient({ initialMedia }: { initialMedia: Med
                           </div>
 
                           <div className="p-4">
-                            <span className="text-[10px] font-bold text-[#A67C52] uppercase tracking-widest">
+                            <span className="text-[11px] font-bold text-[#A67C52] uppercase tracking-widest">
                               {sectionLabel}
                             </span>
                             {item.title && (
                               <p className="text-sm font-semibold text-gray-800 mt-0.5 truncate">{item.title}</p>
                             )}
                             {item.description && (
-                              <p className="text-xs text-gray-400 mt-1 line-clamp-2">{item.description}</p>
+                              <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.description}</p>
                             )}
                             {item.action_text && (
-                              <span className="inline-block mt-2 text-[10px] bg-gray-100 text-gray-500 px-2 py-1 rounded font-medium">
+                              <span className="inline-block mt-2 text-[11px] bg-gray-100 text-gray-500 px-2 py-1 rounded font-medium">
                                 Button: {item.action_text}
                               </span>
                             )}

@@ -58,7 +58,7 @@ function changeSummary(changed: Json): { field: string; from: string; to: string
 export default async function AuditLogPage(props: {
   searchParams: Promise<{ table?: string; page?: string }>;
 }) {
-  await requireRole("owner");
+  await requireRole("developer");
 
   const searchParams = await props.searchParams;
   const tableFilter = searchParams?.table ?? "";
@@ -87,9 +87,9 @@ export default async function AuditLogPage(props: {
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto w-full">
+    <div className="p-4 sm:p-8 max-w-6xl mx-auto w-full">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold uppercase tracking-tight text-matte-black">Audit Log</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-matte-black">Audit Log</h1>
         <p className="text-gray-500 mt-2">
           Every change to a financial record, recorded by the database itself.
         </p>
@@ -148,7 +148,7 @@ export default async function AuditLogPage(props: {
                     <td className="p-4 text-xs text-gray-600">{entry.actor_email || "System"}</td>
                     <td className="p-4">
                       <span
-                        className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mr-2 ${
+                        className={`inline-block px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider mr-2 ${
                           OPERATION_STYLES[entry.operation]
                         }`}
                       >
@@ -169,7 +169,7 @@ export default async function AuditLogPage(props: {
                           ))}
                         </ul>
                       ) : (
-                        <span className="text-gray-400">
+                        <span className="text-gray-500">
                           {entry.operation === "INSERT" ? "New record" : entry.operation === "DELETE" ? "Removed" : "—"}
                         </span>
                       )}
@@ -197,7 +197,7 @@ export default async function AuditLogPage(props: {
             ) : (
               <span />
             )}
-            <span className="text-xs text-gray-400">Page {page}</span>
+            <span className="text-xs text-gray-500">Page {page}</span>
             {hasMore ? (
               <Link href={pageHref(page + 1)} className="text-xs font-bold uppercase tracking-wider text-gray-600 hover:text-matte-black">
                 Older →
@@ -209,7 +209,7 @@ export default async function AuditLogPage(props: {
         )}
       </div>
 
-      <p className="text-xs text-gray-400 mt-6">
+      <p className="text-xs text-gray-500 mt-6">
         Entries are written by database triggers, so a change made outside this app is recorded too. Nothing can edit or
         delete them, including an owner.
       </p>

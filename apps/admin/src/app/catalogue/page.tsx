@@ -3,8 +3,10 @@ import { requireRole } from '@/lib/auth/session'
 import { deleteProduct } from '../actions'
 import Image from 'next/image'
 import AddProductForm from './AddProductForm'
+import CategoriesPanel from '../categories/CategoriesPanel'
 import DeleteButton from '@/components/DeleteButton'
 import { FormDialog } from '@/components/FormDialog'
+import PageTabs from '@/components/PageTabs'
 import { Button } from '@/components/ui/button'
 import type { ProductRow } from '@/lib/supabase/types'
 
@@ -24,21 +26,15 @@ export default async function AdminCataloguePage() {
 
   const categoryNames = categories?.map(c => c.name) || []
 
-  return (
-    <div className="p-8 max-w-7xl mx-auto w-full relative">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold uppercase tracking-tight text-matte-black">Catalogue Management</h1>
-          <p className="text-gray-500 mt-2">Add, remove, and manage your products.</p>
-        </div>
-        <div>
-          <FormDialog title="Add New Product" trigger={<Button type="button" variant="brand">+ Add New Product</Button>}>
-            <AddProductForm categories={categoryNames} />
-          </FormDialog>
-        </div>
+  const productsPanel = (
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+        <p className="text-gray-500">Add, remove, and manage your products.</p>
+        <FormDialog title="Add New Product" trigger={<Button type="button" variant="brand">+ Add New Product</Button>}>
+          <AddProductForm categories={categoryNames} />
+        </FormDialog>
       </div>
 
-      {/* PRODUCT LIST - FULL WIDTH */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden w-full">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -68,7 +64,7 @@ export default async function AdminCataloguePage() {
                   </td>
                   <td className="p-4 align-top text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <FormDialog title="Edit Product Details" trigger={<Button type="button" variant="outline" size="sm" className="border-blue-200 text-blue-500 hover:bg-blue-50 hover:text-blue-700">Edit</Button>}>
+                      <FormDialog title="Edit Product Details" trigger={<Button type="button" variant="outline" size="sm">Edit</Button>}>
                         <AddProductForm initialData={item as ProductRow} categories={categoryNames} />
                       </FormDialog>
                       <DeleteButton id={item.id} itemLabel="product" name={item.name} deleteAction={deleteProduct} />
@@ -79,7 +75,12 @@ export default async function AdminCataloguePage() {
               {(!products || products.length === 0) && (
                 <tr>
                   <td colSpan={3} className="p-8 text-center text-gray-500">
-                    No products found in the database.
+                    No products yet.
+                    <div className="mt-4">
+                      <FormDialog title="Add New Product" trigger={<Button type="button" variant="brand">+ Add New Product</Button>}>
+                        <AddProductForm categories={categoryNames} />
+                      </FormDialog>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -87,6 +88,22 @@ export default async function AdminCataloguePage() {
           </table>
         </div>
       </div>
+    </div>
+  )
+
+  return (
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto w-full relative">
+      <div className="mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-matte-black">Catalogue</h1>
+        <p className="text-gray-500 mt-2">The products shown on the website, and the categories that organise them.</p>
+      </div>
+
+      <PageTabs
+        tabs={[
+          { key: 'products', label: 'Products', content: productsPanel },
+          { key: 'categories', label: 'Categories', content: <CategoriesPanel /> },
+        ]}
+      />
     </div>
   )
 }

@@ -38,7 +38,7 @@ export default function CommentModerationRow({ comment }: { comment: Comment }) 
       <td className="p-4 align-top max-w-md">
         <p className="text-sm text-gray-700">{comment.message}</p>
         {comment.blog_posts && (
-          <p className="text-xs text-gray-400 mt-1">on “{comment.blog_posts.title}”</p>
+          <p className="text-xs text-gray-500 mt-1">on “{comment.blog_posts.title}”</p>
         )}
       </td>
       <td className="p-4 align-top text-xs text-gray-500">
@@ -46,7 +46,7 @@ export default function CommentModerationRow({ comment }: { comment: Comment }) 
       </td>
       <td className="p-4 align-top">
         <span
-          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded ${
+          className={`text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded ${
             comment.status === 'approved'
               ? 'bg-green-100 text-green-700'
               : comment.status === 'rejected'

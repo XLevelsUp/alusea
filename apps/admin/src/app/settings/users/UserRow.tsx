@@ -1,11 +1,12 @@
 "use client";
 
+import { toast } from "sonner";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { useAction } from "@/hooks/use-action";
 import type { Action } from "@/lib/actions";
-import { ROLES, ROLE_DESCRIPTIONS, ROLE_LABELS, type Role } from "@/lib/auth/roles";
+import { ROLE_DESCRIPTIONS, ROLE_LABELS, type Role } from "@/lib/auth/roles";
 import { useConfirm } from "@/components/ConfirmProvider";
 
 type Props = {
@@ -13,13 +14,15 @@ type Props = {
   email: string;
   fullName: string;
   role: Role;
+  // The roles the signed-in person is allowed to hand out.
+  roles: Role[];
   isActive: boolean;
   isSelf: boolean;
   updateRole: Action;
   setActive: Action;
 };
 
-export default function UserRow({ id, email, fullName, role, isActive, isSelf, updateRole, setActive }: Props) {
+export default function UserRow({ id, email, fullName, role, roles, isActive, isSelf, updateRole, setActive }: Props) {
   // Controlled so a rejected change snaps back to the saved role instead of showing one that was never stored.
   const [selectedRole, setSelectedRole] = useState(role);
   const roleAction = useAction(updateRole);
@@ -35,7 +38,7 @@ export default function UserRow({ id, email, fullName, role, isActive, isSelf, u
         <div className="flex flex-col">
           <span className="font-semibold text-gray-900">{fullName || "—"}</span>
           <span className="text-xs text-gray-500">{email}</span>
-          {isSelf && <span className="text-[10px] uppercase tracking-wider text-[#A67C52] mt-1">You</span>}
+          {isSelf && <span className="text-[11px] uppercase tracking-wider text-[#A67C52] mt-1">You</span>}
           {error && <span role="alert" className="text-xs text-destructive mt-2">{error}</span>}
         </div>
       </td>
@@ -54,7 +57,7 @@ export default function UserRow({ id, email, fullName, role, isActive, isSelf, u
               description: ROLE_DESCRIPTIONS[next],
               confirmLabel: "Change role",
               // Removing owner or dropping to staff takes access away, so those read as a warning.
-              tone: role === "owner" || next === "staff" ? "danger" : "neutral",
+              tone: role === "owner" || role === "developer" || next === "staff" ? "danger" : "neutral",
             });
             if (!ok) {
               setSelectedRole(role);
@@ -65,11 +68,12 @@ export default function UserRow({ id, email, fullName, role, isActive, isSelf, u
             fd.set("user_id", id);
             fd.set("role", next);
             roleAction.run(fd).then((result) => {
+              if (result.ok) toast.success("Role updated");
               if (!result.ok) setSelectedRole(role);
             });
           }}
         >
-          {ROLES.map((r) => (
+          {roles.map((r) => (
             <NativeSelectOption key={r} value={r}>
               {ROLE_LABELS[r]}
             </NativeSelectOption>
@@ -78,7 +82,7 @@ export default function UserRow({ id, email, fullName, role, isActive, isSelf, u
       </td>
       <td className="p-4 align-top">
         <span
-          className={`inline-block px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
+          className={`inline-block px-2 py-1 rounded text-[11px] font-bold uppercase tracking-wider ${
             isActive ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"
           }`}
         >
@@ -104,7 +108,9 @@ export default function UserRow({ id, email, fullName, role, isActive, isSelf, u
             const fd = new FormData();
             fd.set("user_id", id);
             fd.set("is_active", String(!isActive));
-            activeAction.run(fd);
+            activeAction.run(fd).then((result) => {
+              if (result.ok) toast.success("User updated");
+            });
           }}
         >
           {isPending ? "…" : isActive ? "Deactivate" : "Reactivate"}

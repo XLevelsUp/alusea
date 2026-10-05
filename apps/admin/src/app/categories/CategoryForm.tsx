@@ -20,8 +20,7 @@ export default function CategoryForm({ initialData, cancelUrl }: { initialData?:
     e.preventDefault();
     run(new FormData(e.currentTarget)).then((result) => {
       if (!result.ok) return;
-      alert(initialData ? "Category updated successfully!" : "Category added successfully!");
-      done();
+      done(initialData ? "Category updated" : "Category added");
     });
   };
 

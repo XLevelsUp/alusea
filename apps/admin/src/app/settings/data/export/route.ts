@@ -1,5 +1,6 @@
 // Full-table CSV backup. Paise columns are converted to rupees so the file is readable outside this application.
 
+import { todayInIndia } from '@/lib/erp/dates'
 import { requireRole } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 import { paiseToRupeeString } from '@/lib/erp/money'
@@ -33,7 +34,7 @@ function csvCell(value: unknown): string {
 }
 
 export async function GET(request: Request) {
-  await requireRole('owner')
+  await requireRole('developer')
 
   const table = new URL(request.url).searchParams.get('table') ?? ''
 
@@ -79,7 +80,7 @@ export async function GET(request: Request) {
 
   // BOM so Excel opens the file as UTF-8 rather than mangling any non-ASCII text.
   const csv = `﻿${lines.join('\r\n')}\r\n`
-  const stamp = new Date().toISOString().slice(0, 10)
+  const stamp = todayInIndia()
 
   return new Response(csv, {
     headers: {

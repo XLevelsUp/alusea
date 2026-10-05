@@ -6,21 +6,23 @@ import { NativeSelectOption } from "@/components/ui/native-select";
 import { useFormDone } from "@/components/FormDialog";
 import { useAction } from "@/hooks/use-action";
 import type { Action } from "@/lib/actions";
-import { ROLES, ROLE_LABELS } from "@/lib/auth/roles";
+import { ROLE_LABELS, type Role } from "@/lib/auth/roles";
 
 type Props = {
   add: Action;
+  // The roles this person is allowed to hand out.
+  roles: Role[];
   cancelUrl?: string;
 };
 
-export default function AddUserForm({ add, cancelUrl }: Props) {
+export default function AddUserForm({ add, roles, cancelUrl }: Props) {
   const { run, isPending, error } = useAction(add);
   const done = useFormDone(cancelUrl);
 
   function onSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     run(new FormData(e.currentTarget)).then((result) => {
-      if (result.ok) done();
+      if (result.ok) done("User created");
     });
   }
 
@@ -37,7 +39,7 @@ export default function AddUserForm({ add, cancelUrl }: Props) {
           hint="Share this with them directly, then ask them to change it after signing in."
         />
         <SelectField label="Role" name="role" required defaultValue="staff">
-          {ROLES.map((role) => (
+          {roles.map((role) => (
             <NativeSelectOption key={role} value={role}>
               {ROLE_LABELS[role]}
             </NativeSelectOption>

@@ -32,6 +32,8 @@ function sampleParty(company: CompanyProfile, interState: boolean): Party {
     pan: 'ABCDE1234F',
     payment_terms_days: 30,
     notes: '',
+    services_offered: '',
+    vendor_type: null,
     is_active: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -44,7 +46,7 @@ function formatDate(date: Date): string {
 }
 
 export async function GET(request: Request) {
-  await requireRole('owner')
+  await requireRole('developer')
 
   const url = new URL(request.url)
   const template = url.searchParams.get('template') ?? 'invoice'

@@ -92,8 +92,7 @@ export default function ProductForm({ initialData, cancelUrl, categories = [] }:
     const result = await run(formData);
     if (!result.ok) return;
 
-    alert(initialData ? 'Product updated successfully!' : 'Product added successfully!');
-    done();
+    done(initialData ? 'Product updated on the website' : 'Product added to the website');
   };
 
   useEffect(() => {
@@ -192,9 +191,9 @@ export default function ProductForm({ initialData, cancelUrl, categories = [] }:
             onClick={() => fileInputRef.current?.click()}
             className={`w-full p-6 border-2 border-dashed rounded-xl text-center cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${isDragging ? "border-[#A67C52] bg-[#A67C52]/5" : "border-gray-300 bg-gray-50 hover:bg-gray-100"}`}
           >
-            <PlusIcon className="mx-auto size-8 text-gray-400 mb-2" aria-hidden="true" />
+            <PlusIcon className="mx-auto size-8 text-gray-500 mb-2" aria-hidden="true" />
             <span className="block text-sm text-gray-500 font-medium">Click or drag images here</span>
-            <span className="block text-[10px] text-gray-400 mt-1">Upload multiple files for your product gallery.</span>
+            <span className="block text-[11px] text-gray-500 mt-1">Upload multiple files for your product gallery.</span>
           </button>
           <input
             id="image_files"

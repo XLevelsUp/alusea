@@ -11,7 +11,7 @@ export default async function CompanySettingsPage() {
 
   if (!profile) {
     return (
-      <div className="p-8 max-w-3xl mx-auto w-full">
+      <div className="p-4 sm:p-8 max-w-3xl mx-auto w-full">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 mt-16 text-center">
           <h1 className="text-xl font-bold uppercase tracking-tight text-matte-black mb-2">Company profile missing</h1>
           <p className="text-gray-500 text-sm">Run the Phase 2 migrations, which seed this row.</p>
@@ -21,9 +21,9 @@ export default async function CompanySettingsPage() {
   }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto w-full">
+    <div className="p-4 sm:p-8 max-w-4xl mx-auto w-full">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold uppercase tracking-tight text-matte-black">Company Details</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-matte-black">Company Details</h1>
         <p className="text-gray-500 mt-2">Your business identity, as it appears on invoices, quotations and payslips.</p>
       </div>
 

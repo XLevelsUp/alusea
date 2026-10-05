@@ -13,9 +13,9 @@ export default async function NewBlogPostPage() {
     .order('sort_order', { ascending: true })
 
   return (
-    <div className="p-8 max-w-4xl mx-auto w-full">
+    <div className="p-4 sm:p-8 max-w-4xl mx-auto w-full">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold uppercase tracking-tight text-matte-black">New Blog Post</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-matte-black">New Blog Post</h1>
         <Link href="/blog" className="text-sm text-gray-500 hover:text-matte-black transition-colors">
           ← Back to Blog List
         </Link>
