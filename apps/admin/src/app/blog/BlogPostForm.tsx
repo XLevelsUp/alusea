@@ -1,5 +1,6 @@
 "use client";
 
+import { todayInIndia } from "@/lib/erp/dates";
 import { useState, useRef, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,6 +15,7 @@ import { Field, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from
 import { Input } from "@/components/ui/input";
 import { NativeSelectOption } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
+import { useNotify } from "@/components/ConfirmProvider";
 import { useAction } from "@/hooks/use-action";
 
 type BlogPost = BlogPostRow;
@@ -30,7 +32,7 @@ const DEFAULT_CTA: BlogCta = {
 
 function toDateInputValue(isoString?: string): string {
   const date = isoString ? new Date(isoString) : new Date();
-  if (isNaN(date.getTime())) return new Date().toISOString().slice(0, 10);
+  if (isNaN(date.getTime())) return todayInIndia();
   return date.toISOString().slice(0, 10);
 }
 
@@ -177,6 +179,7 @@ export default function BlogPostForm({
   cancelUrl: string;
 }) {
   const { run, isPending, error: actionError, setError } = useAction(initialData ? updateBlogPost : addBlogPost);
+  const notify = useNotify();
 
   const [featuredImageUrl, setFeaturedImageUrl] = useState(initialData?.featured_image_url || "");
   const [featuredImageFit, setFeaturedImageFit] = useState<ImageFit>(initialData?.featured_image_fit || "cover");
@@ -271,9 +274,12 @@ export default function BlogPostForm({
     );
     formData.set("intro_html", getFieldValue("intro_html") || "");
 
-    run(formData).then((result) => {
+    run(formData).then(async (result) => {
       if (!result.ok) return;
-      alert(initialData ? "Blog post updated successfully!" : "Blog post published successfully!");
+      await notify({
+        title: initialData ? "Blog post updated" : "Blog post published",
+        description: initialData ? "Your changes are live on the website." : "The post is now live on the website.",
+      });
       window.location.href = cancelUrl;
     });
   };
@@ -362,7 +368,7 @@ export default function BlogPostForm({
 
         <EditorSection title="Sections" action={<AddButton onClick={addSection}>+ Add Section</AddButton>}>
           {sections.length === 0 && (
-            <p className="text-sm text-gray-400 italic">No sections yet. Add one to build out the article body.</p>
+            <p className="text-sm text-gray-500 italic">No sections yet. Add one to build out the article body.</p>
           )}
 
           {sections.map((section, sIdx) => (
@@ -414,7 +420,7 @@ export default function BlogPostForm({
           ))}
         </EditorSection>
 
-        <EditorSection title={<>Second Image <span className="text-gray-400 normal-case font-normal">(optional)</span></>}>
+        <EditorSection title={<>Second Image <span className="text-gray-500 normal-case font-normal">(optional)</span></>}>
           <ImageUploadField
             id="second_image_file"
             label="Second Image"
@@ -460,7 +466,7 @@ export default function BlogPostForm({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {cta.buttons.map((button, index) => (
               <fieldset key={index} className="space-y-2 border border-gray-200 rounded-md p-3 bg-gray-50/50">
-                <legend className="text-[10px] font-semibold text-gray-500 uppercase px-1">Button {index + 1}</legend>
+                <legend className="text-[11px] font-semibold text-gray-500 uppercase px-1">Button {index + 1}</legend>
                 <Input
                   value={button.label}
                   onChange={(e) => updateCtaButton(index, "label", e.target.value)}

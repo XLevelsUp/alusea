@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { assertRole } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 import { isValidGstin, isValidPan, stateNameForCode } from '@/lib/erp/states'
+import { isVendorType, type AddedParty } from '@/lib/erp/parties'
 
 const ERP_WRITERS = ['owner', 'accounts', 'sales'] as const
 
@@ -24,6 +25,13 @@ function readPartyFields(formData: FormData) {
   if (!isClient && !isVendor) {
     throw new ActionError('A party must be a client, a vendor, or both')
   }
+
+  // Only vendors carry a type; clearing it for a pure client keeps the database check satisfied when someone unticks Vendor.
+  const vendorTypeInput = text(formData, 'vendor_type')
+  if (isVendor && !isVendorType(vendorTypeInput)) {
+    throw new ActionError('Choose whether this vendor is local or import/export')
+  }
+  const vendorType = isVendor && isVendorType(vendorTypeInput) ? vendorTypeInput : null
 
   const gstin = text(formData, 'gstin').toUpperCase()
   const pan = text(formData, 'pan').toUpperCase()
@@ -52,6 +60,7 @@ function readPartyFields(formData: FormData) {
     display_name: text(formData, 'display_name'),
     is_client: isClient,
     is_vendor: isVendor,
+    vendor_type: vendorType,
     contact_person: text(formData, 'contact_person'),
     phone: text(formData, 'phone'),
     email: text(formData, 'email'),
@@ -64,23 +73,37 @@ function readPartyFields(formData: FormData) {
     gstin,
     pan,
     payment_terms_days: terms,
+    services_offered: text(formData, 'services_offered'),
     notes: text(formData, 'notes'),
   }
 }
 
-export const addParty = defineAction(async function addParty(formData: FormData) {
+export const addParty = defineAction(async function addParty(formData: FormData): Promise<AddedParty> {
   const profile = await assertRole(...ERP_WRITERS)
 
   const supabase = await createClient()
-  const { error } = await supabase
+  const { data: party, error } = await supabase
     .from('parties')
     .insert([{ ...readPartyFields(formData), created_by: profile.id }])
+    .select('id, name, is_client, is_vendor, billing_state_code, billing_state, gstin')
+    .single()
 
-  if (error) {
-    throw new ActionError('Could not add party: ' + error.message)
+  if (error || !party) {
+    throw new ActionError('Could not add party: ' + (error?.message ?? 'unknown error'))
   }
 
   revalidatePath('/parties')
+
+  // Returned so an invoice or expense form that added this party in passing can select it without reloading.
+  return {
+    id: party.id,
+    name: party.name,
+    isClient: party.is_client,
+    isVendor: party.is_vendor,
+    stateCode: party.billing_state_code,
+    stateName: party.billing_state,
+    gstin: party.gstin,
+  }
 })
 
 export const updateParty = defineAction(async function updateParty(formData: FormData) {
@@ -97,9 +120,10 @@ export const updateParty = defineAction(async function updateParty(formData: For
   }
 
   revalidatePath('/parties')
+  revalidatePath(`/parties/${id}`)
 })
 
-// Parties are deactivated rather than deleted, so invoices and expenses keep a valid reference.
+// Parties are normally deactivated, so invoices and expenses keep a valid reference.
 export const setPartyActive = defineAction(async function setPartyActive(formData: FormData) {
   await assertRole(...ERP_WRITERS)
 
@@ -113,6 +137,32 @@ export const setPartyActive = defineAction(async function setPartyActive(formDat
   if (error) {
     throw new ActionError('Could not update party: ' + error.message)
   }
+
+  revalidatePath('/parties')
+})
+
+// Permanent delete is for a party created by mistake: owner only, and only while nothing refers to it.
+export const deleteParty = defineAction(async function deleteParty(id: string) {
+  await assertRole('owner')
+  if (!id) throw new ActionError('Party is required')
+
+  const supabase = await createClient()
+  const head = { count: 'exact' as const, head: true }
+  const [invoices, quotes, vendorExpenses, clientExpenses] = await Promise.all([
+    supabase.from('invoices').select('id', head).eq('party_id', id),
+    supabase.from('quotes').select('id', head).eq('party_id', id),
+    supabase.from('expenses').select('id', head).eq('party_id', id),
+    supabase.from('expenses').select('id', head).eq('client_id', id),
+  ])
+
+  const used =
+    (invoices.count ?? 0) + (quotes.count ?? 0) + (vendorExpenses.count ?? 0) + (clientExpenses.count ?? 0)
+  if (used > 0) {
+    throw new ActionError('This party has invoices, quotations or expenses, so it cannot be deleted. Deactivate it instead.')
+  }
+
+  const { error } = await supabase.from('parties').delete().eq('id', id)
+  if (error) throw new ActionError('Could not delete party: ' + error.message)
 
   revalidatePath('/parties')
 })

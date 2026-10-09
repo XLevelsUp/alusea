@@ -42,10 +42,10 @@ export default async function QuotesPage(props: { searchParams: Promise<{ filter
   const nameById = new Map((parties ?? []).map((party) => [party.id, party.name]));
 
   return (
-    <div className="p-8 max-w-7xl mx-auto w-full">
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto w-full">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold uppercase tracking-tight text-matte-black">Quotations</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-matte-black">Quotations</h1>
           <p className="text-gray-500 mt-2">Price a job, send it, then turn an accepted quote into an invoice.</p>
         </div>
         <Link
@@ -96,7 +96,7 @@ export default async function QuotesPage(props: { searchParams: Promise<{ filter
                   </td>
                   <td className="p-4">
                     <span
-                      className={`inline-block px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLES[quote.status]}`}
+                      className={`inline-block px-2 py-1 rounded text-[11px] font-bold uppercase tracking-wider ${STATUS_STYLES[quote.status]}`}
                     >
                       {quote.status}
                     </span>

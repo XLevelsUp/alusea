@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { requireProfile } from "@/lib/auth/session";
+import { isOwnerLevel, roleAllowed } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 import { loadExpenseFormData } from "@/lib/erp/expenseFormData";
 import ExpenseForm from "../../ExpenseForm";
@@ -16,17 +17,17 @@ export default async function EditExpensePage({ params }: { params: Promise<{ id
   if (!expense) notFound();
 
   // An approved expense is in the books, so only an approver can still touch it.
-  const canApprove = profile.role === "owner" || profile.role === "accounts";
+  const canApprove = isOwnerLevel(profile.role) || profile.role === "accounts";
   if (expense.status === "approved" && !canApprove) {
     redirect(`/expenses/${id}`);
   }
 
-  const { categories, vendors } = await loadExpenseFormData();
+  const { categories, vendors, clients } = await loadExpenseFormData();
 
   return (
-    <div className="p-8 max-w-4xl mx-auto w-full">
+    <div className="p-4 sm:p-8 max-w-4xl mx-auto w-full">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold uppercase tracking-tight text-matte-black">Edit Expense</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-matte-black">Edit Expense</h1>
         <Link href={`/expenses/${id}`} className="text-sm text-gray-500 hover:text-matte-black transition-colors">
           ← Back to Expense
         </Link>
@@ -36,7 +37,9 @@ export default async function EditExpensePage({ params }: { params: Promise<{ id
         initialData={expense}
         categories={categories}
         vendors={vendors}
+        clients={clients}
         save={updateExpense}
+        canAddParty={roleAllowed(profile.role, ["owner", "accounts", "sales"])}
         cancelUrl={`/expenses/${id}`}
       />
     </div>

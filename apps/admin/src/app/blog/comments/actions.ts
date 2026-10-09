@@ -24,7 +24,7 @@ export const approveComment = defineAction(async function approveComment(id: str
   }
 
   revalidatePath(`/blog/${postSlug}`)
-  revalidatePath('/blog/comments')
+  revalidatePath('/blog')
 })
 
 export const rejectComment = defineAction(async function rejectComment(id: string, postSlug: string) {
@@ -40,7 +40,7 @@ export const rejectComment = defineAction(async function rejectComment(id: strin
   }
 
   revalidatePath(`/blog/${postSlug}`)
-  revalidatePath('/blog/comments')
+  revalidatePath('/blog')
 })
 
 export const deleteComment = defineAction(async function deleteComment(id: string, postSlug: string) {
@@ -56,5 +56,5 @@ export const deleteComment = defineAction(async function deleteComment(id: strin
   }
 
   revalidatePath(`/blog/${postSlug}`)
-  revalidatePath('/blog/comments')
+  revalidatePath('/blog')
 })

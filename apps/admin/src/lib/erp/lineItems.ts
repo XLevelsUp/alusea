@@ -1,12 +1,14 @@
 // Parses the repeating line-item rows a quote or invoice form submits, shared so both documents price identically.
 
 import { ActionError } from '../actionError'
+import { isKnownHsnCode } from './hsn'
 import { parseRupeesToPaise } from './money'
-import { areaSqFt, lineAmountPaise } from './tax'
+import { lineAmountPaise } from './tax'
 
 export type ParsedLineItem = {
   position: number
   description: string
+  hsn_code: string
   width_ft: number | null
   height_ft: number | null
   quantity: number
@@ -35,40 +37,40 @@ export function parseLineItems(formData: FormData): ParsedLineItem[] {
   const items: ParsedLineItem[] = []
 
   for (const index of [...indices].sort((a, b) => a - b)) {
-    const description = String(formData.get(`items[${index}][description]`) ?? '').trim()
+    const field = (name: string) => String(formData.get(`items[${index}][${name}]`) ?? '').trim()
+
+    const description = field('description')
     if (!description) continue
 
-    const width = numberOrNull(formData.get(`items[${index}][width_ft]`))
-    const height = numberOrNull(formData.get(`items[${index}][height_ft]`))
-    const unit = String(formData.get(`items[${index}][unit]`) ?? 'sq ft').trim() || 'sq ft'
-    const ratePaise = parseRupeesToPaise(String(formData.get(`items[${index}][rate]`) ?? ''))
-    const productId = String(formData.get(`items[${index}][product_id]`) ?? '').trim()
+    const line = items.length + 1
+    const hsnCode = field('hsn_code')
+    const unit = field('unit')
+    const ratePaise = parseRupeesToPaise(field('rate'))
 
-    // Width and height, when both given, define the quantity; otherwise the typed quantity stands.
-    const explicitQuantity = numberOrNull(formData.get(`items[${index}][quantity]`))
-    const quantity =
-      width !== null && height !== null && width > 0 && height > 0
-        ? areaSqFt(width, height)
-        : (explicitQuantity ?? 1)
+    // Every figure is taken as typed: width and height are recorded for reference and never change the quantity.
+    const quantity = numberOrNull(formData.get(`items[${index}][quantity]`)) ?? 1
 
-    if (quantity < 0) {
-      throw new ActionError(`Line ${items.length + 1}: quantity cannot be negative`)
-    }
+    // The amount is whatever was typed; only a blank amount falls back to quantity times rate.
+    const amountInput = field('amount')
+    const amountPaise = amountInput ? parseRupeesToPaise(amountInput) : lineAmountPaise(quantity, ratePaise)
 
-    if (ratePaise < 0) {
-      throw new ActionError(`Line ${items.length + 1}: rate cannot be negative`)
-    }
+    if (hsnCode && !isKnownHsnCode(hsnCode)) throw new ActionError(`Line ${line}: choose an HSN code from the list`)
+    if (quantity < 0) throw new ActionError(`Line ${line}: quantity cannot be negative`)
+    if (ratePaise < 0) throw new ActionError(`Line ${line}: rate cannot be negative`)
+    if (amountPaise < 0) throw new ActionError(`Line ${line}: amount cannot be negative`)
 
     items.push({
       position: items.length,
       description,
-      width_ft: width,
-      height_ft: height,
+      hsn_code: hsnCode,
+      width_ft: numberOrNull(formData.get(`items[${index}][width_ft]`)),
+      height_ft: numberOrNull(formData.get(`items[${index}][height_ft]`)),
       quantity,
       unit,
       rate_paise: ratePaise,
-      amount_paise: lineAmountPaise(quantity, ratePaise),
-      product_id: productId || null,
+      amount_paise: amountPaise,
+      // Lines are typed by hand now, so nothing links them to a catalogue product.
+      product_id: null,
     })
   }
 

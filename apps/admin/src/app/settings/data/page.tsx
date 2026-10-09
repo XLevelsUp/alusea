@@ -15,7 +15,7 @@ const BACKUP_TABLES = [
 ];
 
 export default async function DataSettingsPage() {
-  await requireRole("owner");
+  await requireRole("developer");
 
   const supabase = await createClient();
   const [{ data: issues }, { data: series }] = await Promise.all([
@@ -28,9 +28,9 @@ export default async function DataSettingsPage() {
   const currentSeries = (series ?? []).filter((row) => row.financial_year === currentYear);
 
   return (
-    <div className="p-8 max-w-4xl mx-auto w-full">
+    <div className="p-4 sm:p-8 max-w-4xl mx-auto w-full">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold uppercase tracking-tight text-matte-black">Data Health</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-matte-black">Data Health</h1>
         <p className="text-gray-500 mt-2">Consistency checks, backups, and the financial-year position.</p>
       </div>
 
@@ -72,7 +72,7 @@ export default async function DataSettingsPage() {
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
         <h2 className="text-sm font-bold uppercase tracking-wider text-matte-black mb-1">Backup</h2>
-        <p className="text-xs text-gray-400 mb-5">
+        <p className="text-xs text-gray-500 mb-5">
           Download any table as CSV. These are your records in a form that outlives this application.
         </p>
 
@@ -88,7 +88,7 @@ export default async function DataSettingsPage() {
           ))}
         </div>
 
-        <p className="text-xs text-gray-400 mt-4">
+        <p className="text-xs text-gray-500 mt-4">
           Supabase also takes its own database backups. This export is for handing data to someone else, not a
           replacement for those.
         </p>
@@ -96,7 +96,7 @@ export default async function DataSettingsPage() {
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-sm font-bold uppercase tracking-wider text-matte-black mb-1">Financial year</h2>
-        <p className="text-xs text-gray-400 mb-5">
+        <p className="text-xs text-gray-500 mb-5">
           Currently {currentYear}. Counters restart automatically on 1 April, carrying each prefix forward.
         </p>
 

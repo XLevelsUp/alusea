@@ -25,7 +25,7 @@ const PREVIEWS = [
 ];
 
 export default async function DocumentSettingsPage() {
-  await requireRole("owner");
+  await requireRole("developer");
 
   const supabase = await createClient();
   const { data: company } = await supabase
@@ -45,9 +45,9 @@ export default async function DocumentSettingsPage() {
   const incomplete = missing.filter((item) => !item.filled);
 
   return (
-    <div className="p-8 max-w-4xl mx-auto w-full">
+    <div className="p-4 sm:p-8 max-w-4xl mx-auto w-full">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold uppercase tracking-tight text-matte-black">Document Templates</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-matte-black">Document Templates</h1>
         <p className="text-gray-500 mt-2">
           Preview how invoices, quotations and payslips will look, using your real company details.
         </p>
@@ -80,7 +80,7 @@ export default async function DocumentSettingsPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
         <div className="p-6 border-b border-gray-100">
           <h2 className="text-sm font-bold uppercase tracking-wider text-matte-black">Previews</h2>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-gray-500 mt-1">
             Each opens a sample PDF in a new tab. Nothing is saved and no document number is consumed.
           </p>
         </div>

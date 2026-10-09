@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import ConfirmPanel from "@/components/ConfirmPanel";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { FormError } from "@/components/form-fields";
 import { Button } from "@/components/ui/button";
 import { useActionRunner } from "@/hooks/use-action";
@@ -34,7 +33,7 @@ export default function QuoteActions({
   remove,
 }: Props) {
   const { run: runAction, isPending, error } = useActionRunner();
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const confirm = useConfirm();
 
   function run(action: Action, extra?: Record<string, string>) {
     const formData = new FormData();
@@ -44,6 +43,35 @@ export default function QuoteActions({
   }
 
   const changeStatus = (next: QuoteStatus) => run(setStatus, { status: next });
+
+  async function onReject() {
+    const ok = await confirm({
+      title: "Mark this quotation as rejected?",
+      description: "It stays on record, marked as turned down by the client.",
+      confirmLabel: "Mark rejected",
+    });
+    if (ok) changeStatus("rejected");
+  }
+
+  async function onConvert() {
+    const ok = await confirm({
+      tone: "neutral",
+      title: "Convert this quotation to an invoice?",
+      description: "A draft invoice is created with the same client and lines, and this quotation is marked accepted. You can review the invoice before issuing it.",
+      confirmLabel: "Convert",
+    });
+    if (ok) run(convert);
+  }
+
+  async function onDelete() {
+    const ok = await confirm({
+      title: "Delete this draft quotation?",
+      description: "This cannot be undone.",
+      confirmLabel: "Delete",
+      cancelLabel: "Keep it",
+    });
+    if (ok) run(remove);
+  }
 
   return (
     <div>
@@ -66,14 +94,14 @@ export default function QuoteActions({
             >
               Mark Accepted
             </Button>
-            <Button type="button" size="lg" variant="outline" disabled={isPending} onClick={() => changeStatus("rejected")}>
+            <Button type="button" size="lg" variant="destructive" disabled={isPending} onClick={onReject}>
               Mark Rejected
             </Button>
           </>
         )}
 
         {canConvert && !alreadyInvoiced && status !== "draft" && (
-          <Button type="button" size="lg" disabled={isPending} onClick={() => run(convert)}>
+          <Button type="button" size="lg" disabled={isPending} onClick={onConvert}>
             {isPending ? "Working…" : "Convert to Invoice"}
           </Button>
         )}
@@ -85,7 +113,7 @@ export default function QuoteActions({
         )}
 
         {canEdit && status === "draft" && (
-          <Button type="button" size="lg" variant="destructive" disabled={isPending} onClick={() => setConfirmingDelete(true)}>
+          <Button type="button" size="lg" variant="destructive" disabled={isPending} onClick={onDelete}>
             Delete
           </Button>
         )}
@@ -96,17 +124,6 @@ export default function QuoteActions({
       )}
 
       <FormError error={error} className="mt-3" />
-
-      {confirmingDelete && (
-        <ConfirmPanel
-          title="Delete this draft quotation?"
-          confirmLabel="Delete"
-          pendingLabel="Deleting…"
-          isPending={isPending}
-          onConfirm={() => run(remove)}
-          onCancel={() => setConfirmingDelete(false)}
-        />
-      )}
     </div>
   );
 }

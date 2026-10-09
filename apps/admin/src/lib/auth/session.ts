@@ -3,7 +3,7 @@
 
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import type { Role } from './roles'
+import { roleAllowed, type Role } from './roles'
 import { ActionError } from '@/lib/actionError'
 
 export type Profile = {
@@ -40,7 +40,7 @@ export async function requireProfile(): Promise<Profile> {
 // Use on pages restricted to particular roles. Sends an authenticated but unauthorised user to /no-access rather than /login, so they are not asked to sign in again.
 export async function requireRole(...allowed: Role[]): Promise<Profile> {
   const profile = await requireProfile()
-  if (!allowed.includes(profile.role)) redirect('/no-access')
+  if (!roleAllowed(profile.role, allowed)) redirect('/no-access')
   return profile
 }
 
@@ -48,6 +48,6 @@ export async function requireRole(...allowed: Role[]): Promise<Profile> {
 export async function assertRole(...allowed: Role[]): Promise<Profile> {
   const profile = await getProfile()
   if (!profile) throw new ActionError('Your session has expired. Please sign in again.')
-  if (!allowed.includes(profile.role)) throw new ActionError('You do not have permission to do this.')
+  if (!roleAllowed(profile.role, allowed)) throw new ActionError('You do not have permission to do this.')
   return profile
 }

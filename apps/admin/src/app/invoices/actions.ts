@@ -1,5 +1,6 @@
 'use server'
 
+import { todayInIndia } from '@/lib/erp/dates'
 import { ActionError, defineAction } from '@/lib/actions'
 
 import { revalidatePath } from 'next/cache'
@@ -9,7 +10,6 @@ import { createClient } from '@/lib/supabase/server'
 import { computeTax } from '@/lib/erp/tax'
 import { parseLineItems } from '@/lib/erp/lineItems'
 import { parseRupeesToPaise } from '@/lib/erp/money'
-import { allocateDocumentNumber } from '@/lib/erp/numbering'
 import { renderAndStore } from '@/lib/pdf/render'
 import { InvoiceDocument } from '@/lib/pdf/templates/InvoiceDocument'
 import type { PaymentMethod } from '@/lib/supabase/types'
@@ -31,7 +31,7 @@ async function computeTotals(formData: FormData, partyId: string) {
   const supabase = await createClient()
 
   const [{ data: company }, { data: party }] = await Promise.all([
-    supabase.from('company_profile').select('state_code, default_gst_rate').eq('id', 1).single(),
+    supabase.from('company_profile').select('state_code').eq('id', 1).single(),
     supabase.from('parties').select('*').eq('id', partyId).single(),
   ])
 
@@ -39,10 +39,13 @@ async function computeTotals(formData: FormData, partyId: string) {
 
   const items = parseLineItems(formData)
   const isGstApplicable = formData.get('is_gst_applicable') === 'on'
-  const gstRate = Number(text(formData, 'gst_rate') || String(company?.default_gst_rate ?? 18))
+  // The rate is typed on the form for each invoice; it only matters, and is only required, when GST applies.
+  const gstRateInput = text(formData, 'gst_rate')
+  if (isGstApplicable && !gstRateInput) throw new ActionError('Enter the GST % for this invoice')
 
+  const gstRate = isGstApplicable ? Number(gstRateInput) : 0
   if (!Number.isFinite(gstRate) || gstRate < 0 || gstRate > 100) {
-    throw new ActionError('GST rate must be between 0 and 100')
+    throw new ActionError('GST % must be a number between 0 and 100')
   }
 
   const tax = computeTax({
@@ -56,7 +59,8 @@ async function computeTotals(formData: FormData, partyId: string) {
   return { items, party, tax, isGstApplicable, gstRate }
 }
 
-export const createInvoice = defineAction(async function createInvoice(formData: FormData) {
+// Creates the invoice and issues it in one step: it gets its number, is frozen, and its PDF is rendered. There is no draft stage.
+export const generateInvoice = defineAction(async function generateInvoice(formData: FormData) {
   const profile = await assertRole(...ACCOUNTS)
 
   const partyId = text(formData, 'party_id')
@@ -64,7 +68,7 @@ export const createInvoice = defineAction(async function createInvoice(formData:
 
   const { items, party, tax, isGstApplicable, gstRate } = await computeTotals(formData, partyId)
 
-  const issueDate = text(formData, 'issue_date') || new Date().toISOString().slice(0, 10)
+  const issueDate = text(formData, 'issue_date') || todayInIndia()
   const dueDateInput = text(formData, 'due_date')
 
   // Falls back to the client's agreed payment terms when no explicit due date is given.
@@ -113,6 +117,14 @@ export const createInvoice = defineAction(async function createInvoice(formData:
     throw new ActionError('Could not save invoice lines: ' + itemsError.message)
   }
 
+  try {
+    await issueDraft(invoice.id)
+  } catch (e) {
+    // Issuing failed before the invoice was numbered, so it is removed rather than left behind as a stray draft.
+    await supabase.from('invoices').delete().eq('id', invoice.id)
+    throw e
+  }
+
   revalidatePath('/invoices')
   redirect(`/invoices/${invoice.id}`)
 })
@@ -139,7 +151,7 @@ export const updateInvoice = defineAction(async function updateInvoice(formData:
     .from('invoices')
     .update({
       party_id: partyId,
-      issue_date: text(formData, 'issue_date') || new Date().toISOString().slice(0, 10),
+      issue_date: text(formData, 'issue_date') || todayInIndia(),
       due_date: text(formData, 'due_date') || null,
       is_gst_applicable: isGstApplicable,
       gst_rate: gstRate,
@@ -167,12 +179,7 @@ export const updateInvoice = defineAction(async function updateInvoice(formData:
 })
 
 // Allocates the number, freezes the document, and renders the PDF. This is the point of no return.
-export const issueInvoice = defineAction(async function issueInvoice(formData: FormData) {
-  await assertRole(...ACCOUNTS)
-
-  const id = text(formData, 'id')
-  if (!id) throw new ActionError('Invoice is required')
-
+async function issueDraft(id: string) {
   const supabase = await createClient()
   const { data: invoice } = await supabase.from('invoices').select('*').eq('id', id).single()
 
@@ -193,24 +200,16 @@ export const issueInvoice = defineAction(async function issueInvoice(formData: F
     throw new ActionError('Set your legal name in Settings, Company Details before issuing invoices')
   }
 
-  // GST and non-GST invoices use separate series, which keeps them easy to separate at filing time.
-  const docType = invoice.is_gst_applicable ? 'invoice' : 'invoice_nogst'
-  const invoiceNumber = await allocateDocumentNumber(docType, new Date(invoice.issue_date))
+  // One database step takes the number (a freed one from a cancelled invoice first) and marks the invoice issued, so a failure leaves no gap.
+  // The client record is frozen onto the invoice, so a later edit to the client cannot change what this invoice says.
+  const { data: invoiceNumber, error } = await supabase.rpc('issue_invoice', {
+    p_invoice_id: id,
+    p_party_snapshot: party,
+    p_place_of_supply_state: party.billing_state,
+    p_place_of_supply_code: party.billing_state_code,
+  })
 
-  const { error } = await supabase
-    .from('invoices')
-    .update({
-      invoice_number: invoiceNumber,
-      status: 'issued',
-      issued_at: new Date().toISOString(),
-      place_of_supply_state: party.billing_state,
-      place_of_supply_code: party.billing_state_code,
-      // Frozen so a later edit to the client record cannot change what this invoice says.
-      party_snapshot: party,
-    })
-    .eq('id', id)
-
-  if (error) throw new ActionError('Could not issue invoice: ' + error.message)
+  if (error || !invoiceNumber) throw new ActionError('Could not issue invoice: ' + (error?.message ?? 'no number returned'))
 
   try {
     const { path } = await renderAndStore({
@@ -223,6 +222,7 @@ export const issueInvoice = defineAction(async function issueInvoice(formData: F
         party,
         lines: items.map((item) => ({
           description: item.description,
+          hsnCode: item.hsn_code,
           quantity: Number(item.quantity),
           unit: item.unit,
           ratePaise: item.rate_paise,
@@ -249,6 +249,16 @@ export const issueInvoice = defineAction(async function issueInvoice(formData: F
   } catch {
     // The invoice is issued and numbered regardless; a failed render is recoverable from the detail page.
   }
+}
+
+// Kept for invoices that are still drafts from before invoices were generated in one step.
+export const issueInvoice = defineAction(async function issueInvoice(formData: FormData) {
+  await assertRole(...ACCOUNTS)
+
+  const id = text(formData, 'id')
+  if (!id) throw new ActionError('Invoice is required')
+
+  await issueDraft(id)
 
   revalidatePath('/invoices')
   revalidatePath(`/invoices/${id}`)
@@ -282,6 +292,7 @@ export const regenerateInvoicePdf = defineAction(async function regenerateInvoic
       party,
       lines: items.map((item) => ({
         description: item.description,
+        hsnCode: item.hsn_code,
         quantity: Number(item.quantity),
         unit: item.unit,
         ratePaise: item.rate_paise,
@@ -348,11 +359,12 @@ export const deleteDraftInvoice = defineAction(async function deleteDraftInvoice
   if (error) throw new ActionError('Could not delete draft: ' + error.message)
 
   revalidatePath('/invoices')
-  redirect('/invoices')
+  redirect('/invoices?tab=history')
 })
 
+// Payments are recorded from Finances, which only owners and developers can change; accounts can see them but not add them.
 export const recordPayment = defineAction(async function recordPayment(formData: FormData) {
-  const profile = await assertRole(...ACCOUNTS)
+  const profile = await assertRole('owner')
 
   const invoiceId = text(formData, 'invoice_id')
   const amountPaise = parseRupeesToPaise(text(formData, 'amount'))
@@ -377,7 +389,7 @@ export const recordPayment = defineAction(async function recordPayment(formData:
   const { error } = await supabase.from('payments').insert([
     {
       invoice_id: invoiceId,
-      paid_on: text(formData, 'paid_on') || new Date().toISOString().slice(0, 10),
+      paid_on: text(formData, 'paid_on') || todayInIndia(),
       amount_paise: amountPaise,
       method: (text(formData, 'method') || 'bank_transfer') as PaymentMethod,
       reference: text(formData, 'reference'),
@@ -388,12 +400,13 @@ export const recordPayment = defineAction(async function recordPayment(formData:
 
   if (error) throw new ActionError('Could not record payment: ' + error.message)
 
+  revalidatePath('/finances')
   revalidatePath('/invoices')
   revalidatePath(`/invoices/${invoiceId}`)
 })
 
 export const deletePayment = defineAction(async function deletePayment(formData: FormData) {
-  await assertRole(...ACCOUNTS)
+  await assertRole('owner')
 
   const id = text(formData, 'id')
   const invoiceId = text(formData, 'invoice_id')
@@ -404,6 +417,7 @@ export const deletePayment = defineAction(async function deletePayment(formData:
 
   if (error) throw new ActionError('Could not remove payment: ' + error.message)
 
+  revalidatePath('/finances')
   revalidatePath('/invoices')
   revalidatePath(`/invoices/${invoiceId}`)
 })

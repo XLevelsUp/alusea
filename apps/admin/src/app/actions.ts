@@ -4,10 +4,20 @@ import { ActionError, defineAction } from '@/lib/actions'
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
+import { SIGNED_IN_COOKIE } from '@/lib/auth/flash'
 import { createClient } from '@/lib/supabase/server'
 import { syncProductToCatalog, removeProductFromCatalog } from '@/lib/metaCatalog'
 import { assertRole } from '@/lib/auth/session'
 import { landingPageFor } from '@/lib/auth/roles'
+
+// Wrong email and wrong password share one code, so the page never reveals which emails have an account.
+function loginErrorCode(code: string | undefined): string {
+  if (code === 'email_not_confirmed') return 'unconfirmed'
+  if (code === 'over_request_rate_limit' || code === 'over_email_send_rate_limit') return 'rate'
+  if (code === 'invalid_credentials' || code === 'user_not_found') return 'credentials'
+  return 'unknown'
+}
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
@@ -20,7 +30,9 @@ export async function login(formData: FormData) {
   const { data: session, error } = await supabase.auth.signInWithPassword(data)
 
   if (error || !session.user) {
-    redirect('/login?error=Could not authenticate user')
+    // The real reason goes to the server log; the page gets only a code, which it turns into wording of its own.
+    console.error('Login failed', { email: data.email, reason: error?.message ?? 'no user returned', code: error?.code })
+    redirect(`/login?error=${loginErrorCode(error?.code)}`)
   }
 
   const { data: profile } = await supabase
@@ -31,11 +43,26 @@ export async function login(formData: FormData) {
 
   if (!profile || !profile.is_active) {
     await supabase.auth.signOut()
-    redirect('/login?error=This account is not active. Ask an owner to enable it.')
+    redirect('/login?error=inactive')
   }
+
+  // Tells the next page to show a "Signed in" note once. Readable by the page so it can clear it, and short-lived in case it never does.
+  const cookieStore = await cookies()
+  cookieStore.set(SIGNED_IN_COOKIE, '1', { path: '/', maxAge: 60, sameSite: 'lax' })
 
   revalidatePath('/', 'layout')
   redirect(landingPageFor(profile.role))
+}
+
+// Reads a JSON list of links sent by a form; anything unreadable counts as an empty list.
+function parseUrlList(raw: FormDataEntryValue | null): string[] {
+  if (typeof raw !== 'string' || !raw) return []
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : []
+  } catch {
+    return []
+  }
 }
 
 export const addProduct = defineAction(async function addProduct(formData: FormData) {
@@ -46,6 +73,7 @@ export const addProduct = defineAction(async function addProduct(formData: FormD
   const name = formData.get('name') as string
   const category = formData.get('category') as string
   const newUploadedUrlsRaw = formData.get('new_uploaded_urls') as string
+  const videoUrls = parseUrlList(formData.get('video_urls'))
   const description = formData.get('description') as string
   const specsRaw = formData.get('specs') as string
   const pricePerSqftRaw = formData.get('price_per_sqft') as string
@@ -89,7 +117,7 @@ export const addProduct = defineAction(async function addProduct(formData: FormD
 
   const { data: inserted, error } = await supabase
     .from('products')
-    .insert([{ name, category, image_url: finalImageUrl, image_urls: uploadedUrls, description, specs, price_per_sqft: pricePerSqft }])
+    .insert([{ name, category, image_url: finalImageUrl, image_urls: uploadedUrls, video_urls: videoUrls, description, specs, price_per_sqft: pricePerSqft }])
     .select()
     .single()
 
@@ -116,6 +144,7 @@ export const updateProduct = defineAction(async function updateProduct(formData:
   const specsRaw = formData.get('specs') as string
   const existingUrlsRaw = formData.get('existing_urls') as string
   const newUploadedUrlsRaw = formData.get('new_uploaded_urls') as string
+  const videoUrls = parseUrlList(formData.get('video_urls'))
   const pricePerSqftRaw = formData.get('price_per_sqft') as string
   const pricePerSqft = pricePerSqftRaw ? parseFloat(pricePerSqftRaw) : 1500
 
@@ -164,7 +193,7 @@ export const updateProduct = defineAction(async function updateProduct(formData:
 
   const { data: updated, error } = await supabase
     .from('products')
-    .update({ name, category, image_url: mainImageUrl, image_urls: finalUrls, description, specs, price_per_sqft: pricePerSqft })
+    .update({ name, category, image_url: mainImageUrl, image_urls: finalUrls, video_urls: videoUrls, description, specs, price_per_sqft: pricePerSqft })
     .eq('id', id)
     .select()
     .single()

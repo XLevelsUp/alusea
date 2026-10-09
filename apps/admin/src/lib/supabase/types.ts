@@ -8,6 +8,11 @@ export type AgeingBucket = 'current' | '1_30' | '31_60' | '61_90' | 'over_90'
 export type ExpenseStatus = 'draft' | 'submitted' | 'approved' | 'rejected'
 
 export type WorkerType = 'monthly' | 'daily'
+export type VendorType = 'local' | 'import_export'
+export type CapitalKind = 'owner_capital' | 'loan' | 'investment' | 'other'
+export type LedgerDirection = 'in' | 'out'
+export type LedgerCategory = 'opening_balance' | 'bank_charges' | 'owner_drawings' | 'loan_repayment' | 'interest' | 'refund' | 'other'
+export type LedgerSource = 'invoice_payment' | 'expense' | 'payroll' | 'capital' | 'manual'
 export type PayrollRunStatus = 'draft' | 'approved' | 'paid'
 
 export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired'
@@ -15,13 +20,100 @@ export type InvoiceStatus = 'draft' | 'issued' | 'cancelled'
 export type PaymentMethod = 'cash' | 'bank_transfer' | 'upi' | 'cheque' | 'card' | 'other'
 export type PaymentStatus = 'draft' | 'unpaid' | 'part_paid' | 'paid' | 'overdue' | 'cancelled'
 
-export type AppRole = 'owner' | 'accounts' | 'sales' | 'hr' | 'staff'
+export type AppRole = 'developer' | 'owner' | 'accounts' | 'sales' | 'hr' | 'staff'
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
   public: {
     Tables: {
+      capital_inflows: {
+        Row: {
+          id: string
+          received_on: string
+          source: string
+          kind: CapitalKind
+          amount_paise: number
+          notes: string
+          created_at: string
+          updated_at: string
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          received_on?: string
+          source: string
+          kind?: CapitalKind
+          amount_paise: number
+          notes?: string
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          received_on?: string
+          source?: string
+          kind?: CapitalKind
+          amount_paise?: number
+          notes?: string
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+        }
+        Relationships: []
+      }
+      ledger_entries: {
+        Row: {
+          id: string
+          entry_date: string
+          direction: LedgerDirection
+          category: LedgerCategory
+          description: string
+          party_id: string | null
+          amount_paise: number
+          gst_claim: boolean
+          status: 'pending' | 'approved'
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          updated_at: string
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          entry_date?: string
+          direction: LedgerDirection
+          category?: LedgerCategory
+          description: string
+          party_id?: string | null
+          amount_paise: number
+          gst_claim?: boolean
+          status?: 'pending' | 'approved'
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          entry_date?: string
+          direction?: LedgerDirection
+          category?: LedgerCategory
+          description?: string
+          party_id?: string | null
+          amount_paise?: number
+          gst_claim?: boolean
+          status?: 'pending' | 'approved'
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+        }
+        Relationships: []
+      }
       company_profile: {
         Row: {
           id: number
@@ -46,6 +138,7 @@ export type Database = {
           logo_url: string
           invoice_terms: string
           invoice_footer: string
+          reuse_cancelled_invoice_numbers: boolean
           default_gst_rate: number
           created_at: string
           updated_at: string
@@ -73,6 +166,7 @@ export type Database = {
           logo_url?: string
           invoice_terms?: string
           invoice_footer?: string
+          reuse_cancelled_invoice_numbers?: boolean
           default_gst_rate?: number
           created_at?: string
           updated_at?: string
@@ -100,6 +194,7 @@ export type Database = {
           logo_url?: string
           invoice_terms?: string
           invoice_footer?: string
+          reuse_cancelled_invoice_numbers?: boolean
           default_gst_rate?: number
           created_at?: string
           updated_at?: string
@@ -126,6 +221,8 @@ export type Database = {
           pan: string
           payment_terms_days: number
           notes: string
+          services_offered: string
+          vendor_type: VendorType | null
           is_active: boolean
           created_at: string
           updated_at: string
@@ -150,6 +247,8 @@ export type Database = {
           pan?: string
           payment_terms_days?: number
           notes?: string
+          services_offered?: string
+          vendor_type?: VendorType | null
           is_active?: boolean
           created_at?: string
           updated_at?: string
@@ -174,6 +273,8 @@ export type Database = {
           pan?: string
           payment_terms_days?: number
           notes?: string
+          services_offered?: string
+          vendor_type?: VendorType | null
           is_active?: boolean
           created_at?: string
           updated_at?: string
@@ -208,6 +309,42 @@ export type Database = {
           sort_order?: number
           is_active?: boolean
           created_at?: string
+        }
+        Relationships: []
+      }
+      released_invoice_numbers: {
+        Row: {
+          id: string
+          doc_type: string
+          financial_year: string
+          invoice_number: string
+          sequence: number
+          released_from: string
+          released_at: string
+          reused_by: string | null
+          reused_at: string | null
+        }
+        Insert: {
+          id?: string
+          doc_type: string
+          financial_year: string
+          invoice_number: string
+          sequence: number
+          released_from: string
+          released_at?: string
+          reused_by?: string | null
+          reused_at?: string | null
+        }
+        Update: {
+          id?: string
+          doc_type?: string
+          financial_year?: string
+          invoice_number?: string
+          sequence?: number
+          released_from?: string
+          released_at?: string
+          reused_by?: string | null
+          reused_at?: string | null
         }
         Relationships: []
       }
@@ -316,6 +453,7 @@ export type Database = {
           quote_id: string
           position: number
           description: string
+          hsn_code: string
           width_ft: number | null
           height_ft: number | null
           quantity: number
@@ -330,6 +468,7 @@ export type Database = {
           quote_id: string
           position?: number
           description: string
+          hsn_code?: string
           width_ft?: number | null
           height_ft?: number | null
           quantity?: number
@@ -344,6 +483,7 @@ export type Database = {
           quote_id?: string
           position?: number
           description?: string
+          hsn_code?: string
           width_ft?: number | null
           height_ft?: number | null
           quantity?: number
@@ -448,6 +588,7 @@ export type Database = {
           invoice_id: string
           position: number
           description: string
+          hsn_code: string
           width_ft: number | null
           height_ft: number | null
           quantity: number
@@ -462,6 +603,7 @@ export type Database = {
           invoice_id: string
           position?: number
           description: string
+          hsn_code?: string
           width_ft?: number | null
           height_ft?: number | null
           quantity?: number
@@ -476,6 +618,7 @@ export type Database = {
           invoice_id?: string
           position?: number
           description?: string
+          hsn_code?: string
           width_ft?: number | null
           height_ft?: number | null
           quantity?: number
@@ -532,6 +675,8 @@ export type Database = {
           worker_type: WorkerType
           default_amount_paise: number
           phone: string
+          aadhaar_file_name: string | null
+          aadhaar_path: string | null
           address: string
           joining_date: string | null
           bank_account_name: string
@@ -551,6 +696,8 @@ export type Database = {
           worker_type?: WorkerType
           default_amount_paise?: number
           phone?: string
+          aadhaar_file_name?: string | null
+          aadhaar_path?: string | null
           address?: string
           joining_date?: string | null
           bank_account_name?: string
@@ -570,6 +717,8 @@ export type Database = {
           worker_type?: WorkerType
           default_amount_paise?: number
           phone?: string
+          aadhaar_file_name?: string | null
+          aadhaar_path?: string | null
           address?: string
           joining_date?: string | null
           bank_account_name?: string
@@ -595,6 +744,8 @@ export type Database = {
           notes: string
           approved_at: string | null
           paid_at: string | null
+          approved_by: string | null
+          paid_by: string | null
           created_at: string
           updated_at: string
           created_by: string | null
@@ -610,6 +761,8 @@ export type Database = {
           notes?: string
           approved_at?: string | null
           paid_at?: string | null
+          approved_by?: string | null
+          paid_by?: string | null
           created_at?: string
           updated_at?: string
           created_by?: string | null
@@ -625,6 +778,8 @@ export type Database = {
           notes?: string
           approved_at?: string | null
           paid_at?: string | null
+          approved_by?: string | null
+          paid_by?: string | null
           created_at?: string
           updated_at?: string
           created_by?: string | null
@@ -723,14 +878,22 @@ export type Database = {
           id: string
           spent_on: string
           category_id: string
+          client_id: string | null
           party_id: string | null
           description: string
           amount_paise: number
           tax_paise: number
+          gst_claim: boolean
           payment_method: PaymentMethod
           reference: string
           project_tag: string
           notes: string
+          paid_by: 'company' | 'person'
+          paid_by_name: string
+          paid_at: string | null
+          paid_by_user: string | null
+          reimbursed_at: string | null
+          reimbursed_by: string | null
           status: ExpenseStatus
           rejection_reason: string
           approved_at: string | null
@@ -743,14 +906,22 @@ export type Database = {
           id?: string
           spent_on?: string
           category_id: string
+          client_id?: string | null
           party_id?: string | null
           description: string
           amount_paise: number
           tax_paise?: number
+          gst_claim?: boolean
           payment_method?: PaymentMethod
           reference?: string
           project_tag?: string
           notes?: string
+          paid_by?: 'company' | 'person'
+          paid_by_name?: string
+          paid_at?: string | null
+          paid_by_user?: string | null
+          reimbursed_at?: string | null
+          reimbursed_by?: string | null
           status?: ExpenseStatus
           rejection_reason?: string
           approved_at?: string | null
@@ -763,14 +934,22 @@ export type Database = {
           id?: string
           spent_on?: string
           category_id?: string
+          client_id?: string | null
           party_id?: string | null
           description?: string
           amount_paise?: number
           tax_paise?: number
+          gst_claim?: boolean
           payment_method?: PaymentMethod
           reference?: string
           project_tag?: string
           notes?: string
+          paid_by?: 'company' | 'person'
+          paid_by_name?: string
+          paid_at?: string | null
+          paid_by_user?: string | null
+          reimbursed_at?: string | null
+          reimbursed_by?: string | null
           status?: ExpenseStatus
           rejection_reason?: string
           approved_at?: string | null
@@ -912,6 +1091,7 @@ export type Database = {
           description: string
           image_url: string
           image_urls: string[]
+          video_urls: string[]
           specs: Json
           price_per_sqft: number
           created_at: string
@@ -923,6 +1103,7 @@ export type Database = {
           description?: string | null
           image_url: string
           image_urls?: string[] | null
+          video_urls?: string[]
           specs?: Json | null
           price_per_sqft?: number
           created_at?: string | null
@@ -934,6 +1115,7 @@ export type Database = {
           description?: string | null
           image_url?: string
           image_urls?: string[] | null
+          video_urls?: string[]
           specs?: Json | null
           price_per_sqft?: number
           created_at?: string | null
@@ -1213,6 +1395,34 @@ export type Database = {
         }
         Relationships: []
       }
+      general_ledger: {
+        Row: {
+          entry_key: string
+          entry_date: string
+          direction: LedgerDirection
+          source: LedgerSource
+          description: string
+          party_id: string | null
+          amount_paise: number
+          record_id: string
+          parent_id: string | null
+        }
+        Relationships: []
+      }
+      party_financial_summary: {
+        Row: {
+          party_id: string
+          invoice_count: number
+          invoiced_paise: number
+          collected_paise: number
+          outstanding_paise: number
+          client_expense_count: number
+          client_expense_paise: number
+          vendor_expense_count: number
+          vendor_expense_paise: number
+        }
+        Relationships: []
+      }
       invoice_balances: {
         Row: {
           invoice_id: string
@@ -1231,6 +1441,10 @@ export type Database = {
       }
     }
     Functions: {
+      ledger_balance_before: {
+        Args: { p_before: string }
+        Returns: number
+      }
       allocate_document_number: {
         Args: { p_doc_type: string; p_date?: string }
         Returns: string
@@ -1239,13 +1453,21 @@ export type Database = {
         Args: { p_doc_type: string; p_date?: string }
         Returns: string
       }
+      allocate_invoice_number: {
+        Args: { p_doc_type: string; p_date: string; p_invoice_id: string }
+        Returns: string
+      }
+      issue_invoice: {
+        Args: { p_invoice_id: string; p_party_snapshot: Json; p_place_of_supply_state: string; p_place_of_supply_code: string }
+        Returns: string
+      }
       financial_year_of: {
         Args: { on_date: string }
         Returns: string
       }
     }
     Enums: {
-      app_role: 'owner' | 'accounts' | 'sales' | 'hr' | 'staff'
+      app_role: 'developer' | 'owner' | 'accounts' | 'sales' | 'hr' | 'staff'
     }
     CompositeTypes: Record<never, never>
   }
@@ -1260,6 +1482,10 @@ export type TablesUpdate<T extends keyof PublicSchema['Tables']> = PublicSchema[
 export type Profile = Tables<'profiles'>
 export type CompanyProfile = Tables<'company_profile'>
 export type Party = Tables<'parties'>
+export type CapitalInflow = Tables<'capital_inflows'>
+export type LedgerEntry = Tables<'ledger_entries'>
+export type GeneralLedgerRow = Database['public']['Views']['general_ledger']['Row']
+export type PartyFinancialSummary = Database['public']['Views']['party_financial_summary']['Row']
 export type TaxRate = Tables<'tax_rates'>
 export type DocumentSeries = Tables<'document_series'>
 export type Quote = Tables<'quotes'>

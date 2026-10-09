@@ -1,9 +1,9 @@
 // Payroll computation. Pure functions with no database access, because this is the one place in the codebase where a silent bug pays a real person the wrong amount.
-// Scope per docs/erp-implementation-plan.md: fixed 30-day divisor, flat overtime and bonus, no statutory deductions.
+// Monthly staff are prorated over the month's working days (calendar days minus Sundays), with flat overtime and bonus and no statutory deductions.
 
 export type WorkerType = 'monthly' | 'daily'
 
-// Monthly staff are prorated against a fixed 30 days rather than the actual month length, so a February day is worth the same as a January day.
+// Only a fallback for a run with no stored day basis. Runs created before working days were counted stored 30, and keep it.
 export const STANDARD_DAYS_IN_MONTH = 30
 
 export type PayslipInput = {
@@ -56,7 +56,7 @@ export function computePayslip(input: PayslipInput): PayslipComputation {
   const baseExplanation =
     input.workerType === 'daily'
       ? `${input.daysWorked} days at the daily rate`
-      : `${divisor}-day month, ${input.daysWorked} days worked`
+      : `${input.daysWorked} of ${divisor} days worked`
 
   return {
     basePaise: base,
@@ -92,6 +92,24 @@ export function formatPeriod(periodMonth: string): string {
   const date = new Date(`${periodMonth}T00:00:00`)
   if (Number.isNaN(date.getTime())) return periodMonth
   return date.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
+}
+
+// Sundays are the weekly off, so they are not working days and are left out of the salary divisor.
+export function sundaysInMonth(periodMonth: string): number {
+  const first = new Date(`${periodMonth}T00:00:00`)
+  if (Number.isNaN(first.getTime())) return 0
+
+  const days = calendarDaysInMonth(periodMonth)
+  let sundays = 0
+  for (let day = 1; day <= days; day += 1) {
+    if (new Date(first.getFullYear(), first.getMonth(), day).getDay() === 0) sundays += 1
+  }
+  return sundays
+}
+
+// The divisor a new payroll run uses: someone who works every working day earns exactly their monthly salary.
+export function workingDaysInMonth(periodMonth: string): number {
+  return calendarDaysInMonth(periodMonth) - sundaysInMonth(periodMonth)
 }
 
 export function calendarDaysInMonth(periodMonth: string): number {

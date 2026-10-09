@@ -20,6 +20,7 @@ import type { CompanyProfile, Party } from '@/lib/supabase/types'
 
 export type InvoiceLine = {
   description: string
+  hsnCode?: string
   quantity: number
   unit: string
   ratePaise: number
@@ -54,6 +55,9 @@ export type InvoiceDocumentData = {
 const COLUMNS = {
   sno: '6%',
   description: '42%',
+  // When any line carries an HSN code, the description gives up this much width to make room for the column.
+  descriptionWithHsn: '30%',
+  hsn: '12%',
   qty: '12%',
   rate: '18%',
   amount: '22%',
@@ -74,6 +78,8 @@ function partyFromRecord(party: Party): PartyBlockData {
 
 export function InvoiceDocument(data: InvoiceDocumentData) {
   const { company, party, lines, tax } = data
+  const showHsn = lines.some((line) => !!line.hsnCode)
+  const descriptionWidth = showHsn ? COLUMNS.descriptionWithHsn : COLUMNS.description
   const isInterState = tax.applicable && tax.igstPaise > 0
 
   const meta = [{ label: 'Date', value: data.issueDate }]
@@ -102,7 +108,8 @@ export function InvoiceDocument(data: InvoiceDocumentData) {
         <View style={styles.table}>
           <View style={styles.tableHeader}>
             <Text style={[styles.tableHeaderCell, { width: COLUMNS.sno }]}>#</Text>
-            <Text style={[styles.tableHeaderCell, { width: COLUMNS.description }]}>Description</Text>
+            <Text style={[styles.tableHeaderCell, { width: descriptionWidth }]}>Description</Text>
+            {showHsn && <Text style={[styles.tableHeaderCell, { width: COLUMNS.hsn }]}>HSN</Text>}
             <Text style={[styles.tableHeaderCell, { width: COLUMNS.qty }, alignRight]}>Qty</Text>
             <Text style={[styles.tableHeaderCell, { width: COLUMNS.rate }, alignRight]}>Rate</Text>
             <Text style={[styles.tableHeaderCell, { width: COLUMNS.amount }, alignRight]}>Amount</Text>
@@ -111,7 +118,8 @@ export function InvoiceDocument(data: InvoiceDocumentData) {
           {lines.map((line, index) => (
             <View key={index} style={styles.tableRow} wrap={false}>
               <Text style={[styles.tableCell, { width: COLUMNS.sno }]}>{index + 1}</Text>
-              <Text style={[styles.tableCell, { width: COLUMNS.description }]}>{line.description}</Text>
+              <Text style={[styles.tableCell, { width: descriptionWidth }]}>{line.description}</Text>
+              {showHsn && <Text style={[styles.tableCell, { width: COLUMNS.hsn }]}>{line.hsnCode ?? ''}</Text>}
               <Text style={[styles.tableCell, { width: COLUMNS.qty }, alignRight]}>
                 {line.quantity} {line.unit}
               </Text>

@@ -6,15 +6,15 @@ export function PageSkeleton({
   variant?: "table" | "detail" | "form" | "dashboard";
 }) {
   return (
-    <div className="p-8 max-w-7xl mx-auto w-full animate-pulse">
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto w-full animate-pulse">
       <div className="mb-8">
         <div className="h-8 w-64 bg-gray-200 rounded" />
         <div className="h-4 w-96 bg-gray-100 rounded mt-3" />
       </div>
 
       {variant === "dashboard" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {Array.from({ length: 4 }).map((_, index) => (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          {Array.from({ length: 3 }).map((_, index) => (
             <div key={index} className="bg-white rounded-xl border border-gray-100 p-5">
               <div className="h-3 w-24 bg-gray-100 rounded mb-3" />
               <div className="h-7 w-32 bg-gray-200 rounded" />

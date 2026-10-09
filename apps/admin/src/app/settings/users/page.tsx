@@ -1,38 +1,38 @@
-import Link from "next/link";
 import { requireRole } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS, type Role } from "@/lib/auth/roles";
+import { ROLE_LABELS, ROLE_DESCRIPTIONS, assignableRoles, type Role } from "@/lib/auth/roles";
 import { inviteUser, updateUserRole, setUserActive } from "./actions";
 import UserRow from "./UserRow";
 import AddUserForm from "./AddUserForm";
+import { FormDialog } from "@/components/FormDialog";
+import { Button } from "@/components/ui/button";
 
-export default async function UsersPage(props: {
-  searchParams: Promise<{ add?: string }>;
-}) {
+export default async function UsersPage() {
   const profile = await requireRole("owner");
-  const searchParams = await props.searchParams;
-  const isAddOpen = searchParams?.add === "true";
+
+  // Developer accounts and the developer role are shown only to a developer; an owner's list simply does not include them.
+  const roles = assignableRoles(profile.role);
 
   const admin = createAdminClient();
-  const { data: users } = await admin
+  let request = admin
     .from("profiles")
     .select("id, email, full_name, role, is_active")
     .order("role", { ascending: true })
     .order("email", { ascending: true });
+  if (profile.role !== "developer") request = request.neq("role", "developer");
+
+  const { data: users } = await request;
 
   return (
-    <div className="p-8 max-w-5xl mx-auto w-full relative">
+    <div className="p-4 sm:p-8 max-w-5xl mx-auto w-full relative">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-4">
         <div>
-          <h1 className="text-3xl font-bold uppercase tracking-tight text-matte-black">Users &amp; Roles</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-matte-black">Users &amp; Roles</h1>
           <p className="text-gray-500 mt-2">Control who can sign in and what each person can reach.</p>
         </div>
-        <Link
-          href="/settings/users?add=true"
-          className="inline-flex items-center justify-center px-5 py-3 bg-[#A67C52] text-white text-xs font-bold uppercase tracking-wider rounded-sm hover:bg-[#8e6944] transition-colors shadow-md"
-        >
-          + Add User
-        </Link>
+        <FormDialog title="Add User" size="lg" trigger={<Button type="button" variant="brand">+ Add User</Button>}>
+          <AddUserForm add={inviteUser} roles={roles} />
+        </FormDialog>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden w-full mb-10">
@@ -54,6 +54,7 @@ export default async function UsersPage(props: {
                   email={user.email}
                   fullName={user.full_name}
                   role={user.role as Role}
+                  roles={roles}
                   isActive={user.is_active}
                   isSelf={user.id === profile.id}
                   updateRole={updateUserRole}
@@ -75,7 +76,7 @@ export default async function UsersPage(props: {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-sm font-bold uppercase tracking-wider text-matte-black mb-4">What each role can do</h2>
         <dl className="space-y-3">
-          {ROLES.map((role) => (
+          {roles.map((role) => (
             <div key={role} className="flex flex-col sm:flex-row sm:gap-4">
               <dt className="text-xs font-bold uppercase tracking-wider text-[#A67C52] sm:w-28 shrink-0 mb-1 sm:mb-0">
                 {ROLE_LABELS[role]}
@@ -85,25 +86,6 @@ export default async function UsersPage(props: {
           ))}
         </dl>
       </div>
-
-      {isAddOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-xl shadow-2xl border border-gray-100 max-w-lg w-full max-h-[90vh] flex flex-col relative">
-            <div className="flex justify-between items-center p-6 border-b border-gray-100">
-              <h2 className="text-lg font-bold uppercase tracking-wider text-matte-black">Add User</h2>
-              <Link
-                href="/settings/users"
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-matte-black"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </Link>
-            </div>
-            <AddUserForm add={inviteUser} cancelUrl="/settings/users" />
-          </div>
-        </div>
-      )}
     </div>
   );
 }
