@@ -1052,6 +1052,7 @@ export type Database = {
           description: string
           image_url: string
           image_urls: string[]
+          video_urls: string[]
           specs: Json
           price_per_sqft: number
           created_at: string
@@ -1063,6 +1064,7 @@ export type Database = {
           description?: string | null
           image_url: string
           image_urls?: string[] | null
+          video_urls?: string[]
           specs?: Json | null
           price_per_sqft?: number
           created_at?: string | null
@@ -1074,6 +1076,7 @@ export type Database = {
           description?: string | null
           image_url?: string
           image_urls?: string[] | null
+          video_urls?: string[]
           specs?: Json | null
           price_per_sqft?: number
           created_at?: string | null
