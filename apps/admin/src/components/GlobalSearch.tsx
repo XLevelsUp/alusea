@@ -24,7 +24,8 @@ export default function GlobalSearch({ pages, compact = false }: { pages: Page[]
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() === "k" && (event.ctrlKey || event.metaKey)) {
+      // Browser autofill fires key events with no key at all, so the key is checked before it is read.
+      if (event.key?.toLowerCase() === "k" && (event.ctrlKey || event.metaKey)) {
         event.preventDefault();
         setOpen((value) => !value);
       }
