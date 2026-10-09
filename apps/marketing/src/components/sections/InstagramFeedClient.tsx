@@ -80,7 +80,7 @@ const SideReel = ({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      className="group relative w-[22vw] max-w-[150px] md:w-[130px] lg:w-[165px] aspect-[9/16] shrink-0 overflow-hidden rounded-sm bg-alusea-light-gray shadow-[0_16px_36px_-16px_rgba(17,17,17,0.3)] ring-1 ring-black/15 transition-all duration-500 hover:-translate-y-1.5 hover:ring-brushed-bronze focus-visible:outline-2 focus-visible:outline-brushed-bronze"
+      className="group relative w-[22vw] max-w-[150px] md:w-[130px] lg:w-[165px] aspect-[9/16] shrink-0 overflow-hidden rounded-card bg-plate-white shadow-[0_16px_36px_-16px_rgba(17,17,17,0.3)] ring-1 ring-blueberry/15 transition-all duration-500 hover:-translate-y-1.5 hover:ring-berry-bloom focus-visible:outline-2 focus-visible:outline-berry-bloom"
     >
       <video
         ref={videoRef}
@@ -92,8 +92,8 @@ const SideReel = ({
         preload="none"
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
       />
-      <span className="absolute inset-0 flex items-center justify-center bg-black/30 transition-colors duration-500 group-hover:bg-transparent">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/50 bg-black/20 text-white backdrop-blur-sm transition-opacity duration-300 group-hover:opacity-0 md:h-11 md:w-11">
+      <span className="absolute inset-0 flex items-center justify-center bg-blueberry/30 transition-colors duration-500 group-hover:bg-transparent">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/50 bg-blueberry/20 text-white backdrop-blur-sm transition-opacity duration-300 group-hover:opacity-0 md:h-11 md:w-11">
           <PlayIcon className="ml-0.5 h-3 w-3 md:h-4 md:w-4" />
         </span>
       </span>
@@ -143,14 +143,10 @@ const InstagramFeedClient = ({ items }: { items: InstagramMedia[] }) => {
 
   return (
     <section
-      className="relative overflow-hidden bg-[#F7F4EF] py-20 md:py-28"
+      className="section relative overflow-hidden bg-plate-white"
       aria-label="Instagram reels"
     >
-      {/* Bronze accent lines, echoing the hero */}
-      <div className="absolute bottom-0 left-12 hidden h-32 w-[1px] bg-gradient-to-t from-brushed-bronze to-transparent md:block" />
-      <div className="absolute right-12 top-0 hidden h-32 w-[1px] bg-gradient-to-b from-brushed-bronze to-transparent md:block" />
-
-      <div className="mx-auto w-full max-w-[1440px] px-4 md:px-12">
+      <div className="shell">
         <div className="grid items-center gap-12 md:gap-14 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-16">
           {/* Left: hero-style content block */}
           <div className="max-w-xl space-y-1">
@@ -159,17 +155,14 @@ const InstagramFeedClient = ({ items }: { items: InstagramMedia[] }) => {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.7, ease: "easeOut" }}
-              className="flex items-center space-x-3"
+              className="eyebrow"
             >
-              <span className="inline-block h-2 w-2 rounded-full bg-brushed-bronze" />
-              <span className="text-[11px] font-bold uppercase tracking-[0.4em] text-brushed-bronze">
-                From Our Instagram
-              </span>
+              From Our Instagram
             </motion.div>
 
-            <h2 className="mt-2 text-3xl font-bold leading-[1.1] tracking-tight text-matte-black sm:text-5xl md:mt-3 md:text-[4rem]">
+            <h2 className="h-section mt-5 text-blueberry">
               Crafted in Motion, <br />
-              <span className="text-matte-black/70">On Every Project</span>
+              <span className="text-berry-bloom">On Every Project</span>
             </h2>
 
             <motion.p
@@ -177,7 +170,7 @@ const InstagramFeedClient = ({ items }: { items: InstagramMedia[] }) => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
-              className="max-w-2xl pt-4 text-base font-medium text-steel-gray sm:text-lg md:text-xl"
+              className="lede max-w-xl pt-6 text-berry-bloom"
             >
               Watch our premium aluminium doors, windows and facades come to
               life — filmed on site, straight from our Instagram.
@@ -194,7 +187,7 @@ const InstagramFeedClient = ({ items }: { items: InstagramMedia[] }) => {
                 href={INSTAGRAM_PROFILE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex w-full items-center justify-center gap-3 rounded-sm bg-[#7A5418] px-10 py-4 text-sm font-bold uppercase tracking-widest text-white shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:bg-[#5C3D0E] sm:w-auto sm:py-5"
+                className="btn btn-primary w-full sm:w-auto"
               >
                 <InstagramIcon className="h-5 w-5" />
                 Follow Us
@@ -220,10 +213,10 @@ const InstagramFeedClient = ({ items }: { items: InstagramMedia[] }) => {
               transition={{ duration: 0.6, ease: "easeOut" }}
               className="relative w-[40vw] max-w-[290px] md:w-[250px] lg:w-[290px] aspect-[9/16] shrink-0"
             >
-              {/* Offset bronze frame, like an architectural drawing */}
+              {/* Offset accent frame, like an architectural drawing */}
               <div
                 aria-hidden
-                className="absolute inset-0 translate-x-3 translate-y-3 rounded-sm border border-brushed-bronze/50 md:translate-x-4 md:translate-y-4"
+                className="absolute inset-0 translate-x-3 translate-y-3 rounded-card border border-berry-bloom/50 md:translate-x-4 md:translate-y-4"
               />
 
               <AnimatePresence mode="wait">
@@ -233,7 +226,7 @@ const InstagramFeedClient = ({ items }: { items: InstagramMedia[] }) => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.985 }}
                   transition={{ duration: 0.3, ease: "easeOut" }}
-                  className="absolute inset-0 overflow-hidden rounded-sm bg-alusea-light-gray shadow-[0_40px_80px_-32px_rgba(122,84,24,0.5)] ring-1 ring-black/10"
+                  className="absolute inset-0 overflow-hidden rounded-card bg-plate-white shadow-[0_40px_80px_-32px_rgba(47,58,85,0.5)] ring-1 ring-blueberry/10"
                 >
                   <video
                     key={active.id}
@@ -257,7 +250,7 @@ const InstagramFeedClient = ({ items }: { items: InstagramMedia[] }) => {
                     className="absolute inset-0 flex items-center justify-center"
                   >
                     <span
-                      className={`flex h-12 w-12 items-center justify-center rounded-full border border-white/60 bg-black/30 text-white backdrop-blur-sm transition-opacity duration-300 md:h-14 md:w-14 ${
+                      className={`flex h-12 w-12 items-center justify-center rounded-full border border-white/60 bg-blueberry/30 text-white backdrop-blur-sm transition-opacity duration-300 md:h-14 md:w-14 ${
                         isPlaying ? "opacity-0 hover:opacity-100" : "opacity-100"
                       }`}
                     >
@@ -274,7 +267,7 @@ const InstagramFeedClient = ({ items }: { items: InstagramMedia[] }) => {
                     type="button"
                     onClick={toggleMute}
                     aria-label={isMuted ? "Unmute reel" : "Mute reel"}
-                    className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full border border-white/60 bg-black/30 text-white backdrop-blur-sm transition-colors duration-300 hover:bg-black/50 md:right-4 md:top-4 md:h-9 md:w-9"
+                    className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full border border-white/60 bg-blueberry/30 text-white backdrop-blur-sm transition-colors duration-300 hover:bg-blueberry/50 md:right-4 md:top-4 md:h-9 md:w-9"
                   >
                     {isMuted ? (
                       <VolumeOffIcon className="h-4 w-4" />
@@ -284,12 +277,12 @@ const InstagramFeedClient = ({ items }: { items: InstagramMedia[] }) => {
                   </button>
 
                   {isLatest && (
-                    <span className="pointer-events-none absolute left-2.5 top-2.5 rounded-sm bg-brushed-bronze px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-white shadow-md md:left-4 md:top-4 md:px-3 md:py-1.5 md:text-[10px]">
+                    <span className="pointer-events-none absolute left-2.5 top-2.5 rounded-card bg-berry-bloom px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-white shadow-md md:left-4 md:top-4 md:px-3 md:py-1.5 md:text-[10px]">
                       Latest
                     </span>
                   )}
 
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 space-y-2 bg-gradient-to-t from-black/85 via-black/25 to-transparent px-3 pb-3 pt-14 md:space-y-3 md:px-5 md:pb-5 md:pt-24">
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 space-y-2 bg-gradient-to-t from-blueberry/85 via-blueberry/25 to-transparent px-3 pb-3 pt-14 md:space-y-3 md:px-5 md:pb-5 md:pt-24">
                     {active.caption && (
                       <p className="hidden truncate text-sm font-medium text-white sm:block">
                         {active.caption.split("#")[0].trim()}
@@ -299,7 +292,7 @@ const InstagramFeedClient = ({ items }: { items: InstagramMedia[] }) => {
                       href={active.permalink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="pointer-events-auto inline-flex items-center gap-1.5 rounded-sm border border-white/40 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-white backdrop-blur-sm transition-colors duration-300 hover:border-brushed-bronze hover:text-brushed-bronze md:gap-2 md:px-4 md:py-2 md:text-[11px]"
+                      className="pointer-events-auto inline-flex items-center gap-1.5 rounded-card border border-white/40 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-white backdrop-blur-sm transition-colors duration-300 hover:border-berry-bloom hover:text-berry-bloom md:gap-2 md:px-4 md:py-2 md:text-[11px]"
                     >
                       <InstagramIcon className="h-3.5 w-3.5 md:h-4 md:w-4" />
                       Watch Reel

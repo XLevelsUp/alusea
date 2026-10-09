@@ -1,105 +1,74 @@
-"use client";
-import Image from "next/image";
+import InViewVideo from "@/components/ui/InViewVideo";
+import Link from "next/link";
+
+export const principles = [
+  {
+    title: "Our Mission",
+    text: "Our mission is to deliver premium doors and windows that blend durability, design, and functionality, with precise installation that enhances every space with secure and stylish solutions.",
+    icon: <path d="M3 3h18v18H3z M12 3v18 M3 10h18 M3 14h18" />,
+  },
+  {
+    title: "Our Vision",
+    text: "Our vision is to be the most trusted name in doors and windows by delivering unmatched quality and innovative designs, creating homes and spaces where beauty meets strength.",
+    icon: <path d="M4 4h16v16H4z M9 4v16 M15 4v16" />,
+  },
+];
+
+export const qualities = [
+  { label: "Energy Saving Technologies", icon: <path d="M3 3h18v18H3z M9 3v8 M15 3v8 M3 11h18" /> },
+  { label: "Quality without compromise", icon: <path d="M4 4h16v16H4z M10 4v16 M14 4v16 M4 10h16 M4 14h16" /> },
+  { label: "Customer-first approach", icon: <path d="M3 3h18v18H3z M12 3v18 M3 12h18" /> },
+  { label: "Long Durability", icon: <path d="M4 4h16v10 c0 3.3-2.7 6-6 6 s-6-2.7-6-6 V4" /> },
+  { label: "Eco - Friendly Materials", icon: <path d="M4 4h16v16H4z M12 4v16 M12 10h8" /> },
+  { label: "Lifetime Support", icon: <path d="M4 4h16v16H4z M12 4v16" /> },
+];
 
 const AboutSection = () => {
   return (
-    <section id="about" className="py-24 px-6 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-24">
-          {/* Left Side: Arched Image and Badge */}
-          <div className="relative">
-            <div className="relative w-full max-w-[500px] mx-auto lg:mx-0">
-              <div className="absolute -top-10 -left-10 w-32 h-32 opacity-20 hidden md:block" style={{ backgroundImage: 'radial-gradient(var(--color-brushed-bronze) 2px, transparent 2px)', backgroundSize: '20px 20px' }} />
-              <Image
-                src="/images/aboutus.webp"
-                alt="Modern architectural window system"
-                className="w-full h-auto relative z-10"
-                width={600} height={600} sizes="(max-width: 768px) 100vw, 50vw"
-              />
-            </div>
+    <section id="about" className="section overflow-hidden bg-plate-white pt-0">
+      <div className="shell">
+        <div className="grid items-center gap-12 lg:grid-cols-12 lg:gap-20">
+          {/* The film sits on the right on wide screens; it is cropped a little at the sides, which also keeps its corner mark out of view. */}
+          <div className="reveal lg:order-2 lg:col-span-6">
+            <InViewVideo src="/videos/about.webm" poster="/images/posters/about.webp" label="Modern architectural window system" className="swatch-shadow aspect-[4/3] rounded-card" />
           </div>
 
-          {/* Right Side: Content */}
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#7A5418]" />
-                {/* FIX: darkened from text-brushed-bronze to #7A5418 for AA contrast on white */}
-                <span className="text-[#7A5418] text-xs uppercase tracking-[0.2em] font-bold">About Us</span>
-              </div>
-              <h2 className="text-[42px] md:text-[52px] font-bold text-architectural-blue leading-tight">
-                Expertise in Windows & Doors
-              </h2>
-            </div>
-
-            <p className="text-steel-gray text-lg leading-relaxed">
+          <div className="reveal lg:col-span-6">
+            <p className="eyebrow">About Us</p>
+            <h2 className="h-section mt-5 text-blueberry">Expertise in Windows &amp; Doors</h2>
+            <p className="lede mt-6 max-w-2xl text-berry-bloom">
               At ALU-SEA, we believe your doors and windows are more than just fittings—they&apos;re the first impression of your home. As reputable suppliers of aluminium sliding doors and premium architectural systems, we provide affordable aluminium windows and doors that elevate your living spaces without compromising on quality or aesthetics.
             </p>
 
-            <div className="space-y-8 pt-4">
-              {/* Our Mission */}
-              <div className="flex gap-6">
-                <div className="flex-shrink-0 w-16 h-16 border-2 border-[#7A5418] p-3 flex items-center justify-center">
-                  <svg viewBox="0 0 24 24" className="w-full h-full fill-none stroke-[#7A5418]" strokeWidth="1.5">
-                    <path d="M3 3h18v18H3z" />
-                    <path d="M12 3v18M3 10h18M3 14h18" />
+            <div className="mt-10 grid gap-8 border-t border-stem-grey/50 pt-10 sm:grid-cols-2">
+              {principles.map((item) => (
+                <div key={item.title}>
+                  <svg viewBox="0 0 24 24" aria-hidden="true" className="size-9 fill-none stroke-berry-bloom" strokeWidth="1">
+                    {item.icon}
                   </svg>
+                  <h3 className="h-card mt-4 text-blueberry">{item.title}</h3>
+                  <p className="mt-2 text-[15px] leading-relaxed text-berry-bloom">{item.text}</p>
                 </div>
-                <div>
-                  <h3 className="text-architectural-blue text-xl font-bold mb-2">Our Mission</h3>
-                  <p className="text-steel-gray text-base leading-relaxed">
-                    Our mission is to deliver premium doors and windows that blend durability, design, and functionality, with precise installation that enhances every space with secure and stylish solutions.
-                  </p>
-                </div>
-              </div>
-
-              {/* Our Vision */}
-              <div className="flex gap-6">
-                <div className="flex-shrink-0 w-16 h-16 border-2 border-[#7A5418] p-3 flex items-center justify-center">
-                  <svg viewBox="0 0 24 24" className="w-full h-full fill-none stroke-[#7A5418]" strokeWidth="1.5">
-                    <path d="M4 4h16v16H4z" />
-                    <path d="M9 4v16M15 4v16" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-architectural-blue text-xl font-bold mb-2">Our Vision</h3>
-                  <p className="text-steel-gray text-base leading-relaxed">
-                    Our vision is to be the most trusted name in doors and windows by delivering unmatched quality and innovative designs, creating homes and spaces where beauty meets strength.
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
 
-            {/* FIX: darkened bg from brushed-bronze to #7A5418 for white text contrast */}
-            <button className="mt-4 bg-[#7A5418] hover:bg-[#5C3D0E] text-white px-8 py-4 text-sm font-bold transition-all shadow-lg">
+            <Link href="#contact" className="btn btn-primary mt-10">
               Get Your Free Quote
-            </button>
+            </Link>
           </div>
         </div>
 
-        {/* Bottom Feature Icons */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 pt-12 border-t border-gray-100">
-          {[
-            { label: "Energy Saving Technologies", icon: <path d="M3 3h18v18H3z M9 3v8 M15 3v8 M3 11h18" /> },
-            { label: "Quality without compromise", icon: <path d="M4 4h16v16H4z M10 4v16 M14 4v16 M4 10h16 M4 14h16" /> },
-            { label: "Customer-first approach", icon: <path d="M3 3h18v18H3z M12 3v18 M3 12h18" /> },
-            { label: "Long Durability", icon: <path d="M4 4h16v10 c0 3.3-2.7 6-6 6 s-6-2.7-6-6 V4" /> },
-            { label: "Eco - Friendly Materials", icon: <path d="M4 4h16v16H4z M12 4v16 M12 10h8" /> },
-            { label: "Lifetime Support", icon: <path d="M4 4h16v16H4z M12 4v16" /> },
-          ].map((feature, idx) => (
-            <div key={idx} className="flex flex-col items-center text-center space-y-4">
-              <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center">
-                {/* FIX: icon stroke darkened to #7A5418 */}
-                <svg viewBox="0 0 24 24" className="w-10 h-10 fill-none stroke-[#7A5418]" strokeWidth="1">
-                  {feature.icon}
-                </svg>
-              </div>
-              <span className="text-[13px] font-medium text-steel-gray leading-snug">
-                {feature.label}
-              </span>
-            </div>
+        {/* Six qualities in one ruled band, like a specification strip. */}
+        <ul className="reveal mt-[var(--section-y)] grid grid-cols-2 border-l border-t border-stem-grey/50 md:grid-cols-3 lg:grid-cols-6">
+          {qualities.map((item) => (
+            <li key={item.label} className="flex flex-col items-start gap-4 border-b border-r border-stem-grey/50 p-6 lg:p-7">
+              <svg viewBox="0 0 24 24" aria-hidden="true" className="size-8 fill-none stroke-berry-bloom" strokeWidth="1">
+                {item.icon}
+              </svg>
+              <span className="text-sm font-medium leading-snug text-blueberry">{item.label}</span>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </section>
   );
