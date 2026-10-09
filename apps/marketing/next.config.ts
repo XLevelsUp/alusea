@@ -34,6 +34,10 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 30,
     unoptimized: true,
   },
+  // The page's old address still works: search results and saved links land on the new one.
+  async redirects() {
+    return [{ source: "/features", destination: "/alusea-difference", permanent: true }];
+  },
   async headers() {
     return [
       // Block crawler indexing of API and Next.js internals at the HTTP layer

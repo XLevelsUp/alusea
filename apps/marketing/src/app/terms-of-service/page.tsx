@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import PageBanner from "@/components/layout/PageBanner";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
@@ -13,34 +14,25 @@ export default function TermsOfServicePage() {
   const lastUpdated = "April 7, 2026";
 
   return (
-    <div className="pt-32 pb-24 px-6 min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <header className="mb-16">
-          <h1 className="text-4xl md:text-6xl font-bold text-architectural-blue mb-4">
-            Terms of <span className="text-brushed-bronze">Service</span>
-          </h1>
-          <p className="text-steel-gray text-lg leading-relaxed">
-            Please read these terms carefully before using our website or
-            engaging our services.
-          </p>
-          <p className="mt-4 text-sm text-steel-gray/70">
-            Last updated: {lastUpdated}
-          </p>
-        </header>
+    <div className="bg-plate-white">
+      <PageBanner crumb="Terms of Service" title={<>Terms of <span className="text-plate-white/80">Service</span></>}>
+        <p>Please read these terms carefully before using our website or engaging our services.</p>
+        <p className="mt-4 text-sm">Last updated: {lastUpdated}</p>
+      </PageBanner>
+      <div className="section mx-auto max-w-4xl px-[var(--gutter)]">
 
         {/* Terms Content */}
-        <div className="prose prose-lg max-w-none space-y-12 text-matte-black/90">
+        <div className="prose prose-lg max-w-none space-y-12 text-blueberry/90">
           {/* 1. Acceptance of Terms */}
           <section id="acceptance">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               1. Acceptance of Terms
             </h2>
             <p className="leading-relaxed">
               By accessing or using the website{" "}
               <a
                 href="https://www.alusea.in"
-                className="text-brushed-bronze hover:underline font-medium"
+                className="text-berry-bloom hover:underline font-medium"
               >
                 www.alusea.in
               </a>{" "}
@@ -59,7 +51,7 @@ export default function TermsOfServicePage() {
 
           {/* 2. About Our Services */}
           <section id="services">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               2. About Our Services
             </h2>
             <p className="leading-relaxed">
@@ -73,7 +65,7 @@ export default function TermsOfServicePage() {
 
           {/* 3. Use of the Website */}
           <section id="use-of-website">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               3. Use of the Website
             </h2>
             <p className="leading-relaxed">
@@ -111,7 +103,7 @@ export default function TermsOfServicePage() {
 
           {/* 4. Intellectual Property */}
           <section id="intellectual-property">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               4. Intellectual Property
             </h2>
             <p className="leading-relaxed">
@@ -120,11 +112,11 @@ export default function TermsOfServicePage() {
               and software — is the property of Alusea or its licensors and is
               protected by applicable intellectual property laws.
             </p>
-            <div className="mt-6 p-6 bg-aluminum-light rounded-xl">
-              <h4 className="font-bold text-matte-black mb-2">
+            <div className="mt-6 p-6 bg-plate-white rounded-card">
+              <h4 className="font-bold text-blueberry mb-2">
                 You may not:
               </h4>
-              <ul className="list-disc pl-6 space-y-2 text-steel-gray">
+              <ul className="list-disc pl-6 space-y-2 text-berry-bloom">
                 <li>
                   Reproduce, distribute, or create derivative works from any
                   content without prior written consent.
@@ -144,7 +136,7 @@ export default function TermsOfServicePage() {
 
           {/* 5. Quote Requests & Contact Forms */}
           <section id="quote-requests">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               5. Quote Requests &amp; Contact Forms
             </h2>
             <p className="leading-relaxed">
@@ -174,7 +166,7 @@ export default function TermsOfServicePage() {
                 Your submission data is processed in accordance with our{" "}
                 <a
                   href="/privacy-policy"
-                  className="text-brushed-bronze hover:underline font-medium"
+                  className="text-berry-bloom hover:underline font-medium"
                 >
                   Privacy Policy
                 </a>
@@ -185,7 +177,7 @@ export default function TermsOfServicePage() {
 
           {/* 6. Product Information & Pricing */}
           <section id="product-information">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               6. Product Information &amp; Pricing
             </h2>
             <p className="leading-relaxed">
@@ -217,7 +209,7 @@ export default function TermsOfServicePage() {
 
           {/* 7. Orders & Contracts */}
           <section id="orders-contracts">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               7. Orders &amp; Contracts
             </h2>
             <p className="leading-relaxed">
@@ -244,16 +236,16 @@ export default function TermsOfServicePage() {
 
           {/* 8. Limitation of Liability */}
           <section id="limitation-of-liability">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               8. Limitation of Liability
             </h2>
             <p className="leading-relaxed">
               To the fullest extent permitted by applicable law:
             </p>
             <div className="mt-4 space-y-4">
-              <div className="p-6 bg-aluminum-light rounded-xl">
-                <p className="text-steel-gray leading-relaxed">
-                  <strong className="text-matte-black">
+              <div className="p-6 bg-plate-white rounded-card">
+                <p className="text-berry-bloom leading-relaxed">
+                  <strong className="text-blueberry">
                     Website provided &quot;as is&quot;:
                   </strong>{" "}
                   The Website and its content are provided on an &quot;as
@@ -263,9 +255,9 @@ export default function TermsOfServicePage() {
                   a particular purpose, or non-infringement.
                 </p>
               </div>
-              <div className="p-6 bg-aluminum-light rounded-xl">
-                <p className="text-steel-gray leading-relaxed">
-                  <strong className="text-matte-black">
+              <div className="p-6 bg-plate-white rounded-card">
+                <p className="text-berry-bloom leading-relaxed">
+                  <strong className="text-blueberry">
                     No liability for damages:
                   </strong>{" "}
                   Alusea shall not be liable for any direct, indirect,
@@ -274,9 +266,9 @@ export default function TermsOfServicePage() {
                   limited to errors, interruptions, or loss of data.
                 </p>
               </div>
-              <div className="p-6 bg-aluminum-light rounded-xl">
-                <p className="text-steel-gray leading-relaxed">
-                  <strong className="text-matte-black">
+              <div className="p-6 bg-plate-white rounded-card">
+                <p className="text-berry-bloom leading-relaxed">
+                  <strong className="text-blueberry">
                     Third-party links:
                   </strong>{" "}
                   Our Website may contain links to third-party websites. We are
@@ -289,7 +281,7 @@ export default function TermsOfServicePage() {
 
           {/* 9. Indemnification */}
           <section id="indemnification">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               9. Indemnification
             </h2>
             <p className="leading-relaxed">
@@ -304,7 +296,7 @@ export default function TermsOfServicePage() {
 
           {/* 10. Governing Law */}
           <section id="governing-law">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               10. Governing Law &amp; Jurisdiction
             </h2>
             <p className="leading-relaxed">
@@ -318,7 +310,7 @@ export default function TermsOfServicePage() {
 
           {/* 11. Severability */}
           <section id="severability">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               11. Severability
             </h2>
             <p className="leading-relaxed">
@@ -332,14 +324,14 @@ export default function TermsOfServicePage() {
 
           {/* 12. Entire Agreement */}
           <section id="entire-agreement">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               12. Entire Agreement
             </h2>
             <p className="leading-relaxed">
               These Terms, together with our{" "}
               <a
                 href="/privacy-policy"
-                className="text-brushed-bronze hover:underline font-medium"
+                className="text-berry-bloom hover:underline font-medium"
               >
                 Privacy Policy
               </a>
@@ -351,35 +343,35 @@ export default function TermsOfServicePage() {
 
           {/* 13. Contact Us */}
           <section id="contact-us">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               13. Contact Us
             </h2>
             <p className="leading-relaxed">
               If you have any questions or concerns regarding these Terms of
               Service, please contact us:
             </p>
-            <div className="mt-6 p-8 bg-aluminum-light rounded-xl space-y-4">
-              <p className="font-bold text-matte-black text-lg">Alusea</p>
-              <div className="space-y-2 text-steel-gray">
+            <div className="mt-6 p-8 bg-plate-white rounded-card space-y-4">
+              <p className="font-bold text-blueberry text-lg">Alusea</p>
+              <div className="space-y-2 text-berry-bloom">
                 <p>
-                  <strong className="text-matte-black">Address:</strong> No 178,
+                  <strong className="text-blueberry">Address:</strong> No 178,
                   A Ramachandra Road, RS Puram, Near Flower Market, Coimbatore,
                   Tamil Nadu – 641002, India
                 </p>
                 <p>
-                  <strong className="text-matte-black">Email:</strong>{" "}
+                  <strong className="text-blueberry">Email:</strong>{" "}
                   <a
                     href="mailto:aluseacbe@gmail.com"
-                    className="text-brushed-bronze hover:underline font-medium"
+                    className="text-berry-bloom hover:underline font-medium"
                   >
                     aluseacbe@gmail.com
                   </a>
                 </p>
                 <p>
-                  <strong className="text-matte-black">Phone:</strong>{" "}
+                  <strong className="text-blueberry">Phone:</strong>{" "}
                   <a
                     href="tel:+919626022722"
-                    className="text-brushed-bronze hover:underline font-medium"
+                    className="text-berry-bloom hover:underline font-medium"
                   >
                     +91 96260 22722
                   </a>

@@ -105,18 +105,17 @@ export default function ContactForm() {
 
   if (status === 'success') {
     return (
-      <div className="bg-green-50/50 border border-green-100 p-8 rounded-xl text-center">
+      <div className="bg-green-50/50 border border-green-100 p-8 rounded-card text-center">
         <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
           <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h3 className="text-2xl font-bold text-matte-black mb-2">Message Received</h3>
-        <p className="text-steel-gray">Thank you for reaching out to Alusea. Our team will contact you within 24 hours.</p>
-        {/* FIX: text-brushed-bronze → text-[#7A5418] for AA contrast on white bg */}
+        <h3 className="text-2xl font-bold text-blueberry mb-2">Message Received</h3>
+        <p className="text-berry-bloom">Thank you for reaching out to Alusea. Our team will contact you within 24 hours.</p>
         <button
           onClick={() => setStatus('idle')}
-          className="mt-6 text-[#7A5418] font-bold hover:underline"
+          className="mt-6 text-berry-bloom font-bold hover:underline"
         >
           Send another message
         </button>
@@ -128,7 +127,7 @@ export default function ContactForm() {
     <form onSubmit={handleSubmit} className="space-y-6" noValidate>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-[#111111] mb-1">Full Name *</label>
+          <label htmlFor="name" className="field-label text-berry-bloom">Full Name *</label>
           <input
             type="text"
             id="name"
@@ -136,19 +135,19 @@ export default function ContactForm() {
             value={formData.name}
             onChange={handleChange}
             onBlur={handleBlur}
-            className={`w-full p-4 bg-gray-50 border text-[#111111] ${errors.name && touched.name ? 'border-red-500 focus:ring-red-300' : 'border-gray-200 focus:ring-[#7A5418]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+            className="field"
             aria-invalid={!!errors.name}
             aria-describedby={errors.name ? "name-error" : undefined}
           />
           {errors.name && touched.name && (
-            <p id="name-error" className="mt-1 text-sm text-red-500 flex items-center gap-1">
+            <p id="name-error" role="alert" className="mt-2 flex items-center gap-1 text-sm text-red-700">
               <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
               {errors.name}
             </p>
           )}
         </div>
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-[#111111] mb-1">Email Address *</label>
+          <label htmlFor="email" className="field-label text-berry-bloom">Email Address *</label>
           <input
             type="email"
             id="email"
@@ -156,12 +155,12 @@ export default function ContactForm() {
             value={formData.email}
             onChange={handleChange}
             onBlur={handleBlur}
-            className={`w-full p-4 bg-gray-50 border text-[#111111] ${errors.email && touched.email ? 'border-red-500 focus:ring-red-300' : 'border-gray-200 focus:ring-[#7A5418]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+            className="field"
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? "email-error" : undefined}
           />
           {errors.email && touched.email && (
-            <p id="email-error" className="mt-1 text-sm text-red-500 flex items-center gap-1">
+            <p id="email-error" role="alert" className="mt-2 flex items-center gap-1 text-sm text-red-700">
               <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
               {errors.email}
             </p>
@@ -170,7 +169,7 @@ export default function ContactForm() {
       </div>
 
       <div>
-        <label htmlFor="phone" className="block text-sm font-medium text-[#111111] mb-1">Phone Number *</label>
+        <label htmlFor="phone" className="field-label text-berry-bloom">Phone Number *</label>
         <input
           type="tel"
           id="phone"
@@ -179,12 +178,12 @@ export default function ContactForm() {
           maxLength={10}
           onChange={handleChange}
           onBlur={handleBlur}
-          className={`w-full p-4 bg-gray-50 border text-[#111111] ${errors.phone && touched.phone ? 'border-red-500 focus:ring-red-300' : 'border-gray-200 focus:ring-[#7A5418]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+          className="field"
           aria-invalid={!!errors.phone}
           aria-describedby={errors.phone ? "phone-error" : undefined}
         />
         {errors.phone && touched.phone && (
-          <p id="phone-error" className="mt-1 text-sm text-red-500 flex items-center gap-1">
+          <p id="phone-error" role="alert" className="mt-2 flex items-center gap-1 text-sm text-red-700">
             <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
             {errors.phone}
           </p>
@@ -192,7 +191,7 @@ export default function ContactForm() {
       </div>
 
       <div>
-        <label htmlFor="message" className="block text-sm font-medium text-[#111111] mb-1">Message *</label>
+        <label htmlFor="message" className="field-label text-berry-bloom">Message *</label>
         <textarea
           id="message"
           name="message"
@@ -200,28 +199,27 @@ export default function ContactForm() {
           value={formData.message}
           onChange={handleChange}
           onBlur={handleBlur}
-          className={`w-full p-4 bg-gray-50 border text-[#111111] ${errors.message && touched.message ? 'border-red-500 focus:ring-red-300' : 'border-gray-200 focus:ring-[#7A5418]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+          className="field"
           aria-invalid={!!errors.message}
           aria-describedby={errors.message ? "message-error" : undefined}
         />
         {errors.message && touched.message && (
-          <p id="message-error" className="mt-1 text-sm text-red-500 flex items-center gap-1">
+          <p id="message-error" role="alert" className="mt-2 flex items-center gap-1 text-sm text-red-700">
             <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
             {errors.message}
           </p>
         )}
       </div>
 
-      {/* bg-matte-black + text-white passes contrast — no change needed */}
       {status === 'error' && (
-        <div className="p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg text-sm">
+        <div role="alert" className="rounded-card border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           Failed to send message. Please try again or contact us directly.
         </div>
       )}
       <button
         type="submit"
         disabled={status === 'submitting'}
-        className="w-full bg-matte-black hover:bg-architectural-blue text-white font-bold py-4 px-8 rounded-lg transition-colors flex justify-center items-center"
+        className="btn btn-primary w-full sm:w-auto sm:min-w-56"
       >
         {status === 'submitting' ? (
           <span className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></span>

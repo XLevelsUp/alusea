@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import PageBanner from "@/components/layout/PageBanner";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -79,15 +80,13 @@ export default function ExperienceCenterClient({ dbZones }: { dbZones: DbZone[] 
   const step = showroomSteps[currentStep];
 
   return (
-    <div className="pt-32 pb-24 min-h-screen bg-white overflow-hidden">
+    <div className="overflow-hidden bg-plate-white">
+      <PageBanner crumb="Experience Center" title={<>Interactive <span className="text-plate-white/80">Virtual Tour</span></>}>
+        <p>Click the images to walk through our Experience Center.</p>
+      </PageBanner>
+
       {/* Interactive Tour Section */}
-      <div className="px-6 max-w-7xl mx-auto mb-24">
-        <header className="mb-12 text-center">
-           <h1 className="text-4xl md:text-5xl font-bold text-architectural-blue tracking-tight mb-4">
-             Interactive <span className="text-brushed-bronze">Virtual Tour</span>
-           </h1>
-           <p className="text-steel-gray text-lg">Click the images to walk through our Experience Center.</p>
-        </header>
+      <div className="shell section">
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           
@@ -103,13 +102,13 @@ export default function ExperienceCenterClient({ dbZones }: { dbZones: DbZone[] 
                 className="space-y-6"
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-brushed-bronze font-bold tracking-widest uppercase text-sm">Zone 0{step.id}</span>
-                  <div className="h-[1px] w-12 bg-brushed-bronze/40" />
+                  <span className="text-xs font-semibold uppercase tracking-[0.22em] text-berry-bloom">Zone 0{step.id}</span>
+                  <div className="h-[1px] w-12 bg-stem-grey" />
                 </div>
-                <h2 className="text-3xl md:text-5xl font-bold text-matte-black leading-tight">
+                <h2 className="h-section text-blueberry">
                   {step.title}
                 </h2>
-                <p className="text-steel-gray text-lg leading-relaxed">
+                <p className="text-berry-bloom text-lg leading-relaxed">
                   {step.desc}
                 </p>
                 
@@ -117,7 +116,7 @@ export default function ExperienceCenterClient({ dbZones }: { dbZones: DbZone[] 
                   {showroomSteps.map((_, i) => (
                     <div 
                       key={i} 
-                      className={`h-1.5 transition-all duration-500 rounded-full ${i === currentStep ? 'w-10 bg-brushed-bronze' : 'w-2 bg-gray-200 cursor-pointer hover:bg-gray-300'}`}
+                      className={`h-1.5 transition-all duration-500 rounded-full ${i === currentStep ? 'w-10 bg-berry-bloom' : 'w-2 bg-stem-grey/35 cursor-pointer hover:bg-stem-grey/40'}`}
                       onClick={() => setCurrentStep(i)}
                     />
                   ))}
@@ -135,7 +134,7 @@ export default function ExperienceCenterClient({ dbZones }: { dbZones: DbZone[] 
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 1.05 }}
                 transition={{ duration: 0.6 }}
-                className="absolute inset-0 cursor-pointer rounded-2xl overflow-hidden shadow-2xl group"
+                className="swatch-shadow group absolute inset-0 cursor-pointer overflow-hidden rounded-card"
                 onClick={nextStep}
               >
                  <Image
@@ -143,10 +142,10 @@ export default function ExperienceCenterClient({ dbZones }: { dbZones: DbZone[] 
                     alt={step.title}
                     fill
                     priority
-                    className="object-cover transition-transform duration-[2s] ease-out group-hover:scale-110"
+                    className="object-cover transition-transform duration-[2s] ease-out group-hover:scale-105"
                  />
                  {/* Click Overlay */}
-                 <div className="absolute inset-0 bg-matte-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                 <div className="absolute inset-0 bg-blueberry/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                     <div className="bg-white/10 backdrop-blur-md border border-white/20 px-6 py-3 rounded-full text-white font-bold tracking-widest uppercase text-sm flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
                       {step.action}
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -162,17 +161,19 @@ export default function ExperienceCenterClient({ dbZones }: { dbZones: DbZone[] 
       </div>
 
       {/* Visit Us Section */}
-      <div className="bg-gray-50 border-t border-gray-100 py-24 px-6 mt-12">
-        <div className="max-w-4xl mx-auto text-center space-y-6">
-           <h2 className="text-3xl md:text-4xl font-bold text-matte-black">Ready to see it in person?</h2>
-           <p className="text-steel-gray text-lg pb-4">
-             Walk-ins are always welcome. Come visit us during our operating hours to explore the showroom and speak directly with our engineering team. No appointment necessary.
-           </p>
-           <a href="/contact" className="inline-block px-10 py-5 bg-brushed-bronze text-white font-bold uppercase tracking-wider rounded-lg shadow-lg shadow-brushed-bronze/20 hover:translate-y-[-2px] hover:shadow-xl transition-all">
-             Get Directions & Hours
-           </a>
+      <section className="section border-t border-stem-grey/50 bg-stem-grey/20">
+        <div className="shell grid gap-8 lg:grid-cols-12 lg:items-end lg:gap-20">
+          <h2 className="h-section text-blueberry lg:col-span-6">Ready to see it in person?</h2>
+          <div className="lg:col-span-6">
+            <p className="lede text-blueberry/80">
+              Walk-ins are always welcome. Come visit us during our operating hours to explore the showroom and speak directly with our engineering team. No appointment necessary.
+            </p>
+            <a href="/contact" className="btn btn-primary mt-8">
+              Get Directions &amp; Hours
+            </a>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

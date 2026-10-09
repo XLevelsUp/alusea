@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import PageBanner from "@/components/layout/PageBanner";
 
 export const metadata: Metadata = {
   title: "Jobs in Architectural Aluminium Manufacturing",
@@ -10,57 +11,59 @@ export const metadata: Metadata = {
 };
 
 const openPositions = [
-  { title: "Field Marketing Executive", dept: "Marketing", location: "Coimbatore, TN", type: "Full-time" }
+  { title: "Field Marketing Executive", dept: "Marketing", location: "Coimbatore, TN", type: "Full-time" },
+  { title: "Sales Executive", dept: "Sales", location: "Coimbatore, TN", type: "Full-time" },
 ];
+
+// Each Apply button opens WhatsApp with a message that names its own role.
+const applyHref = (title: string) => `https://wa.me/919626022722?text=${encodeURIComponent(`Hello, I am interested in the ${title} position.`)}`;
 
 export default function CareersPage() {
   return (
-    <div className="pt-32 pb-24 px-6 min-h-screen bg-white">
-      <div className="max-w-5xl mx-auto">
-        <header className="mb-20 text-center space-y-4">
-          <h1 className="text-4xl md:text-6xl font-bold text-architectural-blue tracking-tight">
-            Build Your Future <span className="text-brushed-bronze">With Us</span>
-          </h1>
-          <p className="text-steel-gray text-lg leading-relaxed max-w-2xl mx-auto">
-            We&apos;re always looking for passionate engineers, craftsmen, and leaders to join our mission of reshaping modern architecture.
-          </p>
-        </header>
+    <div className="bg-plate-white">
+      <PageBanner crumb="Careers" title={<>Build Your Future <span className="text-plate-white/80">With Us</span></>}>
+        <p>
+          We&apos;re always looking for passionate engineers, craftsmen, and leaders to join our mission of reshaping modern architecture.
+        </p>
+      </PageBanner>
 
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-matte-black border-b border-gray-100 pb-4">Open Roles</h2>
-          {openPositions.map((job, idx) => (
-            <div key={idx} className="group border border-gray-100 rounded-xl p-8 hover:border-brushed-bronze/50 hover:shadow-lg transition-all flex flex-col md:flex-row md:items-center justify-between cursor-pointer">
-              <div className="space-y-2 mb-6 md:mb-0">
-                <h3 className="text-xl font-bold text-matte-black group-hover:text-architectural-blue transition-colors">{job.title}</h3>
-                <div className="flex flex-wrap items-center gap-4 text-sm text-steel-gray">
-                  <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                    {job.dept}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    {job.location}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    {job.type}
-                  </span>
+      <section className="section">
+        <div className="shell">
+          <h2 className="h-section text-blueberry">Open Roles</h2>
+          <ul className="mt-10">
+            {openPositions.map((job) => (
+              <li key={job.title} className="reveal group flex flex-col justify-between gap-6 border-t border-stem-grey/50 py-8 last:border-b md:flex-row md:items-center md:py-10">
+                <div>
+                  <h3 className="font-display text-2xl font-normal text-blueberry md:text-3xl">{job.title}</h3>
+                  <ul className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-berry-bloom">
+                    <li className="flex items-center gap-2">
+                      <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                      {job.dept}
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                      {job.location}
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      {job.type}
+                    </li>
+                  </ul>
                 </div>
-              </div>
-              <div>
-                <a 
-                  href="https://wa.me/919626022722?text=Hello,%20I%20am%20interested%20in%20the%20Field%20Marketing%20Executive%20position." 
-                  target="_blank" 
+                <a
+                  href={applyHref(job.title)}
+                  aria-label={`Apply for ${job.title}`}
+                  target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block px-6 py-3 bg-gray-50 text-matte-black font-bold text-sm rounded-lg group-hover:bg-brushed-bronze group-hover:text-white transition-colors"
+                  className="btn btn-outline shrink-0 self-start md:self-auto"
                 >
                   Apply Now
                 </a>
-              </div>
-            </div>
-          ))}
+              </li>
+            ))}
+          </ul>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

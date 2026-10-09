@@ -53,7 +53,7 @@ export default function ShareLinks({ url, title }: { url: string; title: string 
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`Share on ${link.label}`}
-          className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-steel-gray hover:border-[#7A5418] hover:text-[#7A5418] transition-colors"
+          className="w-9 h-9 rounded-full border border-stem-grey/60 flex items-center justify-center text-berry-bloom hover:border-berry-bloom hover:text-berry-bloom transition-colors"
         >
           {link.icon}
         </a>
@@ -62,7 +62,7 @@ export default function ShareLinks({ url, title }: { url: string; title: string 
         type="button"
         onClick={handleNativeShare}
         aria-label="Share"
-        className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-steel-gray hover:border-[#7A5418] hover:text-[#7A5418] transition-colors"
+        className="w-9 h-9 rounded-full border border-stem-grey/60 flex items-center justify-center text-berry-bloom hover:border-berry-bloom hover:text-berry-bloom transition-colors"
       >
         <ShareIcon />
       </button>

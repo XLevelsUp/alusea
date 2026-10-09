@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import PageBanner from "@/components/layout/PageBanner";
 import "@/lib/fpixel"; // Ensures global window typings are loaded
 
 const products = [
@@ -136,7 +137,7 @@ export default function ProductsClient() {
   };
 
   return (
-    <div className="pt-32 pb-24 px-6 min-h-screen bg-white">
+    <div className="bg-plate-white">
       {/* Inject Structured Data Schemas */}
       <script
         type="application/ld+json"
@@ -147,42 +148,35 @@ export default function ProductsClient() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
       />
 
-      <div className="max-w-7xl mx-auto">
-        <header className="mb-16 text-center max-w-3xl mx-auto space-y-4">
-          <div className="flex items-center justify-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#7A5418]" />
-            <span className="text-[#7A5418] text-xs uppercase tracking-[0.2em] font-bold">Premium Products</span>
-          </div>
-          <h1 className="text-4xl md:text-6xl font-bold text-architectural-blue tracking-tight">
-            Our Premium Collection
-          </h1>
-          <p className="text-steel-gray text-lg leading-relaxed">
-            Discover our comprehensive range of high-performance aluminium systems designed to elevate modern architecture. As a premier <strong className="font-semibold">aluminium windows manufacturer in Coimbatore</strong>, Alusea custom-tailors each specification for luxury residential and high-rise commercial structures across Tamil Nadu.
-          </p>
-        </header>
+      <PageBanner crumb="Our Products" eyebrow="Premium Products" title="Our Premium Collection">
+        <p>
+          Discover our comprehensive range of high-performance aluminium systems designed to elevate modern architecture. As a premier <strong className="font-semibold text-white">aluminium windows manufacturer in Coimbatore</strong>, Alusea custom-tailors each specification for luxury residential and high-rise commercial structures across Tamil Nadu.
+        </p>
+      </PageBanner>
+
+      <div className="shell section">
 
         {/* Product Grid */}
-        <div className="grid grid-cols-1 tracking-tight md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-14 md:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => (
             <article
               key={product.id}
-              className="group cursor-pointer"
+              className="reveal group cursor-pointer"
               onClick={() => trackProductClick(product.title)}
             >
-              <div className="relative h-80 w-full overflow-hidden rounded-md mb-6 bg-gray-100">
+              <div className="media mb-6 aspect-[4/5] w-full">
                 <Image
                   src={product.image}
                   alt={product.title}
                   fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="object-cover"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
-                <div className="absolute inset-0 bg-matte-black/0 group-hover:bg-matte-black/20 transition-colors duration-500" />
               </div>
-              <h2 className="text-2xl font-bold text-matte-black mb-2 group-hover:text-brushed-bronze transition-colors">
+              <h2 className="font-display text-2xl font-normal text-blueberry transition-colors group-hover:text-berry-bloom">
                 {product.title}
               </h2>
-              <p className="text-steel-gray text-sm leading-relaxed">
+              <p className="mt-2 text-[15px] leading-relaxed text-berry-bloom">
                 {product.subtitle}
               </p>
             </article>
@@ -190,53 +184,48 @@ export default function ProductsClient() {
         </div>
 
         {/* Interactive FAQ Accordion Section */}
-        <section className="mt-28 border-t border-gray-100 pt-20">
-          <div className="max-w-3xl mx-auto space-y-8">
-            <header className="text-center space-y-3 mb-12">
-              <div className="flex items-center justify-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#7A5418]" />
-                <span className="text-[#7A5418] text-xs uppercase tracking-[0.2em] font-bold">Product Help Center</span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-architectural-blue tracking-tight">
-                Frequently Asked Questions
-              </h2>
-              <p className="text-steel-gray text-base leading-relaxed">
-                Get premium insights on <strong className="font-semibold">thermal break aluminium window specifications</strong>, local delivery across Tamil Nadu, and custom glass architectural facades.
+        <section className="mt-[var(--section-y)] border-t border-stem-grey/50 pt-[var(--section-y)]">
+          <div className="grid gap-12 lg:grid-cols-12 lg:gap-20">
+            <header className="lg:col-span-4">
+              <p className="eyebrow">Product Help Center</p>
+              <h2 className="h-section mt-5 text-blueberry">Frequently Asked Questions</h2>
+              <p className="mt-5 leading-relaxed text-berry-bloom">
+                Get premium insights on <strong className="font-semibold text-blueberry">thermal break aluminium window specifications</strong>, local delivery across Tamil Nadu, and custom glass architectural facades.
               </p>
             </header>
 
-            <div className="space-y-4">
+            <div className="border-t border-stem-grey/50 lg:col-span-8">
               {faqs.map((faq) => {
                 const isOpen = activeFaq === faq.id;
                 return (
                   <div
                     key={faq.id}
-                    className="border border-gray-200 rounded-lg overflow-hidden transition-all duration-300 bg-white shadow-sm hover:border-[#7A5418]/50"
+                    className="border-b border-stem-grey/50"
                   >
                     <button
                       onClick={() => setActiveFaq(isOpen ? null : faq.id)}
-                      className="w-full text-left px-6 py-5 flex items-center justify-between gap-4 focus:outline-none"
+                      className="flex w-full items-center justify-between gap-6 py-6 text-left"
                       aria-expanded={isOpen}
                     >
-                      <span className="font-bold text-base md:text-lg text-matte-black leading-tight hover:text-[#7A5418] transition-colors">
+                      <span className="font-display text-lg leading-snug text-blueberry transition-colors hover:text-berry-bloom md:text-xl">
                         {faq.question}
                       </span>
                       <svg
-                        className={`w-5 h-5 text-[#7A5418] transform transition-transform duration-300 flex-shrink-0 ${isOpen ? "rotate-180" : ""
+                        className={`w-5 h-5 text-berry-bloom transform transition-transform duration-300 flex-shrink-0 ${isOpen ? "rotate-180" : ""
                           }`}
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
-                        strokeWidth="2.5"
+                        strokeWidth="1.5"
+                        aria-hidden="true"
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
                     <div
-                      className={`transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? "max-h-[300px] border-t border-gray-100" : "max-h-0"
-                        }`}
+                      className={`grid transition-[grid-template-rows] duration-300 ease-out ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
                     >
-                      <p className="px-6 py-5 text-steel-gray leading-relaxed text-sm bg-gray-50/50">
+                      <p className="max-w-2xl overflow-hidden leading-relaxed text-berry-bloom [&]:pb-0">
                         {faq.answer}
                       </p>
                     </div>
