@@ -10,13 +10,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   const { id } = await params
   const supabase = await createClient()
-  const { data: invoice } = await supabase.from('invoices').select('pdf_path').eq('id', id).single()
+  const { data: invoice } = await supabase.from('invoices').select('pdf_path, invoice_number').eq('id', id).single()
 
   if (!invoice?.pdf_path) {
     return new Response('This invoice has no PDF yet. Issue it, or use Regenerate PDF.', { status: 404 })
   }
 
-  const signedUrl = await createSignedUrl(invoice.pdf_path)
+  // ?download saves the file, named after the invoice number, instead of opening it.
+  const download = new URL(request.url).searchParams.has('download')
+  const filename = `${(invoice.invoice_number ?? 'invoice').replace(/[^A-Za-z0-9-]+/g, '-')}.pdf`
+  const signedUrl = await createSignedUrl(invoice.pdf_path, undefined, download ? filename : undefined)
 
   if (!signedUrl) {
     return new Response('Could not open the PDF. Try regenerating it.', { status: 502 })

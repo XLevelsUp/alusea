@@ -62,9 +62,10 @@ export async function renderAndStore({
   return { path, signedUrl: await createSignedUrl(path) }
 }
 
-export async function createSignedUrl(path: string, expiresIn = SIGNED_URL_TTL_SECONDS): Promise<string | null> {
+// With a file name, the link downloads the PDF under that name instead of opening it in the browser.
+export async function createSignedUrl(path: string, expiresIn = SIGNED_URL_TTL_SECONDS, downloadAs?: string): Promise<string | null> {
   const supabase = await createClient()
-  const { data, error } = await supabase.storage.from(DOCUMENTS_BUCKET).createSignedUrl(path, expiresIn)
+  const { data, error } = await supabase.storage.from(DOCUMENTS_BUCKET).createSignedUrl(path, expiresIn, downloadAs ? { download: downloadAs } : undefined)
 
   if (error) return null
   return data?.signedUrl ?? null
