@@ -1,68 +1,538 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* The site has one look for every visitor, so dark: styles apply only under a .dark class, never from the device's dark-mode setting. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
-  /* Alusea Premium Palette */
-  --color-matte-black: #111111;
-  --color-steel-gray: #4A4A4A;
-  --color-aluminum-light: #F5F5F7;
-  --color-architectural-blue: #1A365D; /* Deep Blue */
-  --color-brushed-bronze: #A67C52; /* Accent */
-  --color-bronze-light: #D4AF37;
-  --color-bronze-dark: #8B4513;
-  --color-alusea-gold: #B68B4C;
-  --color-alusea-light-gray: #F1EFF0;
-  
+  /* Alusea palette: every colour on the site comes from these five names. */
+  --color-plate-white: #F5F6F3; /* page background */
+  --color-blueberry: #2F3A55;   /* primary: headings, body text, header, footer, main buttons */
+  --color-berry-bloom: #5C6B8A; /* blue slate: supporting text, links, labels, hovers, the header strip */
+  --color-stem-grey: #8D9295;   /* secondary: borders, dividers, icons; tinted fills; too pale for text on the page colour */
+  --color-stem-grey-deep: #6E6F73; /* the Stem Grey of the palette card: solid textured panels that carry white text */
+  /* The one warm accent, used only for the handwritten word in the hero. */
+  --color-champagne: #F2C14E;
+  --color-surface: #FFFFFF;     /* cards lifted off the page background */
+
+  /* One generous corner for every card, panel and picture. */
+  --radius-card: 1.5rem;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #111111;
+  --background: var(--color-plate-white);
+  --foreground: var(--color-blueberry);
+  /* Tells the browser the page is light, so form controls and scrollbars are not drawn dark on a dark-mode device. */
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #111111;
-    --foreground: #F5F5F7;
-  }
+:root {
+  /* Brushed aluminium for the light background: very fine horizontal hairlines, like a satin metal profile. */
+  --paper-grain: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'400'%20height%3D'400'%3E%3Cfilter%20id%3D'c'%20x%3D'0'%20y%3D'0'%20width%3D'100%25'%20height%3D'100%25'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'0.004%200.75'%20numOctaves%3D'2'%20seed%3D'7'%20stitchTiles%3D'stitch'%2F%3E%3CfeColorMatrix%20values%3D'0%200%200%200%200.18%200%200%200%200%200.23%200%200%200%200%200.33%200.2%200%200%200%20-0.045'%2F%3E%3C%2Ffilter%3E%3Crect%20width%3D'100%25'%20height%3D'100%25'%20filter%3D'url(%23c)'%2F%3E%3C%2Fsvg%3E");
+
+  /* Window frames in fine line: an outer frame with one mullion and one transom, repeated like an elevation drawing. */
+  --window-grid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='240'%3E%3Cg fill='none' stroke='white' stroke-opacity='0.045'%3E%3Crect x='20.5' y='20.5' width='140' height='200'/%3E%3Cpath d='M90.5 20.5v200M20.5 90.5h140'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
+  background-image: var(--paper-grain);
   color: var(--foreground);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Outfit', sans-serif;
+@layer base {
+  /* Every light section carries the same brushed finish as the page behind it. */
+  .bg-plate-white {
+    background-image: var(--paper-grain);
+  }
+
+  @media (prefers-contrast: more), print {
+    body,
+    .bg-plate-white {
+      background-image: none;
+    }
+  }
+
+  /* Added to a large dark section to lay faint window-frame linework over it. */
+  .window-grid {
+    background-image: var(--window-grid);
+  }
+
+  @media (prefers-contrast: more), print {
+    .window-grid {
+      background-image: none;
+    }
+  }
+}
+
+/* The soft lift under each band of the palette card, for panels and cards that should sit above the page. */
+.swatch-shadow {
+  box-shadow: 0 1px 2px rgb(47 58 85 / 0.08), 0 8px 24px -12px rgb(47 58 85 / 0.28);
+}
+
+@layer base {
+  /* Headings default to a medium weight, so size and space carry the hierarchy and a utility class can still change it. */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-outfit), system-ui, sans-serif;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+
+  /* One visible focus ring for every link, button and field reached by keyboard. */
+  :focus-visible {
+    outline: 2px solid var(--color-berry-bloom);
+    outline-offset: 3px;
+  }
+}
+
+:root {
+  /* Layout: one side gutter and one section rhythm for the whole site, both growing with the screen. */
+  --gutter: clamp(1rem, 4vw, 4rem);
+  --section-y: clamp(4rem, 9vw, 8rem);
+  /* The fixed header's height, so page banners can start below it. */
+  --header-h: 4rem;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --header-h: 6.75rem;
+  }
+}
+
+@layer components {
+  /* Side padding only: for full-width bars such as the header and the hero. */
+  .gutter {
+    padding-inline: var(--gutter);
+  }
+
+  /* The content column every section sits in. */
+  .shell {
+    width: 100%;
+    max-width: 100rem;
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  .section {
+    padding-block: var(--section-y);
+  }
+
+  /* The heading typeface, for large figures and quotes that are not headings. */
+  .font-display {
+    font-family: var(--font-outfit), system-ui, sans-serif;
+  }
+
+  /* Type scale: sizes grow smoothly between phone and desktop. */
+  .h-display {
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    font-weight: 300;
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+  }
+
+  .h-section {
+    font-size: clamp(2rem, 4.2vw, 3.5rem);
+    font-weight: 400;
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+
+  .h-card {
+    font-size: clamp(1.125rem, 1.6vw, 1.375rem);
+    font-weight: 500;
+    line-height: 1.25;
+  }
+
+  .lede {
+    font-size: clamp(1rem, 1.25vw, 1.1875rem);
+    line-height: 1.7;
+    text-wrap: pretty;
+  }
+
+  /* The small label above a heading, led by a short rule. */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.875rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-berry-bloom);
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 2.5rem;
+    height: 1px;
+    background: currentColor;
+  }
+
+  .eyebrow.on-dark {
+    color: var(--color-plate-white);
+  }
+
+  /* Buttons: one pill shape, four colourings. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.625rem;
+    min-height: 3rem;
+    padding: 0.75rem 1.75rem;
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: background-color 0.25s, color 0.25s, border-color 0.25s, transform 0.1s ease-out;
+  }
+
+  /* Feedback lands the instant the button is pressed, before the click completes. */
+  .btn:active {
+    transform: scale(0.97);
+  }
+
+  .btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .btn-primary,
+  .btn-light {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary::after,
+  .btn-light::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.28) 50%, transparent 65%);
+    transform: translateX(-120%);
+    transition: transform 0.8s var(--ease-out);
+    pointer-events: none;
+  }
+
+  .btn-primary:hover::after,
+  .btn-light:hover::after {
+    transform: translateX(120%);
+  }
+
+  .btn-primary {
+    background-color: var(--color-blueberry);
+    color: #fff;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-berry-bloom);
+  }
+
+  .btn-light {
+    background-color: var(--color-plate-white);
+    color: var(--color-blueberry);
+  }
+
+  .btn-light:hover {
+    background-color: #fff;
+  }
+
+  .btn-outline {
+    border-color: var(--color-blueberry);
+    color: var(--color-blueberry);
+  }
+
+  .btn-outline:hover {
+    background-color: var(--color-blueberry);
+    color: #fff;
+  }
+
+  .btn-outline-light {
+    border-color: rgb(255 255 255 / 0.5);
+    color: #fff;
+  }
+
+  .btn-outline-light:hover {
+    background-color: #fff;
+    border-color: #fff;
+    color: var(--color-blueberry);
+  }
+
+  /* The header's surface once it leaves the film: a frosted layer the page scrolls beneath. */
+  .header-glass {
+    background-color: color-mix(in srgb, var(--color-plate-white) 82%, transparent);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+    box-shadow: 0 1px 0 rgb(47 58 85 / 0.08), 0 12px 32px -20px rgb(47 58 85 / 0.35);
+  }
+
+  /* A menu grows out of the control that opened it. */
+  .menu-in {
+    transform-origin: top center;
+    animation: menu-in 0.18s var(--ease-out) both;
+  }
+
+  /* A text link whose arrow slides forward on hover. */
+  .link-arrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-bottom: 1px solid currentColor;
+    padding-bottom: 0.25rem;
+    transition: gap 0.25s var(--ease-out), color 0.25s;
+  }
+
+  .link-arrow:hover {
+    gap: 0.875rem;
+  }
+
+  /* A picture frame that zooms its image gently when its card is hovered. */
+  .media {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-card);
+    background-color: color-mix(in srgb, var(--color-stem-grey) 20%, transparent);
+    transition: transform 0.6s var(--ease-out), box-shadow 0.6s var(--ease-out);
+  }
+
+  /* A card's picture rises a little under the pointer; touch screens skip this. */
+  @media (hover: hover) {
+    .group:hover > .media,
+    .group:hover > a > .media,
+    a.media:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 28px 48px -28px rgb(47 58 85 / 0.45);
+    }
+  }
+
+  .media img {
+    transition: transform 0.9s var(--ease-out);
+  }
+
+  .group:hover .media img,
+  .media:hover img {
+    transform: scale(1.04);
+  }
+
+  /* Form fields: a labelled box with a hairline border that darkens on focus. */
+  .field-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .field {
+    width: 100%;
+    min-height: 3.25rem;
+    padding: 0.875rem 1rem;
+    border: 1px solid color-mix(in srgb, var(--color-stem-grey) 70%, transparent);
+    border-radius: 0.75rem;
+    background-color: #fff;
+    color: var(--color-blueberry);
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .field:focus {
+    outline: none;
+    border-color: var(--color-blueberry);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-berry-bloom) 30%, transparent);
+  }
+
+  .field[aria-invalid="true"] {
+    border-color: #dc2626;
+  }
+}
+
+@keyframes menu-in {
+  from { opacity: 0; transform: scale(0.97) translateY(-0.25rem); }
+  to { opacity: 1; transform: none; }
+}
+
+@layer base {
+  /* Anything pressable shows the hand cursor. */
+  button:not(:disabled),
+  [role="button"] {
+    cursor: pointer;
+  }
+}
+
+/* Visitors who ask for less transparency or more contrast get a solid header. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .header-glass {
+    background-color: var(--color-plate-white);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border-bottom: 1px solid var(--color-blueberry);
+  }
+}
+
+/* Reached first by keyboard: jumps past the header to the page content. */
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 100;
+  transform: translateY(-200%);
+  border-radius: 9999px;
+  background-color: var(--color-blueberry);
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+/* Sections fade up as they scroll into view; RevealObserver adds js-reveal, so without JavaScript everything is simply visible. */
+.js-reveal .reveal {
+  transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+}
+
+.js-reveal .reveal:not([data-in]) {
+  opacity: 0;
+  transform: translateY(1.75rem);
+}
+
+/* Scroll-linked depth, only where the browser supports it and the visitor has not asked for less motion. */
+@keyframes parallax-drift {
+  from { transform: translateY(-5%) scale(1.12); }
+  to { transform: translateY(5%) scale(1.12); }
+}
+
+@keyframes hero-film-zoom {
+  from { transform: scale(1); }
+  to { transform: scale(1.12); }
+}
+
+@keyframes hero-copy-out {
+  to { opacity: 0; transform: translateY(-2rem); }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* A key picture drifts slower than the page, inside its frame. */
+    .media img.parallax {
+      animation: parallax-drift linear both;
+      animation-timeline: view();
+    }
+
+    /* The hero film pushes in, and its words lift away, as the page scrolls past. */
+    .hero-film {
+      animation: hero-film-zoom linear both;
+      animation-timeline: view();
+      animation-range: exit 0% exit 100%;
+    }
+
+    .hero-copy {
+      animation: hero-copy-out linear both;
+      animation-timeline: view();
+      animation-range: exit 10% exit 70%;
+    }
+  }
+}
+
+/* Links to a place on the same page glide there and stop below the header. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+html {
+  scroll-padding-top: var(--header-h);
+}
+
+/* The process wheel's progress line: the current segment fills as its time runs out. */
+@keyframes segment-fill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.segment-fill {
+  animation: segment-fill linear both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segment-fill {
+    animation: none;
+  }
+}
+
+/* The phone menu settles in from the top, its links following one after another. */
+@keyframes sheet-in {
+  from { opacity: 0; transform: translateY(-0.75rem); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes sheet-item-in {
+  from { opacity: 0; transform: translateY(0.75rem); }
+  to { opacity: 1; transform: none; }
+}
+
+.sheet-in {
+  animation: sheet-in 0.45s var(--ease-out) both;
+}
+
+.sheet-item-in {
+  animation: sheet-item-in 0.5s var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-in,
+  .sheet-item-in {
+    animation: none;
+  }
+
+  .media,
+  .btn-primary::after,
+  .btn-light::after {
+    transition: none;
+  }
+
+  .media img,
+  .btn,
+  .link-arrow {
+    transition: none;
+  }
+
+  .menu-in {
+    animation: none;
+  }
 }
 
 .glass-effect {
-  background: rgba(255, 255, 255, 0.7);
+  background: color-mix(in srgb, var(--color-surface) 70%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.dark .glass-effect {
-  background: rgba(17, 17, 17, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid color-mix(in srgb, var(--color-surface) 20%, transparent);
 }
 
 .glass-nav {
-  background: rgba(17, 17, 17, 0.6);
+  background: color-mix(in srgb, var(--color-blueberry) 60%, transparent);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-plate-white) 5%, transparent);
 }
 
 .text-gradient {
-  background: linear-gradient(to right, #A67C52, #D4AF37);
+  background: linear-gradient(to right, var(--color-blueberry), var(--color-berry-bloom));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -75,6 +545,22 @@ h1, h2, h3, h4, h5, h6 {
   @apply max-w-7xl mx-auto;
 }
 
+/* Home page opening: the film plays alone for a moment, then the header settles in from above. */
+@keyframes header-in {
+  from { opacity: 0; transform: translateY(-1rem); }
+  to { opacity: 1; transform: none; }
+}
+
+.header-reveal {
+  animation: header-in 0.7s ease-out 2s backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header-reveal {
+    animation: none;
+  }
+}
+
 @keyframes slow-zoom {
   from { transform: scale(1); }
   to { transform: scale(1.1); }
@@ -82,5 +568,103 @@ h1, h2, h3, h4, h5, h6 {
 
 .animate-slow-zoom {
   animation: slow-zoom 20s linear infinite alternate;
+}
+
+
+/* Design by Space: each doorway holds a door hinged on its left edge that swings into the room. */
+.door {
+  perspective: 1600px;
+}
+
+.door-leaf {
+  transform-origin: left center;
+  backface-visibility: hidden;
+  transition: transform 1s var(--ease-out), box-shadow 1s var(--ease-out);
+  box-shadow: inset -1px 0 0 rgb(255 255 255 / 0.12);
+}
+
+/* The room's own name waits behind the glass and appears once the door is open. */
+.door-caption {
+  opacity: 0;
+  transition: opacity 0.5s ease 0.15s;
+}
+
+@media (hover: hover) {
+  .door-frame:hover .door-caption,
+  .door-frame:focus-visible .door-caption {
+    opacity: 1;
+  }
+}
+
+@media (hover: none) {
+  .js-reveal .door[data-in] .door-caption {
+    opacity: 1;
+    transition-delay: 0.6s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .door-caption {
+    opacity: 1;
+  }
+}
+
+/* The lettering and the frosting on the door fade as it swings, so neither is seen squeezed edge-on. */
+.door-label {
+  transition: opacity 0.4s ease;
+}
+
+@media (hover: hover) {
+  .door-frame:hover .door-label,
+  .door-frame:focus-visible .door-label {
+    opacity: 0;
+  }
+}
+
+@media (hover: none) {
+  .js-reveal .door[data-in] .door-label {
+    opacity: 0;
+    transition-delay: 0.35s;
+  }
+}
+
+/* As the row scrolls into view each door comes ajar, hinting that it opens. */
+.js-reveal .door[data-in] .door-leaf {
+  transform: rotateY(14deg);
+}
+
+/* With a pointer, the door opens under it; with the keyboard, when its link is focused. */
+@media (hover: hover) {
+  .js-reveal .door[data-in] .door-frame:hover .door-leaf,
+  .js-reveal .door[data-in] .door-frame:focus-visible .door-leaf,
+  .door-frame:hover .door-leaf,
+  .door-frame:focus-visible .door-leaf {
+    transform: rotateY(80deg);
+    box-shadow: 24px 0 40px -12px rgb(0 0 0 / 0.45);
+  }
+}
+
+/* Touch screens have no hover, so the doors open once they are on screen. */
+@media (hover: none) {
+  .js-reveal .door[data-in] .door-leaf {
+    transform: rotateY(80deg);
+    transition-delay: 0.35s;
+  }
+}
+
+/* Visitors who ask for less motion see the rooms with the doors already out of the way. */
+@media (prefers-reduced-motion: reduce) {
+  .door-leaf {
+    display: none;
+  }
+}
+
+
+
+/* The 404 page stands alone: the header, the Instagram band and the footer are left out around it. */
+body:has([data-not-found]) header,
+body:has([data-not-found]) footer,
+body:has([data-not-found]) section[aria-label="Instagram reels"] {
+  display: none;
 }
 

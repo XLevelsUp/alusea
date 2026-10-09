@@ -7,6 +7,7 @@ import Footer from "@/components/layout/Footer";
 import InstagramFeed from "@/components/sections/InstagramFeed";
 import BackButton from "@/components/ui/BackButton";
 import WhatsAppFloat from "@/components/ui/WhatsAppFloat";
+import RevealObserver from "@/components/ui/RevealObserver";
 import MetaPixel from "@/components/layout/MetaPixel";
 import DelayedScript from "@/components/layout/DelayedScript";
 
@@ -234,7 +235,7 @@ export default function RootLayout({
           />
         )}
       </head>
-      <body className={`${inter.variable} ${outfit.variable} antialiased selection:bg-brushed-bronze selection:text-white`}>
+      <body className={`${inter.variable} ${outfit.variable} antialiased selection:bg-berry-bloom selection:text-white`}>
         <MetaPixel />
 
         {/*
@@ -286,14 +287,16 @@ export default function RootLayout({
           }}
         />
 
+        <a href="#main" className="skip-link">Skip to main content</a>
         <Header />
-        <main className="min-h-screen">
+        <main id="main" className="min-h-screen">
           {children}
         </main>
         <InstagramFeed />
         <Footer />
         <BackButton />
         <WhatsAppFloat />
+        <RevealObserver />
       </body>
     </html>
   );
