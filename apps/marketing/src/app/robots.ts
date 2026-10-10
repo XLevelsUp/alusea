@@ -41,13 +41,13 @@ export default function robots(): MetadataRoute.Robots {
       // that drive referral traffic. Content navigation guided via /llms.txt.
       {
         userAgent: "PerplexityBot",
-        allow: ["/", "/products", "/services", "/features", "/experience-center", "/about", "/projects", "/catalogue"],
+        allow: ["/", "/products", "/services", "/alusea-difference", "/experience-center", "/about", "/projects", "/catalogue"],
         disallow: ["/api/", "/_next/", "/data-deletion"],
         crawlDelay: 10,
       },
       {
         userAgent: "Claude-SearchBot",
-        allow: ["/", "/products", "/services", "/features", "/about", "/projects"],
+        allow: ["/", "/products", "/services", "/alusea-difference", "/about", "/projects"],
         disallow: ["/api/", "/_next/", "/data-deletion"],
         crawlDelay: 10,
       },

@@ -46,3 +46,9 @@ next-env.d.ts
 supabase/.branches
 supabase/.temp
 supabase/.env
+
+# Full-size camera originals of site videos: far too large for git; the site uses the converted copies beside them
+apps/marketing/public/videos/*reel*.mp4
+
+# Print-quality brochure original: too large for git; the site serves the web-sized copy in public/brochure
+apps/marketing/Alusea Catalogue Final.pdf

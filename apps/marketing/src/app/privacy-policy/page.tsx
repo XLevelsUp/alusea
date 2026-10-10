@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import PageBanner from "@/components/layout/PageBanner";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -13,27 +14,18 @@ export default function PrivacyPolicyPage() {
   const lastUpdated = "April 7, 2026";
 
   return (
-    <div className="pt-32 pb-24 px-6 min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <header className="mb-16">
-          <h1 className="text-4xl md:text-6xl font-bold text-architectural-blue mb-4">
-            Privacy <span className="text-brushed-bronze">Policy</span>
-          </h1>
-          <p className="text-steel-gray text-lg leading-relaxed">
-            Your privacy matters to us. This policy explains how Alusea
-            collects, uses, and safeguards your personal information.
-          </p>
-          <p className="mt-4 text-sm text-steel-gray/70">
-            Last updated: {lastUpdated}
-          </p>
-        </header>
+    <div className="bg-plate-white">
+      <PageBanner crumb="Privacy Policy" title={<>Privacy <span className="text-plate-white/80">Policy</span></>}>
+        <p>Your privacy matters to us. This policy explains how Alusea collects, uses, and safeguards your personal information.</p>
+        <p className="mt-4 text-sm">Last updated: {lastUpdated}</p>
+      </PageBanner>
+      <div className="section mx-auto max-w-4xl px-[var(--gutter)]">
 
         {/* Policy Content */}
-        <div className="prose prose-lg max-w-none space-y-12 text-matte-black/90">
+        <div className="prose prose-lg max-w-none space-y-12 text-blueberry/90">
           {/* 1. Introduction */}
           <section id="introduction">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               1. Introduction
             </h2>
             <p className="leading-relaxed">
@@ -41,7 +33,7 @@ export default function PrivacyPolicyPage() {
               operates the website{" "}
               <a
                 href="https://www.alusea.in"
-                className="text-brushed-bronze hover:underline font-medium"
+                className="text-berry-bloom hover:underline font-medium"
               >
                 www.alusea.in
               </a>{" "}
@@ -59,11 +51,11 @@ export default function PrivacyPolicyPage() {
 
           {/* 2. Information We Collect */}
           <section id="information-we-collect">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               2. Information We Collect
             </h2>
 
-            <h3 className="text-xl font-semibold text-matte-black mt-6 mb-3">
+            <h3 className="text-xl font-semibold text-blueberry mt-6 mb-3">
               2.1 Personal Information You Provide
             </h3>
             <p className="leading-relaxed">
@@ -87,7 +79,7 @@ export default function PrivacyPolicyPage() {
               </li>
             </ul>
 
-            <h3 className="text-xl font-semibold text-matte-black mt-6 mb-3">
+            <h3 className="text-xl font-semibold text-blueberry mt-6 mb-3">
               2.2 Information Collected Automatically
             </h3>
             <p className="leading-relaxed">
@@ -106,7 +98,7 @@ export default function PrivacyPolicyPage() {
 
           {/* 3. How We Use Your Information */}
           <section id="how-we-use-information">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               3. How We Use Your Information
             </h2>
             <p className="leading-relaxed">
@@ -139,7 +131,7 @@ export default function PrivacyPolicyPage() {
 
           {/* 4. Third-Party Services */}
           <section id="third-party-services">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               4. Third-Party Services
             </h2>
             <p className="leading-relaxed">
@@ -149,11 +141,11 @@ export default function PrivacyPolicyPage() {
             </p>
 
             <div className="mt-6 space-y-6">
-              <div className="p-6 bg-aluminum-light rounded-xl">
-                <h4 className="font-bold text-matte-black mb-2">
+              <div className="p-6 bg-plate-white rounded-card">
+                <h4 className="font-bold text-blueberry mb-2">
                   Google Analytics 4 (via Google Tag Manager)
                 </h4>
-                <p className="text-steel-gray leading-relaxed">
+                <p className="text-berry-bloom leading-relaxed">
                   We use Google Analytics to understand how visitors interact
                   with our Website. Google Analytics collects anonymous usage
                   data such as pages visited, session duration, and traffic
@@ -163,7 +155,7 @@ export default function PrivacyPolicyPage() {
                     href="https://policies.google.com/privacy"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-brushed-bronze hover:underline font-medium"
+                    className="text-berry-bloom hover:underline font-medium"
                   >
                     Google&apos;s Privacy Policy
                   </a>
@@ -171,22 +163,22 @@ export default function PrivacyPolicyPage() {
                 </p>
               </div>
 
-              <div className="p-6 bg-aluminum-light rounded-xl">
-                <h4 className="font-bold text-matte-black mb-2">
+              <div className="p-6 bg-plate-white rounded-card">
+                <h4 className="font-bold text-blueberry mb-2">
                   Google Sheets
                 </h4>
-                <p className="text-steel-gray leading-relaxed">
+                <p className="text-berry-bloom leading-relaxed">
                   Contact form submissions are stored in Google Sheets for our
                   team to review and respond. This data is transmitted securely
                   and stored within our private Google Workspace account.
                 </p>
               </div>
 
-              <div className="p-6 bg-aluminum-light rounded-xl">
-                <h4 className="font-bold text-matte-black mb-2">
+              <div className="p-6 bg-plate-white rounded-card">
+                <h4 className="font-bold text-blueberry mb-2">
                   WhatsApp Business API
                 </h4>
-                <p className="text-steel-gray leading-relaxed">
+                <p className="text-berry-bloom leading-relaxed">
                   When you submit a quote request, a notification containing
                   your enquiry details is sent to our team via WhatsApp Business
                   API to enable prompt responses. For more information, see{" "}
@@ -194,7 +186,7 @@ export default function PrivacyPolicyPage() {
                     href="https://www.whatsapp.com/legal/privacy-policy"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-brushed-bronze hover:underline font-medium"
+                    className="text-berry-bloom hover:underline font-medium"
                   >
                     WhatsApp&apos;s Privacy Policy
                   </a>
@@ -206,7 +198,7 @@ export default function PrivacyPolicyPage() {
 
           {/* 5. Cookies */}
           <section id="cookies">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               5. Cookies &amp; Tracking Technologies
             </h2>
             <p className="leading-relaxed">
@@ -217,23 +209,23 @@ export default function PrivacyPolicyPage() {
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-architectural-blue text-white">
+                  <tr className="bg-blueberry text-white">
                     <th className="p-4 font-semibold rounded-tl-lg">Type</th>
                     <th className="p-4 font-semibold">Purpose</th>
                     <th className="p-4 font-semibold rounded-tr-lg">Duration</th>
                   </tr>
                 </thead>
-                <tbody className="text-steel-gray">
-                  <tr className="border-b border-gray-100">
-                    <td className="p-4 font-medium text-matte-black">Essential</td>
+                <tbody className="text-berry-bloom">
+                  <tr className="border-b border-stem-grey/50">
+                    <td className="p-4 font-medium text-blueberry">Essential</td>
                     <td className="p-4">
                       Required for the Website to function correctly (e.g.,
                       session management).
                     </td>
                     <td className="p-4">Session</td>
                   </tr>
-                  <tr className="border-b border-gray-100 bg-gray-50/50">
-                    <td className="p-4 font-medium text-matte-black">Analytics</td>
+                  <tr className="border-b border-stem-grey/50 bg-gray-50/50">
+                    <td className="p-4 font-medium text-blueberry">Analytics</td>
                     <td className="p-4">
                       Google Analytics cookies that help us understand user
                       behaviour and improve our Website.
@@ -253,7 +245,7 @@ export default function PrivacyPolicyPage() {
 
           {/* 6. Data Sharing */}
           <section id="data-sharing">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               6. Data Sharing &amp; Disclosure
             </h2>
             <p className="leading-relaxed">
@@ -281,7 +273,7 @@ export default function PrivacyPolicyPage() {
 
           {/* 7. Data Security */}
           <section id="data-security">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               7. Data Security
             </h2>
             <p className="leading-relaxed">
@@ -305,7 +297,7 @@ export default function PrivacyPolicyPage() {
 
           {/* 8. Data Retention */}
           <section id="data-retention">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               8. Data Retention
             </h2>
             <p className="leading-relaxed">
@@ -319,7 +311,7 @@ export default function PrivacyPolicyPage() {
 
           {/* 9. Your Rights */}
           <section id="your-rights">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               9. Your Rights
             </h2>
             <p className="leading-relaxed">
@@ -356,7 +348,7 @@ export default function PrivacyPolicyPage() {
 
           {/* 10. Children's Privacy */}
           <section id="childrens-privacy">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               10. Children&apos;s Privacy
             </h2>
             <p className="leading-relaxed">
@@ -369,7 +361,7 @@ export default function PrivacyPolicyPage() {
 
           {/* 11. Changes to Policy */}
           <section id="changes">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               11. Changes to This Policy
             </h2>
             <p className="leading-relaxed">
@@ -383,35 +375,35 @@ export default function PrivacyPolicyPage() {
 
           {/* 12. Contact Us */}
           <section id="contact-us">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               12. Contact Us
             </h2>
             <p className="leading-relaxed">
               If you have any questions, concerns, or requests regarding this
               Privacy Policy or how we handle your data, please get in touch:
             </p>
-            <div className="mt-6 p-8 bg-aluminum-light rounded-xl space-y-4">
-              <p className="font-bold text-matte-black text-lg">Alusea</p>
-              <div className="space-y-2 text-steel-gray">
+            <div className="mt-6 p-8 bg-plate-white rounded-card space-y-4">
+              <p className="font-bold text-blueberry text-lg">Alusea</p>
+              <div className="space-y-2 text-berry-bloom">
                 <p>
-                  <strong className="text-matte-black">Address:</strong> No 178,
+                  <strong className="text-blueberry">Address:</strong> No 178,
                   A Ramachandra Road, RS Puram, Near Flower Market, Coimbatore,
                   Tamil Nadu – 641002, India
                 </p>
                 <p>
-                  <strong className="text-matte-black">Email:</strong>{" "}
+                  <strong className="text-blueberry">Email:</strong>{" "}
                   <a
                     href="mailto:aluseacbe@gmail.com"
-                    className="text-brushed-bronze hover:underline font-medium"
+                    className="text-berry-bloom hover:underline font-medium"
                   >
                     aluseacbe@gmail.com
                   </a>
                 </p>
                 <p>
-                  <strong className="text-matte-black">Phone:</strong>{" "}
+                  <strong className="text-blueberry">Phone:</strong>{" "}
                   <a
                     href="tel:+919626022722"
-                    className="text-brushed-bronze hover:underline font-medium"
+                    className="text-berry-bloom hover:underline font-medium"
                   >
                     +91 96260 22722
                   </a>

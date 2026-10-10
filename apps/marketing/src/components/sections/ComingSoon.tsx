@@ -11,7 +11,7 @@ interface ComingSoonProps {
 
 const defaultIcon = (
   <svg
-    className="w-16 h-16 text-alusea-gold"
+    className="w-16 h-16 text-plate-white"
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"
@@ -42,27 +42,27 @@ export default function ComingSoon({
   );
 
   return (
-    <section className="relative min-h-screen bg-matte-black flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-screen bg-blueberry flex items-center justify-center overflow-hidden">
       {/* Animated gradient background */}
       <div className="absolute inset-0">
         <div
           className="absolute inset-0 opacity-30"
           style={{
             background:
-              "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(182,139,76,0.18) 0%, transparent 70%)",
+              "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(92,107,138,0.18) 0%, transparent 70%)",
           }}
         />
         {/* Gold accent lines */}
         <div
           className="absolute bottom-0 left-0 right-0 h-px opacity-30"
           style={{
-            background: "linear-gradient(to right, transparent, #B68B4C, transparent)",
+            background: "linear-gradient(to right, transparent, var(--color-berry-bloom), transparent)",
           }}
         />
         <div
           className="absolute top-0 left-0 right-0 h-px opacity-20"
           style={{
-            background: "linear-gradient(to right, transparent, #B68B4C, transparent)",
+            background: "linear-gradient(to right, transparent, var(--color-berry-bloom), transparent)",
           }}
         />
       </div>
@@ -72,7 +72,7 @@ export default function ComingSoon({
         {particles.map((p, i) => (
           <div
             key={i}
-            className="absolute rounded-full bg-alusea-gold"
+            className="absolute rounded-full bg-plate-white"
             style={{
               left: `${p.x}%`,
               top: `${p.y}%`,
@@ -91,8 +91,8 @@ export default function ComingSoon({
         className="absolute inset-0 opacity-[0.03]"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(182,139,76,0.6) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(182,139,76,0.6) 1px, transparent 1px)
+            linear-gradient(rgba(92,107,138,0.6) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(92,107,138,0.6) 1px, transparent 1px)
           `,
           backgroundSize: "60px 60px",
         }}
@@ -103,10 +103,10 @@ export default function ComingSoon({
         {/* Icon */}
         <div className="flex justify-center mb-8">
           <div
-            className="w-28 h-28 rounded-full flex items-center justify-center border border-alusea-gold/30"
+            className="w-28 h-28 rounded-full flex items-center justify-center border border-plate-white/30"
             style={{
-              background: "rgba(182,139,76,0.08)",
-              boxShadow: "0 0 60px rgba(182,139,76,0.15), inset 0 0 30px rgba(182,139,76,0.05)",
+              background: "rgba(92,107,138,0.08)",
+              boxShadow: "0 0 60px rgba(92,107,138,0.15), inset 0 0 30px rgba(92,107,138,0.05)",
             }}
           >
             {icon}
@@ -114,7 +114,7 @@ export default function ComingSoon({
         </div>
 
         {/* Label */}
-        <p className="text-alusea-gold/80 text-xs uppercase tracking-[0.4em] font-semibold mb-4">
+        <p className="text-plate-white/80 text-xs uppercase tracking-[0.4em] font-semibold mb-4">
           {pageName}
         </p>
 
@@ -127,7 +127,7 @@ export default function ComingSoon({
           <br />
           <span
             style={{
-              background: "linear-gradient(135deg, #B68B4C 0%, #D4AF37 50%, #A67C52 100%)",
+              background: "linear-gradient(135deg, var(--color-berry-bloom) 0%, var(--color-plate-white) 50%, var(--color-berry-bloom) 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
             }}
@@ -143,19 +143,19 @@ export default function ComingSoon({
 
         {/* Divider */}
         <div className="flex items-center gap-4 justify-center mb-12">
-          <div className="h-px flex-1 max-w-[80px]" style={{ background: "linear-gradient(to right, transparent, rgba(182,139,76,0.4))" }} />
-          <div className="w-1.5 h-1.5 rounded-full bg-alusea-gold/60" />
-          <div className="h-px flex-1 max-w-[80px]" style={{ background: "linear-gradient(to left, transparent, rgba(182,139,76,0.4))" }} />
+          <div className="h-px flex-1 max-w-[80px]" style={{ background: "linear-gradient(to right, transparent, rgba(92,107,138,0.4))" }} />
+          <div className="w-1.5 h-1.5 rounded-full bg-plate-white/60" />
+          <div className="h-px flex-1 max-w-[80px]" style={{ background: "linear-gradient(to left, transparent, rgba(92,107,138,0.4))" }} />
         </div>
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/"
-            className="group inline-flex items-center gap-3 px-8 py-4 text-white text-sm uppercase tracking-widest font-bold rounded-sm transition-all duration-300"
+            className="group inline-flex items-center gap-3 px-8 py-4 text-white text-sm uppercase tracking-widest font-bold rounded-card transition-all duration-300"
             style={{
-              background: "linear-gradient(135deg, #B68B4C 0%, #D4AF37 100%)",
-              boxShadow: "0 4px 24px rgba(182,139,76,0.3)",
+              background: "linear-gradient(135deg, var(--color-berry-bloom) 0%, var(--color-plate-white) 100%)",
+              boxShadow: "0 4px 24px rgba(92,107,138,0.3)",
             }}
           >
             <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,7 +165,7 @@ export default function ComingSoon({
           </Link>
           <a
             href="mailto:aluseacbe@gmail.com"
-            className="inline-flex items-center gap-3 px-8 py-4 border border-white/20 text-white/80 text-sm uppercase tracking-widest font-bold rounded-sm hover:border-alusea-gold/50 hover:text-white transition-all duration-300"
+            className="inline-flex items-center gap-3 px-8 py-4 border border-white/20 text-white/80 text-sm uppercase tracking-widest font-bold rounded-card hover:border-plate-white/50 hover:text-white transition-all duration-300"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />

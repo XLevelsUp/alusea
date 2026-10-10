@@ -31,17 +31,17 @@ const projects = [
 
 const ProjectGallery = () => {
   return (
-    <section className="section-padding bg-matte-black">
+    <section className="section-padding bg-blueberry">
       <div className="max-container">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8 px-6 md:px-0">
           <div className="max-w-2xl space-y-4">
-            <h2 className="text-brushed-bronze text-sm uppercase tracking-[0.3em] font-bold">Showcase</h2>
+            <h2 className="text-plate-white/80 text-sm uppercase tracking-[0.3em] font-bold">Showcase</h2>
             <p className="text-4xl md:text-5xl font-bold text-white leading-tight">
               A Symphony of <br />
               <span className="text-gradient">Glass & Steel</span>
             </p>
           </div>
-          <p className="text-steel-gray text-sm uppercase tracking-widest font-bold max-w-xs mb-2">
+          <p className="text-berry-bloom text-sm uppercase tracking-widest font-bold max-w-xs mb-2">
             Explore our most prestigious installations across the region.
           </p>
         </div>
@@ -50,7 +50,7 @@ const ProjectGallery = () => {
           {projects.map((project, index) => (
             <div 
               key={index}
-              className={`relative overflow-hidden group cursor-pointer rounded-sm ${
+              className={`relative overflow-hidden group cursor-pointer rounded-card ${
                 index === 0 ? "md:col-span-8 h-[600px]" : 
                 index === 3 ? "md:col-span-12 h-[400px]" : "md:col-span-4 h-[300px]"
               }`}
@@ -62,9 +62,9 @@ const ProjectGallery = () => {
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="object-cover transition-transform duration-1000 group-hover:scale-110"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-matte-black via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-blueberry via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
               <div className="absolute bottom-10 left-10 text-white translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                <span className="block text-[10px] uppercase tracking-[0.3em] font-bold text-brushed-bronze mb-2">{project.location}</span>
+                <span className="block text-[10px] uppercase tracking-[0.3em] font-bold text-plate-white/80 mb-2">{project.location}</span>
                 <h3 className="text-2xl font-bold">{project.title}</h3>
               </div>
             </div>

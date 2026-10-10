@@ -1,83 +1,49 @@
 "use client";
 
-import Image from "next/image";
-import { motion } from "framer-motion";
+import { useEffect, useRef } from "react";
+import { Allura } from "next/font/google";
+
+// The handwritten face used for the one flourished word in the headline.
+const script = Allura({ weight: "400", subsets: ["latin"], display: "swap" });
 
 const Hero = () => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Visitors who ask their device for less motion get a still frame instead of a playing video.
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) videoRef.current?.pause();
+  }, []);
+
   return (
-    <section className="relative min-h-screen w-full overflow-hidden flex items-center">
-      {/* Background Image */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/images/hero_night.webp"
-          alt="Modern luxury house with aluminium windows"
-          fill
-          priority
-          quality={65}
-          sizes="(max-width: 768px) 100vw, (max-width: 1440px) 100vw, 1440px"
-          className="object-cover animate-slow-zoom"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-matte-black/80 via-matte-black/40 to-transparent z-10" />
-        <div className="absolute inset-0 bg-matte-black/20 z-10" />
+    <section className="relative flex h-svh min-h-[560px] w-full items-end overflow-hidden bg-blueberry">
+      {/* Full-screen film: silent, looping, and decorative, so screen readers skip it. */}
+      {/* The file is already cropped clear of the maker's mark and sharpened, so it is shown at its own size. */}
+      <video
+        ref={videoRef}
+        className="hero-film absolute inset-0 size-full object-cover"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        poster="/images/posters/hero.webp"
+        aria-hidden="true"
+        tabIndex={-1}
+      >
+        <source src="/videos/hero-desktop.webm" type="video/webm" />
+      </video>
+
+      {/* Nothing is laid over the film, so a soft shadow under the letters keeps them readable on bright scenes. */}
+      <div className="hero-copy gutter relative w-full pb-12 text-left [text-shadow:0_1px_12px_rgb(0_0_0/0.45)] md:pb-16">
+        <h1 className="text-4xl font-light leading-tight tracking-normal text-white sm:text-5xl md:text-6xl">
+          Frame Every View{" "}
+          {/* The handwritten word is painted in shaded gold, light at the top and deeper at the foot, like foil. */}
+          <span className={`${script.className} text-[1.35em] bg-[linear-gradient(180deg,#FFE9A8_0%,var(--color-champagne)_45%,#C98F1E_100%)] bg-clip-text px-[0.15em] leading-none text-transparent [filter:drop-shadow(0_1px_3px_rgb(0_0_0/0.55))] [text-shadow:none]`}>Elegantly</span>
+        </h1>
+        <p className="mt-2 text-base text-white md:mt-3 md:text-xl">
+          Slim aluminium windows and doors, made to measure for your home
+        </p>
       </div>
-
-      <div className="w-full max-w-[1440px] mx-auto relative z-20 px-4 md:pl-6 md:pr-12">
-        <div className="max-w-3xl space-y-1 mt-14 md:mt-16">
-
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
-            className="flex items-center space-x-3 mt-2 md:mt-3"
-          >
-            <span className="inline-block w-2 h-2 rounded-full bg-brushed-bronze" />
-            <span className="text-brushed-bronze text-[11px] uppercase tracking-[0.4em] font-bold">
-              Transform Your Home Today
-            </span>
-          </motion.div>
-
-          {/*
-            PERFORMANCE FIX: H1 is the LCP element.
-            Removed motion.h1 with initial opacity:0 — caused 2,510ms LCP delay
-            waiting for JS hydration. Plain h1 renders immediately from SSR.
-          */}
-          <h1 className="text-3xl sm:text-5xl md:text-[5.5rem] font-bold text-white leading-[1.1] tracking-tight mt-2 md:mt-3">
-            Premium Aluminium <br />
-            <span className="text-white/90"> Doors and Windows  </span>
-          </h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
-            className="text-white/80 text-lg md:text-xl font-medium max-w-2xl hidden md:block"
-          >
-            Working alongside top-rated aluminium window and door brands to deliver
-            unparalleled architectural beauty and performance to your spaces.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.5 }}
-            className="pt-8"
-          >
-            <a
-              href="#contact"
-              className="inline-block px-10 py-5 bg-[#7A5418] text-white text-sm uppercase tracking-widest font-bold rounded-sm hover:bg-[#5C3D0E] hover:-translate-y-1 transition-all duration-300 shadow-2xl"
-            >
-              Get Started
-            </a>
-          </motion.div>
-        </div>
-      </div>
-
-      <motion.div
-        initial={{ height: 0 }}
-        animate={{ height: "8rem" }}
-        transition={{ duration: 1.5, delay: 0.8, ease: "easeInOut" }}
-        className="absolute bottom-0 left-12 w-[1px] bg-gradient-to-t from-brushed-bronze to-transparent hidden md:block"
-      />
     </section>
   );
 };

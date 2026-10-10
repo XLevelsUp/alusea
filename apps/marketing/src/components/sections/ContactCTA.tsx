@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Image from "next/image";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import * as fbq from '@/lib/fpixel';
+import { SPACES } from "@/lib/spaces";
 
 const GOOGLE_SCRIPT_URL = process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL || "";
 
@@ -50,11 +52,39 @@ const validateField = (name: keyof FormData, value: string): string => {
   }
 };
 
+// The first question: what the visitor is planning, answered by tapping a picture.
+const NEEDS = [
+  { name: "Windows", image: "/images/spaces/study-room/double-side-open-window.webp" },
+  { name: "Doors", image: "/images/spaces/bathroom/slim-profile-door.webp" },
+  { name: "Sliding Systems", image: "/images/spaces/living-room/sliding-doors-to-terrace.webp" },
+  { name: "Help me choose", image: "/images/about/villa-sliding-doors.webp" },
+];
+
+const STEPS = ["What are you planning?", "Which spaces is it for?", "Where can we reach you?"];
+const LAST_STEP = STEPS.length - 1;
+
 const ContactCTA = () => {
   const [form, setForm] = useState<FormData>(initialForm);
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Partial<Record<keyof FormData, boolean>>>({});
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [step, setStep] = useState(0);
+  const [need, setNeed] = useState<string | null>(null);
+  const [rooms, setRooms] = useState<string[]>([]);
+  const questionRef = useRef<HTMLHeadingElement>(null);
+  const hasMoved = useRef(false);
+
+  // After Continue or Back, focus moves to the new question so keyboard and screen-reader users follow along.
+  useEffect(() => {
+    if (hasMoved.current) questionRef.current?.focus();
+  }, [step]);
+
+  const goTo = (next: number) => {
+    hasMoved.current = true;
+    setStep(next);
+  };
+
+  const toggleRoom = (name: string) => setRooms((current) => (current.includes(name) ? current.filter((item) => item !== name) : [...current, name]));
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -76,8 +106,13 @@ const ContactCTA = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate all required fields before submitting
-    const requiredFields: (keyof FormData)[] = ["firstName", "email", "phone"];
+    // The first two questions only move on; the form is sent from the last one.
+    if (step < LAST_STEP) {
+      if (step === 0 && !need) return;
+      goTo(step + 1);
+      return;
+    }
+
     const newErrors: FormErrors = {};
     let hasError = false;
 
@@ -85,7 +120,7 @@ const ContactCTA = () => {
       const err = validateField(field, form[field]);
       if (err) {
         newErrors[field] = err;
-        if (requiredFields.includes(field) || err) hasError = true;
+        hasError = true;
       }
     });
 
@@ -96,9 +131,14 @@ const ContactCTA = () => {
 
     setStatus("loading");
 
+    // The answers to the first two questions travel at the head of the message.
+    const answers = [need ? `Interested in: ${need}.` : "", rooms.length > 0 ? `Spaces: ${rooms.join(", ")}.` : ""].filter(Boolean).join(" ");
+    const message = [answers, form.message.trim()].filter(Boolean).join(" ");
+
     try {
       const payload = {
         ...form,
+        message,
         submittedAt: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
         status: "Draft",
       };
@@ -121,7 +161,7 @@ const ContactCTA = () => {
           name: form.firstName,
           phone: form.phone,
           email: form.email,
-          message: form.message
+          message
         }),
       });
 
@@ -144,241 +184,203 @@ const ContactCTA = () => {
       setForm(initialForm);
       setErrors({});
       setTouched({});
+      setNeed(null);
+      setRooms([]);
+      setStep(0);
     } catch (error) {
       console.error("Submission error:", error);
       setStatus("error");
     }
   };
 
+  const inputs: { name: keyof FormData; type: string; label: string; autoComplete: string; maxLength?: number; wide?: boolean }[] = [
+    { name: "firstName", type: "text", label: "First Name", autoComplete: "given-name" },
+    { name: "phone", type: "tel", label: "Phone Number", autoComplete: "tel-national", maxLength: 10 },
+    { name: "email", type: "email", label: "Your Email", autoComplete: "email", wide: true },
+  ];
+  const fieldError = (name: keyof FormData) => (errors[name] && touched[name] ? errors[name] : undefined);
+
   return (
-    <section id="contact" className="relative py-28 overflow-hidden bg-matte-black group">
-      {/* Top Golden Bar */}
-      {/* FIX: bar color darkened to #7A5418 */}
-      <div className="absolute top-0 left-0 w-full h-[8px] bg-[#7A5418] z-20" />
+    <section id="contact" className="section bg-plate-white py-0">
+      <div className="shell">
+        <div className="reveal swatch-shadow grid overflow-hidden rounded-card bg-white lg:grid-cols-12">
+          {/* The dark column keeps the heading and shows where the visitor is. */}
+          <div className="window-grid flex flex-col justify-between gap-12 bg-blueberry p-8 text-white md:p-12 lg:col-span-4">
+            <div>
+              <p className="eyebrow on-dark">Free Consultation</p>
+              <h2 className="h-section mt-5 text-white">Get A Free Quote</h2>
+            </div>
+            <ol className="space-y-5">
+              {STEPS.map((title, index) => {
+                const done = status === "success" || index < step;
+                return (
+                  <li key={title} aria-current={index === step && status !== "success" ? "step" : undefined} className={`flex items-center gap-4 transition-opacity duration-300 ${index === step || status === "success" ? "opacity-100" : "opacity-50"}`}>
+                    <span className={`flex size-9 shrink-0 items-center justify-center rounded-full border text-sm tabular-nums transition-colors duration-300 ${done ? "border-white bg-white text-blueberry" : "border-white/60 text-white"}`}>
+                      {done ? <Check aria-hidden="true" className="size-4" strokeWidth={2.5} /> : index + 1}
+                    </span>
+                    <span className="text-[15px] font-medium">{title}</span>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
 
-      {/* Background image with dark overlay */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&q=80&w=2000"
-          alt="Modern Interior"
-          fill
-          quality={75}
-          sizes="100vw"
-          className="object-cover transition-transform duration-[10000ms] group-hover:scale-110"
-        />
-        <div className="absolute inset-0 bg-black/75" />
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-center">
-
-          {/* Left: Form */}
-          <div className="space-y-10">
-            <h2 className="text-[42px] md:text-[52px] font-bold text-white tracking-tight leading-tight">
-              Get A Free Quote
-            </h2>
-
+          <div className="flex min-h-[34rem] flex-col p-7 sm:p-10 lg:col-span-8 lg:p-12">
             {status === "success" ? (
-              <div className="flex flex-col items-start gap-5">
-                {/* FIX: success icon ring uses darker gold */}
-                <div className="w-16 h-16 rounded-full bg-[#7A5418]/20 border-2 border-[#7A5418] flex items-center justify-center">
-                  <svg viewBox="0 0 24 24" className="w-8 h-8 text-[#D4A84B] fill-none stroke-current" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
+              <div role="status" className="flex flex-grow flex-col items-start justify-center gap-5">
+                <span className="flex size-14 items-center justify-center rounded-full bg-blueberry text-white">
+                  <Check aria-hidden="true" className="size-6" strokeWidth={2} />
+                </span>
                 <div>
-                  <p className="text-white text-xl font-bold mb-1">We&apos;ve got your request!</p>
-                  {/* FIX: white/55 → white/80 for readable subtext */}
-                  <p className="text-white/80 text-base">
-                    Our team will contact you within <span className="text-white font-semibold">24 hours</span>.
+                  <p className="font-display text-2xl text-blueberry">We&apos;ve got your request!</p>
+                  <p className="mt-2 text-berry-bloom">
+                    Our team will contact you within <span className="font-semibold text-blueberry">24 hours</span>.
                   </p>
                 </div>
-                <button
-                  onClick={() => setStatus("idle")}
-                  className="text-white text-sm font-semibold underline underline-offset-4 hover:text-white/70 transition-colors"
-                >
+                <button type="button" onClick={() => setStatus("idle")} className="link-arrow text-blueberry">
                   Submit another request
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} noValidate className="space-y-6">
-                <div className="space-y-4">
-                  {/* First Name */}
-                  <div>
-                    <input
-                      type="text"
-                      name="firstName"
-                      value={form.firstName}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      placeholder="First Name"
-                      aria-describedby={errors.firstName ? "firstName-error" : undefined}
-                      className={`w-full bg-white rounded-full px-8 py-5 text-[#111111] outline-none focus:ring-2 transition-all font-medium placeholder:text-gray-400 border-2 ${
-                        errors.firstName && touched.firstName
-                          ? "border-red-400 focus:ring-red-300"
-                          : "border-transparent focus:ring-[#7A5418]/50"
-                      }`}
-                    />
-                    {errors.firstName && touched.firstName && (
-                      <p id="firstName-error" className="mt-2 ml-4 text-sm text-red-300 flex items-center gap-1">
-                        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-                        {errors.firstName}
-                      </p>
-                    )}
-                  </div>
+              <form onSubmit={handleSubmit} noValidate className="flex flex-grow flex-col">
+                <p className="font-display text-sm tabular-nums text-berry-bloom">{String(step + 1).padStart(2, "0")} / {String(STEPS.length).padStart(2, "0")}</p>
+                <h3 ref={questionRef} tabIndex={-1} className="font-display mt-3 text-3xl font-normal text-blueberry outline-none md:text-[2.25rem]">{STEPS[step]}</h3>
 
-                  {/* Email & Phone */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <input
-                        type="email"
-                        name="email"
-                        value={form.email}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        placeholder="Your Email"
-                        aria-describedby={errors.email ? "email-error" : undefined}
-                        className={`w-full bg-white rounded-full px-8 py-5 text-[#111111] outline-none focus:ring-2 transition-all font-medium placeholder:text-gray-400 border-2 ${
-                          errors.email && touched.email
-                            ? "border-red-400 focus:ring-red-300"
-                            : "border-transparent focus:ring-[#7A5418]/50"
-                        }`}
-                      />
-                      {errors.email && touched.email && (
-                        <p id="email-error" className="mt-2 ml-4 text-sm text-red-300 flex items-center gap-1">
-                          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-                          {errors.email}
-                        </p>
+                <div key={step} className="sheet-in mt-8 flex-grow">
+                  {step === 0 && (
+                    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                      {NEEDS.map((item) => {
+                        const chosen = need === item.name;
+                        return (
+                          <button
+                            key={item.name}
+                            type="button"
+                            aria-pressed={chosen}
+                            onClick={() => setNeed(item.name)}
+                            className={`group relative aspect-[3/4] overflow-hidden rounded-2xl text-left outline-offset-4 transition-shadow duration-300 ${chosen ? "ring-2 ring-blueberry ring-offset-4 ring-offset-white" : ""}`}
+                          >
+                            <Image src={item.image} alt="" fill sizes="(max-width: 1024px) 44vw, 15vw" className="object-cover transition-transform duration-700 ease-out group-hover:scale-105" />
+                            <span aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_45%,rgb(47_58_85/0.9))]" />
+                            <span className="absolute inset-x-4 bottom-4 flex items-center justify-between gap-2 font-display text-lg text-white">
+                              {item.name}
+                              {chosen && (
+                                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white text-blueberry">
+                                  <Check aria-hidden="true" className="size-3.5" strokeWidth={2.5} />
+                                </span>
+                              )}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {step === 1 && (
+                    <>
+                      <p className="-mt-3 mb-6 text-[15px] text-berry-bloom">Choose as many as you like, or skip this step.</p>
+                      <ul className="flex flex-wrap gap-3">
+                        {SPACES.map((space) => {
+                          const chosen = rooms.includes(space.name);
+                          return (
+                            <li key={space.slug}>
+                              <button
+                                type="button"
+                                aria-pressed={chosen}
+                                onClick={() => toggleRoom(space.name)}
+                                className={`flex items-center gap-3 rounded-full border py-1.5 pl-1.5 pr-5 text-[15px] font-medium transition-colors duration-300 ${chosen ? "border-blueberry bg-blueberry text-white" : "border-stem-grey/70 text-blueberry hover:border-blueberry"}`}
+                              >
+                                <span className="relative size-11 shrink-0 overflow-hidden rounded-full bg-stem-grey/30">
+                                  {space.image && <Image src={space.image} alt="" fill sizes="44px" className="object-cover" />}
+                                </span>
+                                {space.name}
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </>
+                  )}
+
+                  {step === LAST_STEP && (
+                    <div className="grid gap-6 sm:grid-cols-2">
+                      {inputs.map((input) => (
+                        <div key={input.name} className={input.wide ? "sm:col-span-2" : ""}>
+                          <label htmlFor={`quote-${input.name}`} className="field-label text-berry-bloom">{input.label}</label>
+                          <input
+                            id={`quote-${input.name}`}
+                            type={input.type}
+                            name={input.name}
+                            value={form[input.name]}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            autoComplete={input.autoComplete}
+                            maxLength={input.maxLength}
+                            aria-invalid={!!fieldError(input.name)}
+                            aria-describedby={fieldError(input.name) ? `${input.name}-error` : undefined}
+                            className="field"
+                          />
+                          {fieldError(input.name) && (
+                            <p id={`${input.name}-error`} role="alert" className="mt-2 text-sm text-red-700">{fieldError(input.name)}</p>
+                          )}
+                        </div>
+                      ))}
+
+                      <div className="sm:col-span-2">
+                        <label htmlFor="quote-message" className="field-label text-berry-bloom">Your Message (optional)</label>
+                        <textarea
+                          id="quote-message"
+                          name="message"
+                          value={form.message}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          rows={3}
+                          aria-invalid={!!fieldError("message")}
+                          aria-describedby={fieldError("message") ? "message-error" : undefined}
+                          className="field resize-none"
+                        />
+                        {fieldError("message") && (
+                          <p id="message-error" role="alert" className="mt-2 text-sm text-red-700">{fieldError("message")}</p>
+                        )}
+                      </div>
+
+                      {status === "error" && (
+                        <p role="alert" className="text-sm text-red-700 sm:col-span-2">Something went wrong. Please try again.</p>
                       )}
                     </div>
-                    <div>
-                      <input
-                        type="tel"
-                        name="phone"
-                        value={form.phone}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        placeholder="Phone Number"
-                        maxLength={10}
-                        aria-describedby={errors.phone ? "phone-error" : undefined}
-                        className={`w-full bg-white rounded-full px-8 py-5 text-[#111111] outline-none focus:ring-2 transition-all font-medium placeholder:text-gray-400 border-2 ${
-                          errors.phone && touched.phone
-                            ? "border-red-400 focus:ring-red-300"
-                            : "border-transparent focus:ring-[#7A5418]/50"
-                        }`}
-                      />
-                      {errors.phone && touched.phone && (
-                        <p id="phone-error" className="mt-2 ml-4 text-sm text-red-300 flex items-center gap-1">
-                          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-                          {errors.phone}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Message */}
-                  <div>
-                    <textarea
-                      name="message"
-                      value={form.message}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      placeholder="Your Message (optional)"
-                      rows={4}
-                      aria-describedby={errors.message ? "message-error" : undefined}
-                      className={`w-full bg-white rounded-[2.5rem] px-8 py-6 text-[#111111] outline-none focus:ring-2 transition-all font-medium placeholder:text-gray-400 resize-none border-2 ${
-                        errors.message && touched.message
-                          ? "border-red-400 focus:ring-red-300"
-                          : "border-transparent focus:ring-[#7A5418]/50"
-                      }`}
-                    />
-                    {errors.message && touched.message && (
-                      <p id="message-error" className="mt-2 ml-4 text-sm text-red-300 flex items-center gap-1">
-                        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-                        {errors.message}
-                      </p>
-                    )}
-                  </div>
+                  )}
                 </div>
 
-                {status === "error" && (
-                  <p className="text-red-400 text-sm">Something went wrong. Please try again.</p>
-                )}
-
-                {/* FIX: button bg darkened to #7A5418 for white text contrast */}
-                <button
-                  type="submit"
-                  disabled={status === "loading"}
-                  className="inline-flex items-center gap-3 bg-[#7A5418] hover:bg-[#5C3D0E] text-white px-16 py-4 rounded-xl font-bold text-lg transition-all shadow-xl active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {status === "loading" ? (
-                    <>
-                      <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      Sending…
-                    </>
-                  ) : (
-                    "Send"
-                  )}
-                </button>
+                <div className="mt-10 flex items-center justify-between gap-4 border-t border-stem-grey/50 pt-6">
+                  <button type="button" onClick={() => goTo(step - 1)} disabled={step === 0} className="link-arrow text-blueberry disabled:invisible">
+                    <ArrowLeft aria-hidden="true" className="size-4" /> Back
+                  </button>
+                  {/* Three segments fill as the questions are answered. */}
+                  <div aria-hidden="true" className="hidden flex-grow items-center gap-2 px-8 sm:flex">
+                    {STEPS.map((title, index) => (
+                      <span key={title} className={`h-0.5 flex-1 rounded-full transition-colors duration-500 ${index <= step ? "bg-blueberry" : "bg-stem-grey/40"}`} />
+                    ))}
+                  </div>
+                  <button type="submit" disabled={status === "loading" || (step === 0 && !need)} className="btn btn-primary disabled:cursor-not-allowed disabled:opacity-50">
+                    {status === "loading" ? (
+                      <>
+                        <svg className="size-5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Sending…
+                      </>
+                    ) : (
+                      <>
+                        {step === LAST_STEP ? "Send" : "Continue"} <ArrowRight aria-hidden="true" className="size-4" />
+                      </>
+                    )}
+                  </button>
+                </div>
               </form>
             )}
           </div>
-
-          {/* Right: Social Media */}
-          <div className="space-y-12 lg:pl-10 text-center lg:text-left">
-            <h3 className="text-[32px] md:text-[42px] font-bold text-white tracking-tight leading-tight">
-              Our Social Media Links
-            </h3>
-
-            <div className="flex flex-wrap justify-center lg:justify-start gap-6 md:gap-8">
-              {[
-                {
-                  icon: (
-                    <svg className="w-8 h-8 md:w-12 md:h-12 fill-current" viewBox="0 0 24 24">
-                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                    </svg>
-                  ),
-                  url: 'https://www.youtube.com/@ALU_SEA'
-                },
-                {
-                  icon: (
-                    <svg className="w-8 h-8 md:w-12 md:h-12 fill-current" viewBox="0 0 24 24">
-                      <path d="M12 2.04c-5.5 0-10 4.49-10 10.02 0 5 3.66 9.15 8.44 9.9v-7h-2.54V12.02h2.54V9.41c0-2.51 1.49-3.89 3.77-3.89 1.09 0 2.23.19 2.23.19v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.89h-2.33v7a10 10 0 008.44-9.9c0-5.53-4.5-10.02-10-10.02z" />
-                    </svg>
-                  ),
-                  url: 'https://www.facebook.com/profile.php?id=61575357051060'
-                },
-                {
-                  icon: (
-                    <svg className="w-8 h-8 md:w-11 md:h-11 fill-current" viewBox="0 0 24 24">
-                      <path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 01-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 017.8 2m-.2 2A3.6 3.6 0 004 7.6v8.8A3.6 3.6 0 007.6 20h8.8a3.6 3.6 0 003.6-3.6V7.6A3.6 3.6 0 0016.4 4H7.6m9.65 1.5a1.25 1.25 0 011.25 1.25A1.25 1.25 0 0117.25 8 1.25 1.25 0 0116 6.75a1.25 1.25 0 011.25-1.25M12 7a5 5 0 015 5 5 5 0 01-5 5 5 5 0 01-5-5 5 5 0 015-5m0 2a3 3 0 00-3 3 3 3 0 003 3 3 3 0 003-3 3 3 0 00-3-3z" />
-                    </svg>
-                  ),
-                  url: 'https://www.instagram.com/alusea_aluminum/'
-                },
-              ].map((social, idx) => (
-                <a
-                  key={idx}
-                  href={social.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={["YouTube", "Facebook", "Instagram"][idx]}
-                  /* FIX: text-[#5C3D0E] on white bg passes AA; hover inverts to white on dark */
-                  className="w-20 h-20 md:w-28 md:h-28 bg-white rounded-full flex items-center justify-center text-[#5C3D0E] hover:bg-[#7A5418] hover:text-white transition-all duration-300 shadow-2xl hover:-translate-y-2"
-                >
-                  {social.icon}
-                </a>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
-
-      {/* Bottom Golden Bar */}
-      <div className="absolute bottom-0 left-0 w-full h-[8px] bg-[#7A5418] z-20" />
     </section>
   );
 };

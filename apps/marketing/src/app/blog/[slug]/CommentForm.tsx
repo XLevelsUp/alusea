@@ -30,9 +30,9 @@ export default function CommentForm({ postId, postSlug }: { postId: string; post
   };
 
   return (
-    <div className="border-t border-gray-100 pt-10">
-      <h3 className="text-xl font-bold text-matte-black mb-2">Leave a comment</h3>
-      <p className="text-sm text-steel-gray mb-6">All comments are moderated before being published.</p>
+    <div className="border-t border-stem-grey/50 pt-10">
+      <h3 className="text-xl font-bold text-blueberry mb-2">Leave a comment</h3>
+      <p className="text-sm text-berry-bloom mb-6">All comments are moderated before being published.</p>
 
       {status === "success" ? (
         <div className="rounded-lg bg-green-50 border border-green-200 p-5">
@@ -42,7 +42,7 @@ export default function CommentForm({ postId, postSlug }: { postId: string; post
           <button
             type="button"
             onClick={() => setStatus("idle")}
-            className="mt-3 text-sm font-semibold text-[#7A5418] hover:underline"
+            className="mt-3 text-sm font-semibold text-berry-bloom hover:underline"
           >
             Leave another comment
           </button>
@@ -55,14 +55,14 @@ export default function CommentForm({ postId, postSlug }: { postId: string; post
               type="text"
               name="name"
               placeholder="Name"
-              className="w-full px-4 py-3 border border-gray-200 rounded-md text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#7A5418]/40"
+              className="w-full px-4 py-3 border border-stem-grey/60 rounded-md text-sm text-blueberry focus:outline-none focus:ring-2 focus:ring-berry-bloom/40"
             />
             <input
               required
               type="email"
               name="email"
               placeholder="E-mail"
-              className="w-full px-4 py-3 border border-gray-200 rounded-md text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#7A5418]/40"
+              className="w-full px-4 py-3 border border-stem-grey/60 rounded-md text-sm text-blueberry focus:outline-none focus:ring-2 focus:ring-berry-bloom/40"
             />
           </div>
           <textarea
@@ -70,7 +70,7 @@ export default function CommentForm({ postId, postSlug }: { postId: string; post
             name="message"
             placeholder="Message"
             rows={5}
-            className="w-full px-4 py-3 border border-gray-200 rounded-md text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#7A5418]/40 resize-none"
+            className="w-full px-4 py-3 border border-stem-grey/60 rounded-md text-sm text-blueberry focus:outline-none focus:ring-2 focus:ring-berry-bloom/40 resize-none"
           />
 
           {status === "error" && <p className="text-sm text-red-600">{errorMessage}</p>}
@@ -78,7 +78,7 @@ export default function CommentForm({ postId, postSlug }: { postId: string; post
           <button
             type="submit"
             disabled={status === "loading"}
-            className="inline-flex items-center gap-2 bg-[#7A5418] hover:bg-[#5C3D0E] text-white px-8 py-3 text-sm font-bold uppercase tracking-widest transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 bg-blueberry hover:bg-berry-bloom text-white px-8 py-3 text-sm font-bold uppercase tracking-widest transition-colors disabled:opacity-50"
           >
             {status === "loading" ? "Submitting..." : "Submit"}
           </button>

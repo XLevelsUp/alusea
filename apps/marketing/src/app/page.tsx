@@ -27,28 +27,25 @@ export const metadata: Metadata = {
   },
 };
 import AboutSection from "@/components/sections/AboutSection";
+import SpacesSection from "@/components/sections/SpacesSection";
+import ProcessSection from "@/components/sections/ProcessSection";
 import ServicesSection from "@/components/sections/ServicesSection";
 import WhyWorkWithUs from "@/components/sections/WhyWorkWithUs";
 import ProductShowcase from "@/components/sections/ProductShowcase";
 // import ProjectGallery from "@/components/sections/ProjectGallery";
 import Testimonials from "@/components/sections/Testimonials";
 import ContactCTA from "@/components/sections/ContactCTA";
-import { createClient } from "@/lib/supabase/server";
 
-export default async function Home() {
-  const supabase = await createClient();
-  const { data: products } = await supabase
-    .from('products')
-    .select('id, name, category')
-    .order('created_at', { ascending: false });
-
+export default function Home() {
   return (
-    <main className="min-h-screen">
+    <div className="min-h-screen">
 
       <Hero />
+      <SpacesSection />
       <AboutSection />
+      <ProcessSection />
+      <WhyWorkWithUs />
       <ServicesSection />
-      <WhyWorkWithUs products={products || []} />
       <ProductShowcase />
       {/* <ProjectGallery /> */}
       <Testimonials />
@@ -67,6 +64,6 @@ export default async function Home() {
           For industrial and commercial spaces, Alusea operates as a professional commercial aluminium facade contractor in Coimbatore and apartment aluminium facade supplier, offering high-performance aluminium window supply in Tamil Nadu. We specialize in custom-tailoring each thermal break aluminium window specification to deliver superior thermal performance, acoustic insulation, and maximum security for modern high-rises and state-of-the-art office spaces.
         </p>
       </div>
-    </main>
+    </div>
   );
 }

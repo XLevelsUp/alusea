@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import PageBanner from "@/components/layout/PageBanner";
 
 export const metadata: Metadata = {
   title: "Data Deletion Instructions",
@@ -13,28 +14,18 @@ export default function DataDeletionPage() {
   const lastUpdated = "April 7, 2026";
 
   return (
-    <div className="pt-32 pb-24 px-6 min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <header className="mb-16">
-          <h1 className="text-4xl md:text-6xl font-bold text-architectural-blue mb-4">
-            Data <span className="text-brushed-bronze">Deletion</span>
-          </h1>
-          <p className="text-steel-gray text-lg leading-relaxed">
-            We respect your right to control your personal data. This page
-            explains how to request the deletion of any personal information
-            we hold about you.
-          </p>
-          <p className="mt-4 text-sm text-steel-gray/70">
-            Last updated: {lastUpdated}
-          </p>
-        </header>
+    <div className="bg-plate-white">
+      <PageBanner crumb="Data Deletion" title={<>Data <span className="text-plate-white/80">Deletion</span></>}>
+        <p>We respect your right to control your personal data. This page explains how to request the deletion of any personal information we hold about you.</p>
+        <p className="mt-4 text-sm">Last updated: {lastUpdated}</p>
+      </PageBanner>
+      <div className="section mx-auto max-w-4xl px-[var(--gutter)]">
 
         {/* Content */}
-        <div className="prose prose-lg max-w-none space-y-12 text-matte-black/90">
+        <div className="prose prose-lg max-w-none space-y-12 text-blueberry/90">
           {/* What Data We Hold */}
           <section id="data-we-hold">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               What Data We May Hold About You
             </h2>
             <p className="leading-relaxed">
@@ -60,7 +51,7 @@ export default function DataDeletionPage() {
 
           {/* How to Request Deletion */}
           <section id="how-to-request">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               How to Request Data Deletion
             </h2>
             <p className="leading-relaxed">
@@ -70,18 +61,18 @@ export default function DataDeletionPage() {
             <div className="mt-8 space-y-6">
               {/* Step 1 */}
               <div className="flex gap-6">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-architectural-blue text-white flex items-center justify-center font-bold text-lg">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blueberry text-white flex items-center justify-center font-bold text-lg">
                   1
                 </div>
                 <div className="pt-2">
-                  <h3 className="text-xl font-semibold text-matte-black mb-2">
+                  <h3 className="text-xl font-semibold text-blueberry mb-2">
                     Send a Deletion Request
                   </h3>
-                  <p className="text-steel-gray leading-relaxed">
+                  <p className="text-berry-bloom leading-relaxed">
                     Email us at{" "}
                     <a
                       href="mailto:aluseacbe@gmail.com?subject=Data%20Deletion%20Request"
-                      className="text-brushed-bronze hover:underline font-medium"
+                      className="text-berry-bloom hover:underline font-medium"
                     >
                       aluseacbe@gmail.com
                     </a>{" "}
@@ -95,14 +86,14 @@ export default function DataDeletionPage() {
 
               {/* Step 2 */}
               <div className="flex gap-6">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-architectural-blue text-white flex items-center justify-center font-bold text-lg">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blueberry text-white flex items-center justify-center font-bold text-lg">
                   2
                 </div>
                 <div className="pt-2">
-                  <h3 className="text-xl font-semibold text-matte-black mb-2">
+                  <h3 className="text-xl font-semibold text-blueberry mb-2">
                     Identity Verification
                   </h3>
-                  <p className="text-steel-gray leading-relaxed">
+                  <p className="text-berry-bloom leading-relaxed">
                     For your security, we may ask you to verify your identity
                     before processing your request. This ensures that data is
                     only deleted at the request of the rightful data owner.
@@ -112,14 +103,14 @@ export default function DataDeletionPage() {
 
               {/* Step 3 */}
               <div className="flex gap-6">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-architectural-blue text-white flex items-center justify-center font-bold text-lg">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blueberry text-white flex items-center justify-center font-bold text-lg">
                   3
                 </div>
                 <div className="pt-2">
-                  <h3 className="text-xl font-semibold text-matte-black mb-2">
+                  <h3 className="text-xl font-semibold text-blueberry mb-2">
                     Processing &amp; Confirmation
                   </h3>
-                  <p className="text-steel-gray leading-relaxed">
+                  <p className="text-berry-bloom leading-relaxed">
                     Once verified, we will delete your personal data from our
                     records within{" "}
                     <strong>30 business days</strong>. You will receive an email
@@ -132,7 +123,7 @@ export default function DataDeletionPage() {
 
           {/* What Gets Deleted */}
           <section id="what-gets-deleted">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               What Gets Deleted
             </h2>
             <p className="leading-relaxed">
@@ -141,22 +132,22 @@ export default function DataDeletionPage() {
             </p>
 
             <div className="mt-6 space-y-4">
-              <div className="p-6 bg-aluminum-light rounded-xl">
-                <h4 className="font-bold text-matte-black mb-2">
+              <div className="p-6 bg-plate-white rounded-card">
+                <h4 className="font-bold text-blueberry mb-2">
                   Contact Form Submissions
                 </h4>
-                <p className="text-steel-gray leading-relaxed">
+                <p className="text-berry-bloom leading-relaxed">
                   Your name, email, phone number, and any messages submitted
                   through our website forms will be removed from our Google
                   Sheets records and internal databases.
                 </p>
               </div>
 
-              <div className="p-6 bg-aluminum-light rounded-xl">
-                <h4 className="font-bold text-matte-black mb-2">
+              <div className="p-6 bg-plate-white rounded-card">
+                <h4 className="font-bold text-blueberry mb-2">
                   WhatsApp Notification Records
                 </h4>
-                <p className="text-steel-gray leading-relaxed">
+                <p className="text-berry-bloom leading-relaxed">
                   Any records of notifications sent via WhatsApp Business API
                   containing your enquiry details will be deleted from our
                   systems. Please note that WhatsApp message history on Meta&apos;s
@@ -165,7 +156,7 @@ export default function DataDeletionPage() {
                     href="https://www.whatsapp.com/legal/privacy-policy"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-brushed-bronze hover:underline font-medium"
+                    className="text-berry-bloom hover:underline font-medium"
                   >
                     WhatsApp&apos;s own data retention policy
                   </a>
@@ -173,11 +164,11 @@ export default function DataDeletionPage() {
                 </p>
               </div>
 
-              <div className="p-6 bg-aluminum-light rounded-xl">
-                <h4 className="font-bold text-matte-black mb-2">
+              <div className="p-6 bg-plate-white rounded-card">
+                <h4 className="font-bold text-blueberry mb-2">
                   Email Correspondence
                 </h4>
-                <p className="text-steel-gray leading-relaxed">
+                <p className="text-berry-bloom leading-relaxed">
                   Any email communications associated with your enquiry will be
                   deleted from our mailbox.
                 </p>
@@ -187,7 +178,7 @@ export default function DataDeletionPage() {
 
           {/* Exceptions */}
           <section id="exceptions">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               Exceptions
             </h2>
             <p className="leading-relaxed">
@@ -219,7 +210,7 @@ export default function DataDeletionPage() {
 
           {/* Third-Party Data */}
           <section id="third-party">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               Third-Party Data Deletion
             </h2>
             <p className="leading-relaxed">
@@ -230,16 +221,16 @@ export default function DataDeletionPage() {
             <div className="mt-6 overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-architectural-blue text-white">
+                  <tr className="bg-blueberry text-white">
                     <th className="p-4 font-semibold rounded-tl-lg">Service</th>
                     <th className="p-4 font-semibold rounded-tr-lg">
                       How to Delete Your Data
                     </th>
                   </tr>
                 </thead>
-                <tbody className="text-steel-gray">
-                  <tr className="border-b border-gray-100">
-                    <td className="p-4 font-medium text-matte-black">
+                <tbody className="text-berry-bloom">
+                  <tr className="border-b border-stem-grey/50">
+                    <td className="p-4 font-medium text-blueberry">
                       Google Analytics
                     </td>
                     <td className="p-4">
@@ -248,14 +239,14 @@ export default function DataDeletionPage() {
                         href="https://tools.google.com/dlpage/gaoptout"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-brushed-bronze hover:underline font-medium"
+                        className="text-berry-bloom hover:underline font-medium"
                       >
                         Google Analytics Opt-out Add-on
                       </a>
                     </td>
                   </tr>
-                  <tr className="border-b border-gray-100 bg-gray-50/50">
-                    <td className="p-4 font-medium text-matte-black">
+                  <tr className="border-b border-stem-grey/50 bg-gray-50/50">
+                    <td className="p-4 font-medium text-blueberry">
                       WhatsApp / Meta
                     </td>
                     <td className="p-4">
@@ -264,7 +255,7 @@ export default function DataDeletionPage() {
                         href="https://www.facebook.com/help/contact/deletion"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-brushed-bronze hover:underline font-medium"
+                        className="text-berry-bloom hover:underline font-medium"
                       >
                         Meta&apos;s Data Deletion Page
                       </a>
@@ -277,36 +268,36 @@ export default function DataDeletionPage() {
 
           {/* Contact */}
           <section id="contact-us">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               Contact Us
             </h2>
             <p className="leading-relaxed">
               For any questions about data deletion or your privacy rights,
               please reach out:
             </p>
-            <div className="mt-6 p-8 bg-aluminum-light rounded-xl space-y-4">
-              <p className="font-bold text-matte-black text-lg">Alusea</p>
-              <div className="space-y-2 text-steel-gray">
+            <div className="mt-6 p-8 bg-plate-white rounded-card space-y-4">
+              <p className="font-bold text-blueberry text-lg">Alusea</p>
+              <div className="space-y-2 text-berry-bloom">
                 <p>
-                  <strong className="text-matte-black">Email:</strong>{" "}
+                  <strong className="text-blueberry">Email:</strong>{" "}
                   <a
                     href="mailto:aluseacbe@gmail.com?subject=Data%20Deletion%20Request"
-                    className="text-brushed-bronze hover:underline font-medium"
+                    className="text-berry-bloom hover:underline font-medium"
                   >
                     aluseacbe@gmail.com
                   </a>
                 </p>
                 <p>
-                  <strong className="text-matte-black">Phone:</strong>{" "}
+                  <strong className="text-blueberry">Phone:</strong>{" "}
                   <a
                     href="tel:+919626022722"
-                    className="text-brushed-bronze hover:underline font-medium"
+                    className="text-berry-bloom hover:underline font-medium"
                   >
                     +91 96260 22722
                   </a>
                 </p>
                 <p>
-                  <strong className="text-matte-black">Address:</strong> No 178,
+                  <strong className="text-blueberry">Address:</strong> No 178,
                   A Ramachandra Road, RS Puram, Near Flower Market, Coimbatore,
                   Tamil Nadu – 641002, India
                 </p>
@@ -316,14 +307,14 @@ export default function DataDeletionPage() {
 
           {/* Related Policies */}
           <section id="related">
-            <h2 className="text-2xl font-bold text-architectural-blue mb-4">
+            <h2 className="text-2xl font-bold text-blueberry mb-4">
               Related Policies
             </h2>
             <ul className="space-y-3">
               <li>
                 <a
                   href="/privacy-policy"
-                  className="text-brushed-bronze hover:underline font-medium text-lg"
+                  className="text-berry-bloom hover:underline font-medium text-lg"
                 >
                   Privacy Policy →
                 </a>
@@ -331,7 +322,7 @@ export default function DataDeletionPage() {
               <li>
                 <a
                   href="/terms-of-service"
-                  className="text-brushed-bronze hover:underline font-medium text-lg"
+                  className="text-berry-bloom hover:underline font-medium text-lg"
                 >
                   Terms of Service →
                 </a>

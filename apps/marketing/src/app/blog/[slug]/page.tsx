@@ -90,7 +90,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   };
 
   return (
-    <main className="min-h-screen bg-white pt-32 pb-24 md:pt-40">
+    <div className="min-h-screen bg-plate-white pb-24 pt-[calc(var(--header-h)+3rem)]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
@@ -100,21 +100,21 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         {/* H1 */}
         <header className="mx-auto mb-10 max-w-4xl text-center space-y-4">
           <div className="flex items-center justify-center gap-3 text-xs">
-            <span className="rounded-full bg-[#7A5418]/10 px-3 py-1 font-bold uppercase tracking-wider text-[#7A5418]">
+            <span className="rounded-full bg-berry-bloom/10 px-3 py-1 font-bold uppercase tracking-wider text-berry-bloom">
               {post.category}
             </span>
-            <span className="text-steel-gray">{formatDate(post.published_at)}</span>
-            <span className="text-steel-gray">·</span>
-            <span className="text-steel-gray">{post.reading_time_minutes} min read</span>
+            <span className="text-berry-bloom">{formatDate(post.published_at)}</span>
+            <span className="text-berry-bloom">·</span>
+            <span className="text-berry-bloom">{post.reading_time_minutes} min read</span>
           </div>
-          <h1 className="text-[32px] font-bold leading-[1.15] text-matte-black md:text-[46px]">
+          <h1 className="text-[32px] font-bold leading-[1.15] text-blueberry md:text-[46px]">
             {post.title}
           </h1>
         </header>
 
         {/* Featured image */}
         <div className="mx-auto mb-10 max-w-5xl">
-          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-alusea-light-gray">
+          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-card bg-plate-white">
             <Image
               src={post.featured_image_url}
               alt={post.featured_image_alt}
@@ -131,22 +131,22 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <div className="min-w-0">
             {/* Introduction */}
             <div
-              className="prose prose-lg max-w-none prose-headings:text-matte-black prose-a:text-[#7A5418]"
+              className="prose prose-lg max-w-none prose-headings:text-blueberry prose-a:text-berry-bloom"
               dangerouslySetInnerHTML={{ __html: post.intro_html }}
             />
 
             {/* Sections */}
             {post.sections?.map((section, sIdx) => (
               <section key={sIdx} className="mt-10">
-                <h2 className="text-2xl md:text-[28px] font-bold text-matte-black mb-4">{section.heading}</h2>
+                <h2 className="text-2xl md:text-[28px] font-bold text-blueberry mb-4">{section.heading}</h2>
                 <div
-                  className="prose prose-lg max-w-none prose-headings:text-matte-black prose-a:text-[#7A5418]"
+                  className="prose prose-lg max-w-none prose-headings:text-blueberry prose-a:text-berry-bloom"
                   dangerouslySetInnerHTML={{ __html: section.body_html }}
                 />
 
                 {/* Second image, shown after the first section (matches the reference placement) */}
                 {sIdx === 0 && post.second_image_url && (
-                  <div className="relative my-8 aspect-[16/9] w-full overflow-hidden rounded-2xl bg-alusea-light-gray">
+                  <div className="relative my-8 aspect-[16/9] w-full overflow-hidden rounded-card bg-plate-white">
                     <Image
                       src={post.second_image_url}
                       alt={post.second_image_alt || post.title}
@@ -159,9 +159,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
                 {section.subsections?.map((sub, subIdx) => (
                   <div key={subIdx} className="mt-6">
-                    <h3 className="text-xl font-bold text-matte-black mb-3">{sub.heading}</h3>
+                    <h3 className="text-xl font-bold text-blueberry mb-3">{sub.heading}</h3>
                     <div
-                      className="prose prose-lg max-w-none prose-headings:text-matte-black prose-a:text-[#7A5418]"
+                      className="prose prose-lg max-w-none prose-headings:text-blueberry prose-a:text-berry-bloom"
                       dangerouslySetInnerHTML={{ __html: sub.body_html }}
                     />
                   </div>
@@ -172,12 +172,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             {/* Q&A */}
             {post.qa?.length > 0 && (
               <section className="mt-12">
-                <h2 className="text-2xl md:text-[28px] font-bold text-matte-black mb-6">Frequently Asked Questions</h2>
+                <h2 className="text-2xl md:text-[28px] font-bold text-blueberry mb-6">Frequently Asked Questions</h2>
                 <div className="space-y-6">
                   {post.qa.map((item, index) => (
-                    <div key={index} className="border-b border-gray-100 pb-6 last:border-0">
-                      <h3 className="text-lg font-bold text-matte-black mb-2">{item.question}</h3>
-                      <p className="text-steel-gray leading-relaxed">{item.answer}</p>
+                    <div key={index} className="border-b border-stem-grey/50 pb-6 last:border-0">
+                      <h3 className="text-lg font-bold text-blueberry mb-2">{item.question}</h3>
+                      <p className="text-berry-bloom leading-relaxed">{item.answer}</p>
                     </div>
                   ))}
                 </div>
@@ -186,9 +186,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
             {/* CTA */}
             {post.cta?.buttons?.length > 0 && (
-              <section className="mt-14 rounded-2xl bg-[#F7F4EF] px-8 py-10 text-center md:px-12">
+              <section className="mt-14 rounded-card bg-plate-white px-8 py-10 text-center md:px-12">
                 {post.cta.intro && (
-                  <p className="mx-auto mb-7 max-w-2xl text-steel-gray leading-relaxed">{post.cta.intro}</p>
+                  <p className="mx-auto mb-7 max-w-2xl text-berry-bloom leading-relaxed">{post.cta.intro}</p>
                 )}
                 <div className="flex flex-wrap justify-center gap-4">
                   {post.cta.buttons.map((button, index) => (
@@ -197,8 +197,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                       href={button.href}
                       className={
                         index === 0
-                          ? "inline-flex items-center rounded-sm bg-[#7A5418] px-7 py-3.5 text-sm font-bold uppercase tracking-widest text-white transition-colors hover:bg-[#5C3D0E]"
-                          : "inline-flex items-center rounded-sm border border-[#7A5418]/40 px-7 py-3.5 text-sm font-bold uppercase tracking-widest text-[#7A5418] transition-colors hover:bg-[#7A5418] hover:text-white"
+                          ? "inline-flex items-center rounded-card bg-blueberry px-7 py-3.5 text-sm font-bold uppercase tracking-widest text-white transition-colors hover:bg-berry-bloom"
+                          : "inline-flex items-center rounded-card border border-berry-bloom/40 px-7 py-3.5 text-sm font-bold uppercase tracking-widest text-berry-bloom transition-colors hover:bg-blueberry hover:text-white"
                       }
                     >
                       {button.label}
@@ -210,18 +210,18 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
             {/* Comments */}
             <section id="comments" className="mt-16 scroll-mt-28">
-              <h2 className="text-2xl font-bold text-matte-black mb-6">
+              <h2 className="text-2xl font-bold text-blueberry mb-6">
                 Comments {comments && comments.length > 0 ? `(${comments.length})` : ""}
               </h2>
               {comments && comments.length > 0 && (
                 <div className="mb-10 space-y-6">
                   {comments.map((comment) => (
-                    <div key={comment.id} className="border-b border-gray-100 pb-6">
+                    <div key={comment.id} className="border-b border-stem-grey/50 pb-6">
                       <div className="flex items-center gap-3 mb-2">
-                        <span className="font-bold text-matte-black">{comment.name}</span>
-                        <span className="text-xs text-steel-gray">{formatDate(comment.created_at)}</span>
+                        <span className="font-bold text-blueberry">{comment.name}</span>
+                        <span className="text-xs text-berry-bloom">{formatDate(comment.created_at)}</span>
                       </div>
-                      <p className="text-steel-gray leading-relaxed">{comment.message}</p>
+                      <p className="text-berry-bloom leading-relaxed">{comment.message}</p>
                     </div>
                   ))}
                 </div>
@@ -231,14 +231,14 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
 
           {/* Sidebar — sticks in place while the article scrolls past it */}
-          <aside className="space-y-8 self-start lg:sticky lg:top-28 lg:border-l lg:border-gray-100 lg:pl-8">
+          <aside className="space-y-8 self-start lg:sticky lg:top-28 lg:border-l lg:border-stem-grey/50 lg:pl-8">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-steel-gray mb-1">By</p>
-              <p className="font-bold text-matte-black">{post.author}</p>
-              <p className="text-sm text-steel-gray mt-1 mb-3">{formatDate(post.published_at)}</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-berry-bloom mb-1">By</p>
+              <p className="font-bold text-blueberry">{post.author}</p>
+              <p className="text-sm text-berry-bloom mt-1 mb-3">{formatDate(post.published_at)}</p>
               <a
                 href="#comments"
-                className="inline-flex items-center gap-1.5 text-sm text-steel-gray hover:text-[#7A5418] transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm text-berry-bloom hover:text-berry-bloom transition-colors"
               >
                 <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="1.8" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -249,13 +249,13 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
             {post.tags?.length > 0 && (
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-steel-gray mb-3">Tags</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-berry-bloom mb-3">Tags</p>
                 <div className="flex flex-wrap gap-2">
                   {post.tags.map((tag) => (
                     <Link
                       key={tag}
                       href={`/blog?tag=${encodeURIComponent(tag)}`}
-                      className="rounded-full bg-alusea-light-gray px-3 py-1 text-xs font-medium text-steel-gray transition-colors hover:bg-[#7A5418]/10 hover:text-[#7A5418]"
+                      className="rounded-full bg-plate-white px-3 py-1 text-xs font-medium text-berry-bloom transition-colors hover:bg-berry-bloom/10 hover:text-berry-bloom"
                     >
                       {tag}
                     </Link>
@@ -265,12 +265,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             )}
 
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-steel-gray mb-3">Share</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-berry-bloom mb-3">Share</p>
               <ShareLinks url={`${BASE_URL}/blog/${post.slug}`} title={post.title} />
             </div>
           </aside>
         </div>
       </article>
-    </main>
+    </div>
   );
 }

@@ -41,13 +41,13 @@ const features = [
 
 const Features = () => {
   return (
-    <section className="section-padding bg-white">
+    <section className="section-padding bg-plate-white">
       <div className="max-container">
         <div className="text-center max-w-3xl mx-auto mb-20 space-y-4">
-          <h2 className="text-brushed-bronze text-sm uppercase tracking-[0.3em] font-bold">Why Alusea</h2>
-          <p className="text-4xl md:text-5xl font-bold text-matte-black leading-tight">
+          <h2 className="text-berry-bloom text-sm uppercase tracking-[0.3em] font-bold">Why Alusea</h2>
+          <p className="text-4xl md:text-5xl font-bold text-blueberry leading-tight">
             Superior Engineering for <br />
-            <span className="text-architectural-blue">Tomorrow&apos;s Architecture</span>
+            <span className="text-blueberry">Tomorrow&apos;s Architecture</span>
           </p>
         </div>
 
@@ -55,13 +55,13 @@ const Features = () => {
           {features.map((feature, index) => (
             <div 
               key={index} 
-              className="p-10 border border-gray-100 hover:border-brushed-bronze/30 transition-all duration-500 rounded-sm hover:shadow-2xl hover:translate-y-[-8px] group"
+              className="p-10 border border-stem-grey/50 hover:border-berry-bloom/30 transition-all duration-500 rounded-card hover:shadow-2xl hover:translate-y-[-8px] group"
             >
-              <div className="text-brushed-bronze mb-8 group-hover:scale-110 transition-transform duration-500">
+              <div className="text-berry-bloom mb-8 group-hover:scale-110 transition-transform duration-500">
                 {feature.icon}
               </div>
-              <h3 className="text-xl font-bold text-matte-black mb-4">{feature.title}</h3>
-              <p className="text-steel-gray text-sm leading-relaxed font-light">
+              <h3 className="text-xl font-bold text-blueberry mb-4">{feature.title}</h3>
+              <p className="text-berry-bloom text-sm leading-relaxed font-light">
                 {feature.description}
               </p>
             </div>

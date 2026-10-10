@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import PageBanner from "@/components/layout/PageBanner";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -43,7 +44,7 @@ function PostCard({ post, index }: { post: Post; index: number }) {
       transition={{ duration: 0.5, delay: 0.05 * (index % 6), ease: "easeOut" }}
     >
       <Link href={`/blog/${post.slug}`} className="group block h-full">
-        <div className="relative aspect-[3/2] w-full overflow-hidden rounded-2xl bg-alusea-light-gray">
+        <div className="relative aspect-[3/2] w-full overflow-hidden rounded-card bg-plate-white">
           <Image
             src={post.featured_image_url}
             alt={post.featured_image_alt}
@@ -51,22 +52,22 @@ function PostCard({ post, index }: { post: Post; index: number }) {
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/0 to-black/0 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+          <div className="absolute inset-0 bg-gradient-to-t from-blueberry/40 via-blueberry/0 to-blueberry/0 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
           {/* Corner badge: rotates and scales in on hover, arrow flips to point outward */}
-          <div className="absolute bottom-4 right-4 flex h-12 w-12 scale-75 items-center justify-center rounded-full bg-white text-matte-black opacity-0 shadow-lg transition-all duration-500 ease-out group-hover:scale-100 group-hover:opacity-100">
+          <div className="absolute bottom-4 right-4 flex h-12 w-12 scale-75 items-center justify-center rounded-full bg-white text-blueberry opacity-0 shadow-lg transition-all duration-500 ease-out group-hover:scale-100 group-hover:opacity-100">
             <ArrowUpRight className="h-5 w-5 -rotate-45 transition-transform duration-500 ease-out group-hover:rotate-0" />
           </div>
         </div>
 
         <div className="mt-5 space-y-2">
           <div className="flex items-center gap-3 text-xs">
-            <span className="rounded-full bg-[#7A5418]/10 px-3 py-1 font-bold uppercase tracking-wider text-[#7A5418]">
+            <span className="font-semibold uppercase tracking-[0.18em] text-berry-bloom">
               {post.category}
             </span>
-            <span className="text-steel-gray">{formatDate(post.published_at)}</span>
+            <span className="text-berry-bloom">{formatDate(post.published_at)}</span>
           </div>
-          <h3 className="text-lg font-bold leading-snug text-matte-black transition-colors group-hover:text-[#7A5418] md:text-xl">
+          <h3 className="font-display text-xl font-normal leading-snug text-blueberry transition-colors group-hover:text-berry-bloom md:text-2xl">
             {post.title}
           </h3>
         </div>
@@ -114,33 +115,21 @@ export default function BlogListingClient({ posts, categories }: { posts: Post[]
   };
 
   return (
-    <main className="min-h-screen bg-white pt-32 pb-24 md:pt-40">
-      <div className="mx-auto max-w-7xl px-6">
-        {/* Header */}
-        <div className="mb-12 space-y-4 text-center md:mb-16">
-          <span className="block text-xs font-bold uppercase tracking-[0.3em] text-[#7A5418]">
-            Insights
-          </span>
-          <h1 className="text-[40px] font-bold leading-[1.08] text-matte-black md:text-[54px]">
-            Alusea Blog
-          </h1>
-          <p className="mx-auto max-w-xl text-lg text-steel-gray">
-            Guides and updates on aluminium windows, doors, sliding systems, and architectural facades.
-          </p>
-        </div>
+    <div className="bg-plate-white">
+      <PageBanner crumb="Blog" eyebrow="Insights" title="Alusea Blog">
+        <p>Guides and updates on aluminium windows, doors, sliding systems, and architectural facades.</p>
+      </PageBanner>
 
+      <div className="shell section">
         {/* Category filter pills */}
-        <div className="mb-12 flex flex-wrap justify-center gap-2.5 md:mb-16">
+        <div className="mb-12 flex flex-wrap gap-2.5 md:mb-16">
           {filters.map((name) => (
             <button
               key={name}
               type="button"
               onClick={() => handleCategoryChange(name)}
-              className={`rounded-full border px-5 py-2.5 text-sm font-semibold transition-all duration-300 ${
-                activeCategory === name
-                  ? "border-[#7A5418] bg-[#7A5418] text-white shadow-md"
-                  : "border-gray-200 bg-white text-steel-gray hover:border-[#7A5418]/50 hover:text-[#7A5418]"
-              }`}
+              aria-pressed={activeCategory === name}
+              className={`btn ${activeCategory === name ? "btn-primary" : "btn-outline"}`}
             >
               {name}
             </button>
@@ -149,14 +138,14 @@ export default function BlogListingClient({ posts, categories }: { posts: Post[]
 
         {/* Active tag filter indicator */}
         {activeTag && (
-          <div className="mb-10 flex items-center justify-center gap-3">
-            <span className="text-sm text-steel-gray">
-              Showing posts tagged <span className="font-semibold text-matte-black">“{activeTag}”</span>
+          <div className="mb-10 flex items-center gap-3">
+            <span className="text-sm text-berry-bloom">
+              Showing posts tagged <span className="font-semibold text-blueberry">“{activeTag}”</span>
             </span>
             <button
               type="button"
               onClick={handleClearTag}
-              className="text-sm font-semibold text-[#7A5418] hover:underline"
+              className="text-sm font-semibold text-berry-bloom hover:underline"
             >
               Clear
             </button>
@@ -177,7 +166,7 @@ export default function BlogListingClient({ posts, categories }: { posts: Post[]
                 <button
                   type="button"
                   onClick={() => setVisibleCount((prev) => prev + POSTS_PER_PAGE)}
-                  className="rounded-full border border-[#7A5418]/40 px-8 py-3.5 text-sm font-semibold text-[#7A5418] transition-all duration-300 hover:bg-[#7A5418] hover:text-white"
+                  className="btn btn-outline"
                 >
                   Load More Articles
                 </button>
@@ -185,11 +174,11 @@ export default function BlogListingClient({ posts, categories }: { posts: Post[]
             )}
           </>
         ) : (
-          <p className="py-20 text-center text-steel-gray">
+          <p className="py-20 text-center text-berry-bloom">
             No articles in this category yet — check back soon.
           </p>
         )}
       </div>
-    </main>
+    </div>
   );
 }

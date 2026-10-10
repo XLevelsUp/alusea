@@ -24,9 +24,9 @@ export default async function CataloguePage() {
 
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-white dark:bg-matte-black pt-32 pb-24 px-6 flex flex-col items-center justify-center">
-        <div className="w-10 h-10 border-4 border-[#B68B4C] border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-steel-gray font-medium">Loading Alusea Catalogue...</p>
+      <div className="min-h-screen bg-plate-white dark:bg-blueberry pt-32 pb-24 px-6 flex flex-col items-center justify-center">
+        <div className="w-10 h-10 border-4 border-berry-bloom border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-berry-bloom font-medium">Loading Alusea Catalogue...</p>
       </div>
     }>
       <CatalogueClient initialProducts={(products || []) as ProductRow[]} />

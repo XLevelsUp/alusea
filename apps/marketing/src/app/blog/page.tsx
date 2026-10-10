@@ -26,9 +26,9 @@ export default async function BlogPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-white pt-32 pb-24 px-6 flex flex-col items-center justify-center md:pt-40">
-          <div className="w-10 h-10 border-4 border-[#B68B4C] border-t-transparent rounded-full animate-spin" />
-          <p className="mt-4 text-steel-gray font-medium">Loading articles...</p>
+        <div className="min-h-screen bg-plate-white pt-32 pb-24 px-6 flex flex-col items-center justify-center md:pt-40">
+          <div className="w-10 h-10 border-4 border-berry-bloom border-t-transparent rounded-full animate-spin" />
+          <p className="mt-4 text-berry-bloom font-medium">Loading articles...</p>
         </div>
       }
     >

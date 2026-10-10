@@ -55,23 +55,23 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   };
 
   return (
-    <main className="min-h-screen bg-white dark:bg-matte-black pt-32 pb-24">
+    <div className="min-h-screen bg-plate-white pb-[var(--section-y)] pt-[calc(var(--header-h)+3rem)]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
       />
 
-      <div className="max-w-7xl mx-auto px-6">
-        <nav className="mb-8 text-sm text-steel-gray dark:text-gray-400">
-          <Link href="/catalogue" className="hover:text-[#A67C52] transition-colors">
+      <div className="shell">
+        <nav aria-label="Breadcrumb" className="mb-8 text-sm text-berry-bloom">
+          <Link href="/catalogue" className="transition-colors hover:text-blueberry">
             Catalogue
           </Link>
           <span className="mx-2">/</span>
-          <span className="text-matte-black dark:text-white">{product.name}</span>
+          <span className="text-blueberry">{product.name}</span>
         </nav>
 
         <ProductDetailClient product={product} />
       </div>
-    </main>
+    </div>
   );
 }

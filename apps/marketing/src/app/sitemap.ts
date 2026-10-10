@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { SPACES } from "@/lib/spaces";
 
 const BASE_URL = "https://www.alusea.in";
 
@@ -17,7 +18,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
+  const spaceEntries: MetadataRoute.Sitemap = SPACES.map((space) => ({
+    url: `${BASE_URL}/spaces/${space.slug}`,
+    lastModified: new Date("2026-10-07"),
+    changeFrequency: "monthly",
+    priority: 0.8,
+  }));
+
   return [
+    ...spaceEntries,
     {
       url: BASE_URL,
       lastModified: new Date("2026-06-02"),
@@ -61,7 +70,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     },
     {
-      url: `${BASE_URL}/features`,
+      url: `${BASE_URL}/alusea-difference`,
       lastModified: new Date("2026-05-15"),
       changeFrequency: "monthly",
       priority: 0.8,
