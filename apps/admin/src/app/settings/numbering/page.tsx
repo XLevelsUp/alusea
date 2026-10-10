@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { DOC_TYPE_LABELS, peekDocumentNumber, financialYearOf, type DocType } from "@/lib/erp/numbering";
+import ReuseToggle from "./ReuseToggle";
 
 export default async function NumberingSettingsPage() {
   await requireRole("developer");
@@ -11,6 +12,12 @@ export default async function NumberingSettingsPage() {
     .select("*")
     .order("financial_year", { ascending: false })
     .order("doc_type", { ascending: true });
+
+  const [{ data: company }, { data: waiting }] = await Promise.all([
+    supabase.from("company_profile").select("reuse_cancelled_invoice_numbers").eq("id", 1).single(),
+    supabase.from("released_invoice_numbers").select("invoice_number").is("reused_by", null).order("sequence"),
+  ]);
+  const reuseNumbers = company?.reuse_cancelled_invoice_numbers ?? false;
 
   const currentYear = financialYearOf(new Date());
   const docTypes = Object.keys(DOC_TYPE_LABELS) as DocType[];
@@ -38,6 +45,26 @@ export default async function NumberingSettingsPage() {
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-matte-black mb-1">Cancelled invoice numbers</h2>
+        <p className="text-xs text-gray-500 mb-5">
+          When on, a cancelled invoice frees its number and the next invoice issued in the same series and year takes it, so issued invoices stay one unbroken run.
+        </p>
+        <ReuseToggle initial={reuseNumbers} />
+        {reuseNumbers && (
+          <p className="text-sm text-gray-600 mt-4">
+            {waiting && waiting.length > 0 ? (
+              <>
+                Waiting to be reused:{" "}
+                <span className="font-mono text-xs">{waiting.map((row) => row.invoice_number).join(", ")}</span>
+              </>
+            ) : (
+              "No freed numbers are waiting."
+            )}
+          </p>
+        )}
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
@@ -97,9 +124,11 @@ export default async function NumberingSettingsPage() {
             the same number.
           </li>
           <li>
-            A cancelled invoice keeps its number and is marked cancelled. Numbers are never reused, so the series stays
-            gapless.
+            {reuseNumbers
+              ? "A cancelled invoice stays on record, marked cancelled, and its number goes to the next invoice issued, lowest number first."
+              : "A cancelled invoice keeps its number and is marked cancelled. Numbers are never reused."}
           </li>
+          <li>Issuing takes the number and marks the invoice issued in one step, so a failed attempt never uses up a number.</li>
         </ul>
       </div>
     </div>

@@ -10,7 +10,6 @@ import { createClient } from '@/lib/supabase/server'
 import { computeTax } from '@/lib/erp/tax'
 import { parseLineItems } from '@/lib/erp/lineItems'
 import { parseRupeesToPaise } from '@/lib/erp/money'
-import { allocateDocumentNumber } from '@/lib/erp/numbering'
 import { renderAndStore } from '@/lib/pdf/render'
 import { InvoiceDocument } from '@/lib/pdf/templates/InvoiceDocument'
 import type { PaymentMethod } from '@/lib/supabase/types'
@@ -201,24 +200,16 @@ async function issueDraft(id: string) {
     throw new ActionError('Set your legal name in Settings, Company Details before issuing invoices')
   }
 
-  // GST and non-GST invoices use separate series, which keeps them easy to separate at filing time.
-  const docType = invoice.is_gst_applicable ? 'invoice' : 'invoice_nogst'
-  const invoiceNumber = await allocateDocumentNumber(docType, new Date(invoice.issue_date))
+  // One database step takes the number (a freed one from a cancelled invoice first) and marks the invoice issued, so a failure leaves no gap.
+  // The client record is frozen onto the invoice, so a later edit to the client cannot change what this invoice says.
+  const { data: invoiceNumber, error } = await supabase.rpc('issue_invoice', {
+    p_invoice_id: id,
+    p_party_snapshot: party,
+    p_place_of_supply_state: party.billing_state,
+    p_place_of_supply_code: party.billing_state_code,
+  })
 
-  const { error } = await supabase
-    .from('invoices')
-    .update({
-      invoice_number: invoiceNumber,
-      status: 'issued',
-      issued_at: new Date().toISOString(),
-      place_of_supply_state: party.billing_state,
-      place_of_supply_code: party.billing_state_code,
-      // Frozen so a later edit to the client record cannot change what this invoice says.
-      party_snapshot: party,
-    })
-    .eq('id', id)
-
-  if (error) throw new ActionError('Could not issue invoice: ' + error.message)
+  if (error || !invoiceNumber) throw new ActionError('Could not issue invoice: ' + (error?.message ?? 'no number returned'))
 
   try {
     const { path } = await renderAndStore({

@@ -5,7 +5,7 @@ import { CancelButton } from "@/components/FormDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldDescription, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,19 +18,21 @@ type FieldShellProps = {
   name: string;
   required?: boolean;
   hint?: ReactNode;
+  // Shown under the field as soon as the field knows its value is wrong, so the mistake is caught before saving.
+  error?: string;
   className?: string;
   children: ReactNode;
 };
 
-function FieldShell({ label, name, required, hint, className, children }: FieldShellProps) {
+function FieldShell({ label, name, required, hint, error, className, children }: FieldShellProps) {
   return (
-    <Field className={className}>
+    <Field className={className} data-invalid={error ? true : undefined}>
       <FieldLabel htmlFor={name}>
         {label}
         {required && <span className="text-destructive">*</span>}
       </FieldLabel>
       {children}
-      {hint && <FieldDescription id={`${name}-hint`}>{hint}</FieldDescription>}
+      {error ? <FieldError id={`${name}-error`}>{error}</FieldError> : hint && <FieldDescription id={`${name}-hint`}>{hint}</FieldDescription>}
     </Field>
   );
 }
@@ -39,18 +41,20 @@ type TextFieldProps = Omit<ComponentProps<typeof Input>, "name" | "defaultValue"
   label: ReactNode;
   name: string;
   hint?: ReactNode;
+  error?: string;
   defaultValue?: string | number | null;
 };
 
-export function TextField({ label, name, hint, required, defaultValue, className, ...props }: TextFieldProps) {
+export function TextField({ label, name, hint, error, required, defaultValue, className, ...props }: TextFieldProps) {
   return (
-    <FieldShell label={label} name={name} required={required} hint={hint} className={className}>
+    <FieldShell label={label} name={name} required={required} hint={hint} error={error} className={className}>
       <Input
         id={name}
         name={name}
         required={required}
         defaultValue={props.value === undefined ? (defaultValue ?? "") : undefined}
-        aria-describedby={hint ? `${name}-hint` : undefined}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${name}-error` : hint ? `${name}-hint` : undefined}
         {...props}
       />
     </FieldShell>

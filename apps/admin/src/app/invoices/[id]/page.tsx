@@ -32,7 +32,15 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
   if (!invoice) notFound();
 
-  const { data: party } = await supabase.from("parties").select("*").eq("id", invoice.party_id).single();
+  const [{ data: party }, { data: company }, { data: freed }, { data: took }] = await Promise.all([
+    supabase.from("parties").select("*").eq("id", invoice.party_id).single(),
+    supabase.from("company_profile").select("reuse_cancelled_invoice_numbers").eq("id", 1).single(),
+    // The number this invoice freed by being cancelled, and whether a later invoice has taken it.
+    supabase.from("released_invoice_numbers").select("reused_by").eq("released_from", id).order("released_at", { ascending: false }).limit(1).maybeSingle(),
+    // The cancelled invoice whose number this one took, if any.
+    supabase.from("released_invoice_numbers").select("released_from").eq("reused_by", id).maybeSingle(),
+  ]);
+  const reuseNumbers = company?.reuse_cancelled_invoice_numbers ?? false;
 
   const canWrite = isOwnerLevel(profile.role) || profile.role === "accounts";
   const isDraft = invoice.status === "draft";
@@ -76,16 +84,6 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
               Edit
             </Link>
           )}
-          {invoice.pdf_path && (
-            <a
-              href={`/invoices/${id}/pdf`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2.5 border border-gray-200 text-gray-600 text-xs font-bold uppercase tracking-wider rounded hover:bg-gray-50 transition-colors"
-            >
-              Open PDF
-            </a>
-          )}
         </div>
       </div>
 
@@ -95,6 +93,31 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             Cancelled on {formatDate(invoice.cancelled_at)}
           </p>
           <p className="text-sm text-red-800 mt-1">{invoice.cancellation_reason}</p>
+          {freed && (
+            <p className="text-sm text-red-800 mt-2">
+              {freed.reused_by ? (
+                <>
+                  Its number was given to a later invoice.{" "}
+                  <Link href={`/invoices/${freed.reused_by}`} className="font-semibold underline underline-offset-2">
+                    Open that invoice
+                  </Link>
+                </>
+              ) : (
+                "Its number is free and will be given to the next invoice you issue."
+              )}
+            </p>
+          )}
+        </div>
+      )}
+
+      {took && invoice.status === "issued" && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+          <p className="text-sm text-amber-900">
+            This invoice reuses the number of a cancelled invoice.{" "}
+            <Link href={`/invoices/${took.released_from}`} className="font-semibold underline underline-offset-2">
+              Open the cancelled invoice
+            </Link>
+          </p>
         </div>
       )}
 
@@ -104,6 +127,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           status={invoice.status}
           hasPdf={!!invoice.pdf_path}
           canWrite={canWrite}
+          reuseNumbers={reuseNumbers}
           issue={issueInvoice}
           cancel={cancelInvoice}
           regenerate={regenerateInvoicePdf}

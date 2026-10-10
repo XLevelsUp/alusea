@@ -138,6 +138,7 @@ export type Database = {
           logo_url: string
           invoice_terms: string
           invoice_footer: string
+          reuse_cancelled_invoice_numbers: boolean
           default_gst_rate: number
           created_at: string
           updated_at: string
@@ -165,6 +166,7 @@ export type Database = {
           logo_url?: string
           invoice_terms?: string
           invoice_footer?: string
+          reuse_cancelled_invoice_numbers?: boolean
           default_gst_rate?: number
           created_at?: string
           updated_at?: string
@@ -192,6 +194,7 @@ export type Database = {
           logo_url?: string
           invoice_terms?: string
           invoice_footer?: string
+          reuse_cancelled_invoice_numbers?: boolean
           default_gst_rate?: number
           created_at?: string
           updated_at?: string
@@ -306,6 +309,42 @@ export type Database = {
           sort_order?: number
           is_active?: boolean
           created_at?: string
+        }
+        Relationships: []
+      }
+      released_invoice_numbers: {
+        Row: {
+          id: string
+          doc_type: string
+          financial_year: string
+          invoice_number: string
+          sequence: number
+          released_from: string
+          released_at: string
+          reused_by: string | null
+          reused_at: string | null
+        }
+        Insert: {
+          id?: string
+          doc_type: string
+          financial_year: string
+          invoice_number: string
+          sequence: number
+          released_from: string
+          released_at?: string
+          reused_by?: string | null
+          reused_at?: string | null
+        }
+        Update: {
+          id?: string
+          doc_type?: string
+          financial_year?: string
+          invoice_number?: string
+          sequence?: number
+          released_from?: string
+          released_at?: string
+          reused_by?: string | null
+          reused_at?: string | null
         }
         Relationships: []
       }
@@ -1052,6 +1091,7 @@ export type Database = {
           description: string
           image_url: string
           image_urls: string[]
+          video_urls: string[]
           specs: Json
           price_per_sqft: number
           created_at: string
@@ -1063,6 +1103,7 @@ export type Database = {
           description?: string | null
           image_url: string
           image_urls?: string[] | null
+          video_urls?: string[]
           specs?: Json | null
           price_per_sqft?: number
           created_at?: string | null
@@ -1074,6 +1115,7 @@ export type Database = {
           description?: string | null
           image_url?: string
           image_urls?: string[] | null
+          video_urls?: string[]
           specs?: Json | null
           price_per_sqft?: number
           created_at?: string | null
@@ -1409,6 +1451,14 @@ export type Database = {
       }
       peek_document_number: {
         Args: { p_doc_type: string; p_date?: string }
+        Returns: string
+      }
+      allocate_invoice_number: {
+        Args: { p_doc_type: string; p_date: string; p_invoice_id: string }
+        Returns: string
+      }
+      issue_invoice: {
+        Args: { p_invoice_id: string; p_party_snapshot: Json; p_place_of_supply_state: string; p_place_of_supply_code: string }
         Returns: string
       }
       financial_year_of: {

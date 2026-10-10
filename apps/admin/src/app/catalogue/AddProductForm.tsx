@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, VideoIcon, XIcon } from "lucide-react";
 import { addProduct, updateProduct } from "../actions";
 import Image from "next/image";
 import { createClient } from '@/lib/supabase/client';
@@ -21,8 +21,12 @@ type Product = {
   specs: Record<string, string>;
   image_url: string;
   image_urls?: string[];
+  video_urls?: string[];
   price_per_sqft?: number;
 };
+
+// Storage rejects larger files, and films this size already load slowly on phones.
+const MAX_VIDEO_MB = 50;
 
 export default function ProductForm({ initialData, cancelUrl, categories = [] }: { initialData?: Product, cancelUrl?: string, categories?: string[] }) {
   const [specs, setSpecs] = useState<{ key: string, value: string }[]>([{ key: "", value: "" }]);
@@ -41,6 +45,10 @@ export default function ProductForm({ initialData, cancelUrl, categories = [] }:
     return [];
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Films are optional and sit after the photos in the website gallery.
+  const [videoFiles, setVideoFiles] = useState<File[]>([]);
+  const [existingVideoUrls, setExistingVideoUrls] = useState<string[]>(() => initialData?.video_urls ?? []);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const isSubmitting = isUploading || isPending;
   const error = uploadError ?? actionError;
@@ -61,13 +69,19 @@ export default function ProductForm({ initialData, cancelUrl, categories = [] }:
     formData.delete('image_files'); // We handle files client-side now
 
     const newUploadedUrls: string[] = [];
-    if (files.length > 0) {
+    const newVideoUrls: string[] = [];
+    // Photos go to the top of the bucket as before; films go into their own folder.
+    const uploads = [
+      ...files.map((file) => ({ file, folder: '', urls: newUploadedUrls })),
+      ...videoFiles.map((file) => ({ file, folder: 'videos/', urls: newVideoUrls })),
+    ];
+    if (uploads.length > 0) {
       setIsUploading(true);
       const supabase = createClient();
       try {
-        for (const file of files) {
+        for (const { file, folder, urls } of uploads) {
           const fileExt = file.name.split('.').pop() || 'webp';
-          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const fileName = `${folder}${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
           const { error: storageError } = await supabase.storage
             .from('alusea-assets')
@@ -80,7 +94,7 @@ export default function ProductForm({ initialData, cancelUrl, categories = [] }:
           }
 
           const { data } = supabase.storage.from('alusea-assets').getPublicUrl(fileName);
-          newUploadedUrls.push(data.publicUrl);
+          urls.push(data.publicUrl);
         }
       } finally {
         setIsUploading(false);
@@ -88,6 +102,8 @@ export default function ProductForm({ initialData, cancelUrl, categories = [] }:
     }
 
     formData.set('new_uploaded_urls', JSON.stringify(newUploadedUrls));
+    formData.set('video_urls', JSON.stringify([...existingVideoUrls, ...newVideoUrls]));
+    formData.delete('video_files'); // Uploaded above, straight from the browser
 
     const result = await run(formData);
     if (!result.ok) return;
@@ -114,11 +130,14 @@ export default function ProductForm({ initialData, cancelUrl, categories = [] }:
         urls = [initialData.image_url];
       }
       setExistingUrls(urls);
+      setExistingVideoUrls(initialData.video_urls ?? []);
     } else {
       setSpecs([{ key: "", value: "" }]);
       setExistingUrls([]);
+      setExistingVideoUrls([]);
     }
     setFiles([]);
+    setVideoFiles([]);
   }, [initialData]);
 
   const handleAddSpec = () => setSpecs([...specs, { key: "", value: "" }]);
@@ -159,6 +178,22 @@ export default function ProductForm({ initialData, cancelUrl, categories = [] }:
       setFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
     }
   };
+
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = Array.from(e.target.files ?? []);
+    // The same file can be picked again after it is removed.
+    e.target.value = "";
+    const tooBig = picked.find((file) => file.size > MAX_VIDEO_MB * 1024 * 1024);
+    if (tooBig) {
+      setUploadError(`${tooBig.name} is larger than ${MAX_VIDEO_MB} MB. Please compress it and try again.`);
+      return;
+    }
+    setUploadError(null);
+    setVideoFiles((prev) => [...prev, ...picked]);
+  };
+
+  // The stored name is all a saved film has to show for itself.
+  const videoName = (url: string) => decodeURIComponent(url.split('/').pop() || url);
 
   return (
     <form onSubmit={handleSubmit}>
@@ -247,6 +282,49 @@ export default function ProductForm({ initialData, cancelUrl, categories = [] }:
                 ))}
               </ul>
             </div>
+          )}
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="video_files">Product Videos (optional)</FieldLabel>
+          <Button type="button" variant="outline" onClick={() => videoInputRef.current?.click()} className="self-start">
+            <VideoIcon aria-hidden="true" />
+            Add videos
+          </Button>
+          <FieldDescription>MP4 or WebM, up to {MAX_VIDEO_MB} MB each. On the website they follow the photos in the product gallery and play without sound.</FieldDescription>
+          <input
+            id="video_files"
+            ref={videoInputRef}
+            onChange={handleVideoChange}
+            name="video_files"
+            type="file"
+            accept="video/mp4,video/webm"
+            multiple
+            className="sr-only"
+          />
+
+          {(existingVideoUrls.length > 0 || videoFiles.length > 0) && (
+            <ul className="flex flex-col gap-2">
+              {existingVideoUrls.map((url, i) => (
+                <li key={url} className="flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2 text-xs">
+                  <VideoIcon aria-hidden="true" className="size-4 shrink-0 text-gray-500" />
+                  <a href={url} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 truncate text-gray-700 underline-offset-2 hover:underline">{videoName(url)}</a>
+                  <Button type="button" variant="ghost" size="icon-sm" onClick={() => setExistingVideoUrls((prev) => prev.filter((_, vi) => vi !== i))} aria-label={`Remove video ${videoName(url)}`} className="text-red-400 hover:text-red-600">
+                    <XIcon />
+                  </Button>
+                </li>
+              ))}
+              {videoFiles.map((file, i) => (
+                <li key={`${file.name}-${i}`} className="flex items-center gap-3 rounded-lg border border-[#A67C52]/30 px-3 py-2 text-xs">
+                  <VideoIcon aria-hidden="true" className="size-4 shrink-0 text-[#A67C52]" />
+                  <span className="min-w-0 flex-1 truncate text-gray-700">{file.name}</span>
+                  <span className="shrink-0 text-gray-500">{(file.size / 1048576).toFixed(1)} MB · new</span>
+                  <Button type="button" variant="ghost" size="icon-sm" onClick={() => setVideoFiles((prev) => prev.filter((_, vi) => vi !== i))} aria-label={`Remove ${file.name}`} className="text-red-400 hover:text-red-600">
+                    <XIcon />
+                  </Button>
+                </li>
+              ))}
+            </ul>
           )}
         </Field>
 

@@ -54,6 +54,17 @@ export async function login(formData: FormData) {
   redirect(landingPageFor(profile.role))
 }
 
+// Reads a JSON list of links sent by a form; anything unreadable counts as an empty list.
+function parseUrlList(raw: FormDataEntryValue | null): string[] {
+  if (typeof raw !== 'string' || !raw) return []
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : []
+  } catch {
+    return []
+  }
+}
+
 export const addProduct = defineAction(async function addProduct(formData: FormData) {
   const supabase = await createClient()
 
@@ -62,6 +73,7 @@ export const addProduct = defineAction(async function addProduct(formData: FormD
   const name = formData.get('name') as string
   const category = formData.get('category') as string
   const newUploadedUrlsRaw = formData.get('new_uploaded_urls') as string
+  const videoUrls = parseUrlList(formData.get('video_urls'))
   const description = formData.get('description') as string
   const specsRaw = formData.get('specs') as string
   const pricePerSqftRaw = formData.get('price_per_sqft') as string
@@ -105,7 +117,7 @@ export const addProduct = defineAction(async function addProduct(formData: FormD
 
   const { data: inserted, error } = await supabase
     .from('products')
-    .insert([{ name, category, image_url: finalImageUrl, image_urls: uploadedUrls, description, specs, price_per_sqft: pricePerSqft }])
+    .insert([{ name, category, image_url: finalImageUrl, image_urls: uploadedUrls, video_urls: videoUrls, description, specs, price_per_sqft: pricePerSqft }])
     .select()
     .single()
 
@@ -132,6 +144,7 @@ export const updateProduct = defineAction(async function updateProduct(formData:
   const specsRaw = formData.get('specs') as string
   const existingUrlsRaw = formData.get('existing_urls') as string
   const newUploadedUrlsRaw = formData.get('new_uploaded_urls') as string
+  const videoUrls = parseUrlList(formData.get('video_urls'))
   const pricePerSqftRaw = formData.get('price_per_sqft') as string
   const pricePerSqft = pricePerSqftRaw ? parseFloat(pricePerSqftRaw) : 1500
 
@@ -180,7 +193,7 @@ export const updateProduct = defineAction(async function updateProduct(formData:
 
   const { data: updated, error } = await supabase
     .from('products')
-    .update({ name, category, image_url: mainImageUrl, image_urls: finalUrls, description, specs, price_per_sqft: pricePerSqft })
+    .update({ name, category, image_url: mainImageUrl, image_urls: finalUrls, video_urls: videoUrls, description, specs, price_per_sqft: pricePerSqft })
     .eq('id', id)
     .select()
     .single()

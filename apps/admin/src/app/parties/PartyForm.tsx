@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FormActions, FormError, FormSection, SelectField, TextareaField, TextField } from "@/components/form-fields";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
@@ -9,7 +9,7 @@ import { useFormDone } from "@/components/FormDialog";
 import { useAction } from "@/hooks/use-action";
 import type { Action } from "@/lib/actions";
 import { VENDOR_TYPES, type AddedParty } from "@/lib/erp/parties";
-import { INDIAN_STATES } from "@/lib/erp/states";
+import { INDIAN_STATES, isValidGstin, isValidPan } from "@/lib/erp/states";
 import type { Party } from "@/lib/supabase/types";
 
 type Props = {
@@ -23,17 +23,47 @@ type Props = {
   onAdded?: (party: AddedParty) => void;
 };
 
+// The same checks the server makes on save, run while typing so a wrong number is caught at once.
+function gstinProblem(gstin: string, stateCode: string): string | undefined {
+  if (!gstin) return undefined;
+  if (!isValidGstin(gstin)) return "GSTIN must be 15 characters in the standard format, for example 33ABCDE1234F1Z5";
+  if (stateCode && gstin.slice(0, 2) !== stateCode) return `GSTIN starts with state code ${gstin.slice(0, 2)} but the selected state is ${stateCode}`;
+  return undefined;
+}
+
+function panProblem(pan: string): string | undefined {
+  if (pan && !isValidPan(pan)) return "PAN must be 10 characters in the standard format, for example ABCDE1234F";
+  return undefined;
+}
+
 export default function PartyForm({ initialData, add, update, cancelUrl, defaultKind = "client", onAdded }: Props) {
   const isEdit = !!initialData;
   // Controlled so the vendor type selector appears only once Vendor is ticked.
   const [isVendor, setIsVendor] = useState(initialData?.is_vendor ?? defaultKind === "vendor");
   const { run, isPending, error } = useAction(isEdit ? update : add);
   const done = useFormDone(cancelUrl);
+  const [gstin, setGstin] = useState(initialData?.gstin ?? "");
+  const [pan, setPan] = useState(initialData?.pan ?? "");
+  const [stateCode, setStateCode] = useState(initialData?.billing_state_code ?? "");
+  // A field shows its error once the user has left it, and then updates on every key until it is right.
+  const [checked, setChecked] = useState({ gstin: false, pan: false });
+  const gstinRef = useRef<HTMLInputElement>(null);
+  const panRef = useRef<HTMLInputElement>(null);
+  const gstinError = checked.gstin ? gstinProblem(gstin, stateCode) : undefined;
+  const panError = checked.pan ? panProblem(pan) : undefined;
 
   function onSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     // Opened from inside an invoice or expense form, this dialog is still that form's child in React, so the submit must not reach it.
     e.stopPropagation();
+    // A wrong GSTIN or PAN stops the save right here and takes the user to it.
+    const badGstin = gstinProblem(gstin, stateCode);
+    const badPan = panProblem(pan);
+    if (badGstin || badPan) {
+      setChecked({ gstin: true, pan: true });
+      (badGstin ? gstinRef : panRef).current?.focus();
+      return;
+    }
     run(new FormData(e.currentTarget)).then((result) => {
       if (!result.ok) return;
       if (result.data) onAdded?.(result.data);
@@ -101,6 +131,7 @@ export default function PartyForm({ initialData, add, update, cancelUrl, default
               label="State"
               name="billing_state_code"
               defaultValue={initialData?.billing_state_code ?? ""}
+              onChange={(e) => setStateCode(e.target.value)}
               hint="Decides IGST or CGST plus SGST on their invoices"
             >
               <NativeSelectOption value="">Select a state</NativeSelectOption>
@@ -116,8 +147,31 @@ export default function PartyForm({ initialData, add, update, cancelUrl, default
 
         <FormSection title="Tax details">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <TextField label="GSTIN" name="gstin" defaultValue={initialData?.gstin} placeholder="33ABCDE1234F1Z5" hint="Leave blank if unregistered" />
-            <TextField label="PAN" name="pan" defaultValue={initialData?.pan} placeholder="ABCDE1234F" />
+            <TextField
+              ref={gstinRef}
+              label="GSTIN"
+              name="gstin"
+              value={gstin}
+              onChange={(e) => setGstin(e.target.value.toUpperCase().trim())}
+              onBlur={() => setChecked((current) => ({ ...current, gstin: true }))}
+              maxLength={15}
+              autoComplete="off"
+              placeholder="33ABCDE1234F1Z5"
+              hint="Leave blank if unregistered"
+              error={gstinError}
+            />
+            <TextField
+              ref={panRef}
+              label="PAN"
+              name="pan"
+              value={pan}
+              onChange={(e) => setPan(e.target.value.toUpperCase().trim())}
+              onBlur={() => setChecked((current) => ({ ...current, pan: true }))}
+              maxLength={10}
+              autoComplete="off"
+              placeholder="ABCDE1234F"
+              error={panError}
+            />
           </div>
         </FormSection>
 
