@@ -6,16 +6,15 @@ import { createClient } from '@/lib/supabase/server'
 export { financialYearOf } from './financial-year'
 
 export const DOC_TYPES = {
+  // One series for every invoice, with or without GST.
   invoice: 'invoice',
-  invoiceNoGst: 'invoice_nogst',
   quote: 'quote',
 } as const
 
 export type DocType = (typeof DOC_TYPES)[keyof typeof DOC_TYPES]
 
 export const DOC_TYPE_LABELS: Record<DocType, string> = {
-  invoice: 'Invoice (with GST)',
-  invoice_nogst: 'Invoice (without GST)',
+  invoice: 'Invoice',
   quote: 'Quotation',
 }
 

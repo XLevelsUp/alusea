@@ -1,17 +1,18 @@
 // Payroll computation. Pure functions with no database access, because this is the one place in the codebase where a silent bug pays a real person the wrong amount.
-// Monthly staff are prorated over the month's working days (calendar days minus Sundays), with flat overtime and bonus and no statutory deductions.
+// Monthly staff: salary ÷ 30.5 is one day's pay, and they are paid for the days they worked plus the month's Sundays. Daily staff: rate × days. No statutory deductions.
 
 export type WorkerType = 'monthly' | 'daily'
 
-// Only a fallback for a run with no stored day basis. Runs created before working days were counted stored 30, and keep it.
-export const STANDARD_DAYS_IN_MONTH = 30
+// One day's pay for monthly staff is the monthly salary divided by this, in every month.
+export const SALARY_DIVISOR_DAYS = 30.5
 
 export type PayslipInput = {
   workerType: WorkerType
   // Monthly salary for monthly staff, daily rate for daily staff.
   enteredAmountPaise: number
   daysWorked: number
-  daysInPeriod?: number
+  // Sundays in the month (from the joining date, for a new joiner). Paid to monthly staff on top of the days worked.
+  sundays?: number
   overtimePaise?: number
   bonusPaise?: number
 }
@@ -22,6 +23,8 @@ export type PayslipComputation = {
   bonusPaise: number
   grossPaise: number
   netPaise: number
+  // The Sundays actually paid: none for daily staff, and none for someone who did not work at all that month.
+  paidSundays: number
   // Human-readable working, shown on the payslip so the figure explains itself.
   baseExplanation: string
 }
@@ -31,18 +34,26 @@ function nonNegative(value: number | undefined): number {
   return Math.round(value)
 }
 
+function daysWorkedOf(input: PayslipInput): number {
+  return Number.isFinite(input.daysWorked) ? Math.max(0, input.daysWorked) : 0
+}
+
+// Sundays are a paid weekly off for monthly staff, but only in a month they actually worked in.
+export function paidSundaysOf(input: PayslipInput): number {
+  if (input.workerType !== 'monthly' || daysWorkedOf(input) === 0) return 0
+  return nonNegative(input.sundays)
+}
+
 export function computeBasePaise(input: PayslipInput): number {
   const amount = nonNegative(input.enteredAmountPaise)
-  const days = Number.isFinite(input.daysWorked) ? Math.max(0, input.daysWorked) : 0
+  const days = daysWorkedOf(input)
 
   if (input.workerType === 'daily') {
     return Math.round(amount * days)
   }
 
-  const divisor = input.daysInPeriod && input.daysInPeriod > 0 ? input.daysInPeriod : STANDARD_DAYS_IN_MONTH
-
-  // Rounding happens once, on the prorated base, so the components always sum exactly to the gross.
-  return Math.round((amount / divisor) * days)
+  // Rounding happens once, on the whole base, so the components always sum exactly to the gross.
+  return Math.round((amount / SALARY_DIVISOR_DAYS) * (days + paidSundaysOf(input)))
 }
 
 export function computePayslip(input: PayslipInput): PayslipComputation {
@@ -50,13 +61,12 @@ export function computePayslip(input: PayslipInput): PayslipComputation {
   const overtime = nonNegative(input.overtimePaise)
   const bonus = nonNegative(input.bonusPaise)
   const gross = base + overtime + bonus
-
-  const divisor = input.daysInPeriod && input.daysInPeriod > 0 ? input.daysInPeriod : STANDARD_DAYS_IN_MONTH
+  const paidSundays = paidSundaysOf(input)
 
   const baseExplanation =
     input.workerType === 'daily'
       ? `${input.daysWorked} days at the daily rate`
-      : `${input.daysWorked} of ${divisor} days worked`
+      : `${input.daysWorked} days worked + ${paidSundays} Sundays, at salary ÷ ${SALARY_DIVISOR_DAYS} a day`
 
   return {
     basePaise: base,
@@ -65,6 +75,7 @@ export function computePayslip(input: PayslipInput): PayslipComputation {
     grossPaise: gross,
     // No statutory deductions in this scope, so net equals gross.
     netPaise: gross,
+    paidSundays,
     baseExplanation,
   }
 }
@@ -88,32 +99,57 @@ export function toPeriodMonth(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`
 }
 
+// The newest month payroll may be run for, as YYYY-MM: the month before today's. A month still in progress has days not yet worked.
+export function lastCompletedMonth(today: string): string {
+  const year = Number(today.slice(0, 4))
+  const month = Number(today.slice(5, 7))
+  return month === 1 ? `${year - 1}-12` : `${year}-${String(month - 1).padStart(2, '0')}`
+}
+
 export function formatPeriod(periodMonth: string): string {
   const date = new Date(`${periodMonth}T00:00:00`)
   if (Number.isNaN(date.getTime())) return periodMonth
   return date.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
 }
 
-// Sundays are the weekly off, so they are not working days and are left out of the salary divisor.
-export function sundaysInMonth(periodMonth: string): number {
-  const first = new Date(`${periodMonth}T00:00:00`)
-  if (Number.isNaN(first.getTime())) return 0
-
-  const days = calendarDaysInMonth(periodMonth)
-  let sundays = 0
-  for (let day = 1; day <= days; day += 1) {
-    if (new Date(first.getFullYear(), first.getMonth(), day).getDay() === 0) sundays += 1
-  }
-  return sundays
+export type MonthDays = {
+  // Sundays, the paid weekly off.
+  sundays: number
+  // Every other day: the most days anyone can have worked.
+  workingDays: number
 }
 
-// The divisor a new payroll run uses: someone who works every working day earns exactly their monthly salary.
+// Counts a month's Sundays and working days. For someone who joined during the month, only the days from their joining date onward count.
+export function monthDays(periodMonth: string, joiningDate?: string | null): MonthDays {
+  const first = new Date(`${periodMonth}T00:00:00`)
+  if (Number.isNaN(first.getTime())) return { sundays: 0, workingDays: 0 }
+
+  const year = first.getFullYear()
+  const month = first.getMonth()
+  const joined = joiningDate ? joiningDate.slice(0, 10) : ''
+  const prefix = `${year}-${String(month + 1).padStart(2, '0')}-`
+
+  let sundays = 0
+  let workingDays = 0
+  for (let day = 1; day <= calendarDaysInMonth(periodMonth); day += 1) {
+    // Dates in YYYY-MM-DD form compare correctly as plain text.
+    if (joined && `${prefix}${String(day).padStart(2, '0')}` < joined) continue
+    if (new Date(year, month, day).getDay() === 0) sundays += 1
+    else workingDays += 1
+  }
+  return { sundays, workingDays }
+}
+
+export function sundaysInMonth(periodMonth: string): number {
+  return monthDays(periodMonth).sundays
+}
+
 export function workingDaysInMonth(periodMonth: string): number {
-  return calendarDaysInMonth(periodMonth) - sundaysInMonth(periodMonth)
+  return monthDays(periodMonth).workingDays
 }
 
 export function calendarDaysInMonth(periodMonth: string): number {
   const date = new Date(`${periodMonth}T00:00:00`)
-  if (Number.isNaN(date.getTime())) return STANDARD_DAYS_IN_MONTH
+  if (Number.isNaN(date.getTime())) return 30
   return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
 }

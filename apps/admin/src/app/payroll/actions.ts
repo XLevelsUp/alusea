@@ -7,7 +7,8 @@ import { redirect } from 'next/navigation'
 import { assertRole } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 import { parseRupeesToPaise } from '@/lib/erp/money'
-import { computePayslip, computeRunTotals, formatPeriod, workingDaysInMonth } from '@/lib/erp/payroll'
+import { todayInIndia } from '@/lib/erp/dates'
+import { computePayslip, computeRunTotals, formatPeriod, lastCompletedMonth, monthDays, workingDaysInMonth } from '@/lib/erp/payroll'
 import { renderAndStore } from '@/lib/pdf/render'
 import { PayslipDocument } from '@/lib/pdf/templates/PayslipDocument'
 import type { WorkerType } from '@/lib/supabase/types'
@@ -28,6 +29,12 @@ export const createPayrollRun = defineAction(async function createPayrollRun(for
   }
 
   const periodMonth = `${period}-01`
+
+  // Payroll is for a finished month: one still in progress has days that have not been worked yet.
+  if (period > lastCompletedMonth(todayInIndia())) {
+    throw new ActionError(`${formatPeriod(periodMonth)} is not over yet. Payroll can be run only after the month has ended.`)
+  }
+
   const workingDays = workingDaysInMonth(periodMonth)
   const supabase = await createClient()
 
@@ -53,7 +60,7 @@ export const createPayrollRun = defineAction(async function createPayrollRun(for
 
   const { data: run, error } = await supabase
     .from('payroll_runs')
-    // The day basis is fixed on the run when it is created, so a later rule change never rewrites an old month.
+    // The month's working days are kept on the run: the most anyone can have worked.
     .insert([{ period_month: periodMonth, days_in_period: workingDays, created_by: profile.id }])
     .select()
     .single()
@@ -68,7 +75,7 @@ export const createPayrollRun = defineAction(async function createPayrollRun(for
       workerType: employee.worker_type,
       enteredAmountPaise: employee.default_amount_paise,
       daysWorked: 0,
-      daysInPeriod: workingDays,
+      sundays: monthDays(periodMonth, employee.joining_date).sundays,
     })
 
     return {
@@ -79,6 +86,7 @@ export const createPayrollRun = defineAction(async function createPayrollRun(for
       designation: employee.designation,
       worker_type: employee.worker_type,
       days_worked: 0,
+      paid_sundays: computed.paidSundays,
       entered_amount_paise: employee.default_amount_paise,
       base_paise: computed.basePaise,
       overtime_paise: 0,
@@ -120,6 +128,13 @@ export const savePayrollEntries = defineAction(async function savePayrollEntries
   const { data: payslips } = await supabase.from('payslips').select('*').eq('run_id', runId)
   if (!payslips) throw new ActionError('Could not load the payroll rows')
 
+  // Joining dates decide how many Sundays and working days each person has in this month.
+  const { data: employees } = await supabase
+    .from('employees')
+    .select('id, joining_date')
+    .in('id', payslips.map((slip) => slip.employee_id))
+  const joiningById = new Map((employees ?? []).map((employee) => [employee.id, employee.joining_date]))
+
   const updates = payslips.map((slip) => {
     const daysRaw = text(formData, `days[${slip.id}]`)
     const amountRaw = text(formData, `amount[${slip.id}]`)
@@ -131,6 +146,12 @@ export const savePayrollEntries = defineAction(async function savePayrollEntries
       throw new ActionError(`${slip.employee_name}: days worked must be between 0 and 31`)
     }
 
+    const days = monthDays(run.period_month, joiningById.get(slip.employee_id))
+    // Sundays are added automatically for monthly staff, so they cannot also be typed in as days worked.
+    if (slip.worker_type === 'monthly' && daysWorked > days.workingDays) {
+      throw new ActionError(`${slip.employee_name}: days worked cannot be more than ${days.workingDays}, the working days they had this month (Sundays are added automatically)`)
+    }
+
     const enteredAmount = parseRupeesToPaise(amountRaw)
     if (enteredAmount < 0) {
       throw new ActionError(`${slip.employee_name}: amount cannot be negative`)
@@ -140,7 +161,7 @@ export const savePayrollEntries = defineAction(async function savePayrollEntries
       workerType: slip.worker_type,
       enteredAmountPaise: enteredAmount,
       daysWorked,
-      daysInPeriod: run.days_in_period,
+      sundays: days.sundays,
       overtimePaise: parseRupeesToPaise(overtimeRaw),
       bonusPaise: parseRupeesToPaise(bonusRaw),
     })
@@ -148,6 +169,7 @@ export const savePayrollEntries = defineAction(async function savePayrollEntries
     return {
       id: slip.id,
       days_worked: daysWorked,
+      paid_sundays: computed.paidSundays,
       entered_amount_paise: enteredAmount,
       base_paise: computed.basePaise,
       overtime_paise: computed.overtimePaise,
@@ -200,6 +222,11 @@ export const approvePayrollRun = defineAction(async function approvePayrollRun(f
 
   if (!run) throw new ActionError('Payroll run not found')
   if (run.status !== 'draft') throw new ActionError('This run has already been approved')
+
+  // A draft started before this rule existed may be for a month still in progress; it cannot be approved until the month ends.
+  if (run.period_month.slice(0, 7) > lastCompletedMonth(todayInIndia())) {
+    throw new ActionError(`${formatPeriod(run.period_month)} is not over yet. This run can be approved once the month has ended.`)
+  }
 
   const { data: payslips } = await supabase.from('payslips').select('*').eq('run_id', runId)
 
@@ -273,8 +300,6 @@ async function generatePayslipPdfs(runId: string) {
           workerType: slip.worker_type as WorkerType,
         },
         daysWorked: Number(slip.days_worked),
-        daysInPeriod: run.days_in_period,
-        enteredAmountPaise: slip.entered_amount_paise,
         basePaise: slip.base_paise,
         overtimePaise: slip.overtime_paise,
         bonusPaise: slip.bonus_paise,

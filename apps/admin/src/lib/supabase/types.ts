@@ -796,6 +796,7 @@ export type Database = {
           designation: string
           worker_type: WorkerType
           days_worked: number
+          paid_sundays: number | null
           entered_amount_paise: number
           base_paise: number
           overtime_paise: number
@@ -816,6 +817,7 @@ export type Database = {
           designation?: string
           worker_type?: WorkerType
           days_worked?: number
+          paid_sundays?: number | null
           entered_amount_paise?: number
           base_paise?: number
           overtime_paise?: number
@@ -836,6 +838,7 @@ export type Database = {
           designation?: string
           worker_type?: WorkerType
           days_worked?: number
+          paid_sundays?: number | null
           entered_amount_paise?: number
           base_paise?: number
           overtime_paise?: number

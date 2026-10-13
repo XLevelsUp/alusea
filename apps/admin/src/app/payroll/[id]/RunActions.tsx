@@ -12,7 +12,6 @@ export default function RunActions({
   runId,
   status,
   canWrite,
-  approve,
   markPaid,
   regenerate,
   remove,
@@ -20,7 +19,6 @@ export default function RunActions({
   runId: string;
   status: PayrollRunStatus;
   canWrite: boolean;
-  approve: Action;
   markPaid: Action;
   regenerate: Action;
   remove: Action;
@@ -36,17 +34,6 @@ export default function RunActions({
     runAction(action, formData).then((result) => {
       if (result.ok) toast.success(done);
     });
-  }
-
-  async function onApprove() {
-    const ok = await confirm({
-      tone: "neutral",
-      title: "Approve this payroll run?",
-      description: "The figures will be frozen and payslips generated. An approved run cannot be reopened or edited.",
-      confirmLabel: "Yes, approve",
-      cancelLabel: "Not yet",
-    });
-    if (ok) run(approve, "Payroll run approved");
   }
 
   async function onMarkPaid() {
@@ -73,14 +60,9 @@ export default function RunActions({
     <div>
       <div className="flex flex-wrap gap-2">
         {status === "draft" && (
-          <>
-            <Button type="button" size="lg" disabled={isPending} onClick={onApprove}>
-              {isPending ? "Working…" : "Approve Run"}
-            </Button>
-            <Button type="button" size="lg" variant="destructive" disabled={isPending} onClick={onDelete}>
-              Delete Run
-            </Button>
-          </>
+          <Button type="button" size="lg" variant="destructive" disabled={isPending} onClick={onDelete}>
+            Delete Run
+          </Button>
         )}
 
         {status === "approved" && (
