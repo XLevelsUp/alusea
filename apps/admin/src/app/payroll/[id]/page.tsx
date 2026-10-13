@@ -4,7 +4,7 @@ import { requireRole } from "@/lib/auth/session";
 import { isOwnerLevel } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 import { formatPaise } from "@/lib/erp/money";
-import { calendarDaysInMonth, formatPeriod, sundaysInMonth, workingDaysInMonth } from "@/lib/erp/payroll";
+import { SALARY_DIVISOR_DAYS, calendarDaysInMonth, formatPeriod, monthDays, sundaysInMonth, workingDaysInMonth } from "@/lib/erp/payroll";
 import { createAdminClient } from "@/lib/supabase/admin";
 import PayrollGrid from "./PayrollGrid";
 import RunActions from "./RunActions";
@@ -42,16 +42,21 @@ export default async function PayrollRunPage({ params }: { params: Promise<{ id:
 
   const employeeIds = (payslips ?? []).map((slip) => slip.employee_id);
   const { data: employees } = employeeIds.length
-    ? await supabase.from("employees").select("id, default_amount_paise").in("id", employeeIds)
+    ? await supabase.from("employees").select("id, default_amount_paise, joining_date").in("id", employeeIds)
     : { data: [] };
 
   const defaultById = new Map((employees ?? []).map((employee) => [employee.id, employee.default_amount_paise]));
+  const joiningById = new Map((employees ?? []).map((employee) => [employee.id, employee.joining_date]));
+  // Drafts always follow the current rule; a finished run does only if its payslips recorded the Sundays they paid.
+  const paysSundays = isDraft || (payslips ?? []).some((slip) => slip.paid_sundays !== null);
 
   // Runs created since Sundays were excluded store the month's working days; older runs stored a flat 30 and say so.
   const usesWorkingDays = run.days_in_period === workingDaysInMonth(run.period_month);
-  const dayBasisNote = usesWorkingDays
-    ? `${calendarDaysInMonth(run.period_month)} days − ${sundaysInMonth(run.period_month)} Sundays`
-    : "Flat day basis from before Sundays were excluded";
+  const dayBasisNote = paysSundays
+    ? `${calendarDaysInMonth(run.period_month)} days − ${sundaysInMonth(run.period_month)} Sundays. Monthly staff are paid salary ÷ ${SALARY_DIVISOR_DAYS} for each day worked and each Sunday.`
+    : usesWorkingDays
+      ? `${calendarDaysInMonth(run.period_month)} days − ${sundaysInMonth(run.period_month)} Sundays`
+      : "Flat day basis from before Sundays were excluded";
 
   // Names for the trail. Profiles are readable only by their owner, so they are looked up with the service client, limited to the people on this run.
   const actorIds = [run.created_by, run.approved_by, run.paid_by].filter((value): value is string => !!value);
@@ -140,7 +145,6 @@ export default async function PayrollRunPage({ params }: { params: Promise<{ id:
           runId={id}
           status={run.status}
           canWrite={canWrite}
-          approve={approvePayrollRun}
           markPaid={markPayrollPaid}
           regenerate={regeneratePayslips}
           remove={deletePayrollRun}
@@ -155,10 +159,12 @@ export default async function PayrollRunPage({ params }: { params: Promise<{ id:
       ) : isDraft && canWrite ? (
         <PayrollGrid
           runId={id}
-          daysInPeriod={run.days_in_period}
           notes={run.notes}
           save={savePayrollEntries}
+          approve={approvePayrollRun}
+          hasSavedDays={(payslips ?? []).some((slip) => Number(slip.days_worked) > 0)}
           initialRows={(payslips ?? []).map((slip) => ({
+            ...monthDays(run.period_month, joiningById.get(slip.employee_id)),
             id: slip.id,
             employeeId: slip.employee_id,
             code: slip.employee_code,
@@ -180,6 +186,7 @@ export default async function PayrollRunPage({ params }: { params: Promise<{ id:
                 <tr className="bg-gray-50 border-b border-gray-100">
                   <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Employee</th>
                   <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Days</th>
+                  <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Sundays</th>
                   <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Base</th>
                   <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">OT</th>
                   <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Bonus</th>
@@ -195,6 +202,7 @@ export default async function PayrollRunPage({ params }: { params: Promise<{ id:
                       <span className="text-xs text-gray-500 font-mono">{slip.employee_code}</span>
                     </td>
                     <td className="p-4 text-sm text-gray-600 text-right">{Number(slip.days_worked)}</td>
+                    <td className="p-4 text-sm text-gray-600 text-right">{slip.worker_type === "monthly" && slip.paid_sundays !== null ? slip.paid_sundays : "—"}</td>
                     <td className="p-4 text-sm text-gray-600 text-right">{formatPaise(slip.base_paise)}</td>
                     <td className="p-4 text-sm text-gray-600 text-right">{formatPaise(slip.overtime_paise)}</td>
                     <td className="p-4 text-sm text-gray-600 text-right">{formatPaise(slip.bonus_paise)}</td>
@@ -216,7 +224,7 @@ export default async function PayrollRunPage({ params }: { params: Promise<{ id:
               </tbody>
               <tfoot>
                 <tr className="bg-gray-50 border-t border-gray-200">
-                  <td colSpan={5} className="p-4 text-sm font-bold uppercase tracking-wide text-right">
+                  <td colSpan={6} className="p-4 text-sm font-bold uppercase tracking-wide text-right">
                     Total
                   </td>
                   <td className="p-4 text-lg font-bold text-right text-gray-900">{formatPaise(run.total_net_paise)}</td>

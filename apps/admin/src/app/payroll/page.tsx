@@ -3,7 +3,8 @@ import { requireRole } from "@/lib/auth/session";
 import { isOwnerLevel } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 import { formatPaise } from "@/lib/erp/money";
-import { formatPeriod, toPeriodMonth } from "@/lib/erp/payroll";
+import { todayInIndia } from "@/lib/erp/dates";
+import { formatPeriod, lastCompletedMonth } from "@/lib/erp/payroll";
 import NewRunForm from "./NewRunForm";
 import RunRowActions from "./RunRowActions";
 import { createPayrollRun } from "./actions";
@@ -24,8 +25,9 @@ export default async function PayrollPage() {
     .order("period_month", { ascending: false });
 
   const canRun = isOwnerLevel(profile.role) || profile.role === "hr";
-  const thisMonth = toPeriodMonth(new Date()).slice(0, 7);
-  const hasThisMonth = runs?.some((run) => run.period_month.slice(0, 7) === thisMonth);
+  // Payroll is run for a finished month, so the form starts on last month and cannot go past it.
+  const lastMonth = lastCompletedMonth(todayInIndia());
+  const hasLastMonth = runs?.some((run) => run.period_month.slice(0, 7) === lastMonth);
 
   return (
     <div className="p-4 sm:p-8 max-w-5xl mx-auto w-full">
@@ -38,11 +40,12 @@ export default async function PayrollPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
           <h2 className="text-sm font-bold uppercase tracking-wider text-matte-black mb-1">Start a run</h2>
           <p className="text-xs text-gray-500 mb-4">
-            {hasThisMonth
-              ? "This month already has a run. Choose another month, or open the existing one below."
-              : "Every active employee is added automatically, pre-filled from their stored amount."}
+            {hasLastMonth
+              ? `${formatPeriod(`${lastMonth}-01`)} already has a run. Open it below, or choose an earlier month.`
+              : "Every active employee is added automatically, pre-filled from their stored amount."}{" "}
+            Payroll can be run only for a month that has ended, so the current month is not offered.
           </p>
-          <NewRunForm defaultMonth={thisMonth} create={createPayrollRun} />
+          <NewRunForm defaultMonth={lastMonth} create={createPayrollRun} />
         </div>
       )}
 

@@ -37,7 +37,7 @@ export default async function NumberingSettingsPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
         <h2 className="text-sm font-bold uppercase tracking-wider text-matte-black mb-1">Next numbers</h2>
         <p className="text-xs text-gray-500 mb-5">What the next document of each type will be given, in {currentYear}.</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {previews.map(({ docType, preview }) => (
             <div key={docType} className="border border-gray-100 rounded-lg p-4 bg-gray-50">
               <p className="text-xs text-gray-500 mb-2">{DOC_TYPE_LABELS[docType]}</p>
@@ -86,7 +86,8 @@ export default async function NumberingSettingsPage() {
               {series?.map((row) => (
                 <tr key={row.id} className={row.financial_year === currentYear ? "" : "opacity-60"}>
                   <td className="p-4 text-sm text-gray-900">
-                    {DOC_TYPE_LABELS[row.doc_type as DocType] ?? row.doc_type}
+                    {/* The separate series for invoices without GST is retired; a year that used it still shows here as a record. */}
+                    {DOC_TYPE_LABELS[row.doc_type as DocType] ?? (row.doc_type === "invoice_nogst" ? "Invoice without GST (old series, no longer used)" : row.doc_type)}
                   </td>
                   <td className="p-4 text-sm text-gray-600">
                     {row.financial_year}
@@ -118,7 +119,7 @@ export default async function NumberingSettingsPage() {
             <span className="font-mono text-xs">ALU/{currentYear}/0001</span>.
           </li>
           <li>The counter restarts at 0001 each 1 April, so the financial year is legible from any number.</li>
-          <li>GST and non-GST invoices use separate series, which keeps them easy to separate at filing time.</li>
+          <li>Invoices with and without GST share one series, so the numbers run on without a break whichever kind is issued.</li>
           <li>
             Numbers are allocated by the database, so two people issuing invoices at the same moment can never receive
             the same number.

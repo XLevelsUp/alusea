@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { FormError, TextareaField } from "@/components/form-fields";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { useAction } from "@/hooks/use-action";
+import { useAction, useActionRunner } from "@/hooks/use-action";
 import type { Action } from "@/lib/actions";
 import { formatPaise, previewRupeesToPaise } from "@/lib/erp/money";
 import { computePayslip } from "@/lib/erp/payroll";
@@ -22,6 +23,9 @@ export type GridRow = {
   designation: string;
   workerType: WorkerType;
   daysWorked: string;
+  // The Sundays and working days this person has in the month, counted from their joining date if they joined during it.
+  sundays: number;
+  workingDays: number;
   amount: string;
   overtime: string;
   bonus: string;
@@ -30,23 +34,29 @@ export type GridRow = {
 
 export default function PayrollGrid({
   runId,
-  daysInPeriod,
   initialRows,
   notes,
   save,
+  approve,
+  hasSavedDays,
 }: {
   runId: string;
-  daysInPeriod: number;
   initialRows: GridRow[];
   notes: string;
   save: Action;
+  approve: Action;
+  // True when days worked are already saved on this run, so it can be approved without saving again.
+  hasSavedDays: boolean;
 }) {
   const [rows, setRows] = useState<GridRow[]>(initialRows);
   const { run, isPending, error } = useAction(save);
-  const [saved, setSaved] = useState(false);
+  const { run: runApprove, isPending: isApproving, error: approveError } = useActionRunner();
+  const confirm = useConfirm();
+  // Approve is offered only when what is on screen is exactly what is saved, and some days have been entered.
+  const [isSaved, setIsSaved] = useState(hasSavedDays);
 
   function update(id: string, patch: Partial<GridRow>) {
-    setSaved(false);
+    setIsSaved(false);
     setRows((current) => current.map((row) => (row.id === id ? { ...row, ...patch } : row)));
   }
 
@@ -55,7 +65,7 @@ export default function PayrollGrid({
       workerType: row.workerType,
       enteredAmountPaise: previewRupeesToPaise(row.amount),
       daysWorked: Number(row.daysWorked) || 0,
-      daysInPeriod,
+      sundays: row.sundays,
       overtimePaise: previewRupeesToPaise(row.overtime),
       bonusPaise: previewRupeesToPaise(row.bonus),
     })
@@ -66,9 +76,27 @@ export default function PayrollGrid({
 
   function onSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
-    setSaved(false);
     run(new FormData(e.currentTarget)).then((result) => {
-      if (result.ok) setSaved(true);
+      if (!result.ok) return;
+      toast.success("Payroll saved");
+      // A run with no days entered has nothing to approve yet, so it stays on Save.
+      setIsSaved(rows.some((row) => (Number(row.daysWorked) || 0) > 0));
+    });
+  }
+
+  async function onApprove() {
+    const ok = await confirm({
+      tone: "neutral",
+      title: "Approve this payroll run?",
+      description: "The figures will be frozen and payslips generated. An approved run cannot be reopened or edited.",
+      confirmLabel: "Yes, approve",
+      cancelLabel: "Not yet",
+    });
+    if (!ok) return;
+    const formData = new FormData();
+    formData.set("run_id", runId);
+    runApprove(approve, formData).then((result) => {
+      if (result.ok) toast.success("Payroll run approved");
     });
   }
 
@@ -82,7 +110,8 @@ export default function PayrollGrid({
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
                 <th className="p-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Employee</th>
-                <th className="p-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Days</th>
+                <th className="p-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Days worked</th>
+                <th className="p-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Sundays</th>
                 <th className="p-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Salary / Rate</th>
                 <th className="p-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Overtime</th>
                 <th className="p-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Bonus</th>
@@ -93,6 +122,9 @@ export default function PayrollGrid({
               {rows.map((row, index) => {
                 const slip = computed[index];
                 const amountChanged = previewRupeesToPaise(row.amount) !== row.storedDefaultPaise;
+                const isMonthly = row.workerType === "monthly";
+                // Sundays are added automatically, so typing more than the working days would pay them twice.
+                const tooManyDays = isMonthly && (Number(row.daysWorked) || 0) > row.workingDays;
 
                 return (
                   <tr key={row.id} className="align-top hover:bg-gray-50/30">
@@ -115,9 +147,19 @@ export default function PayrollGrid({
                         onChange={(e) => update(row.id, { daysWorked: e.target.value })}
                         inputMode="decimal"
                         aria-label={`Days worked by ${row.name}`}
+                        aria-invalid={tooManyDays || undefined}
+                        aria-describedby={`days-note-${row.id}`}
                         className="h-9 w-20 px-2"
                       />
-                      <span className="block text-[11px] text-gray-500 mt-1">of {daysInPeriod}</span>
+                      <span id={`days-note-${row.id}`} className={`block text-[11px] mt-1 ${tooManyDays ? "font-semibold text-destructive" : "text-gray-500"}`}>
+                        {tooManyDays ? `At most ${row.workingDays}` : isMonthly ? `of ${row.workingDays}` : "days"}
+                      </span>
+                    </td>
+
+                    <td className="p-3">
+                      {/* Read-only: counted from the calendar, and paid only once some days are worked. */}
+                      <span className="block h-9 pt-2 text-sm font-semibold text-gray-900 tabular-nums">{isMonthly ? slip.paidSundays : "—"}</span>
+                      {isMonthly && <span className="block text-[11px] text-gray-500 mt-1">paid, of {row.sundays}</span>}
                     </td>
 
                     <td className="p-3">
@@ -195,18 +237,24 @@ export default function PayrollGrid({
         </CardContent>
       </Card>
 
-      <FormError error={error} className="mb-4" />
-      {saved && !error && (
-        <Alert className="mb-4 border-green-100 bg-green-50 text-green-700">
-          <AlertDescription className="text-green-700">
-            Saved. Review the total, then approve the run when it looks right.
-          </AlertDescription>
-        </Alert>
-      )}
+      <FormError error={error ?? approveError} className="mb-4" />
 
-      <Button type="submit" variant="brand" disabled={isPending}>
-        {isPending ? "Saving…" : "Save Payroll"}
-      </Button>
+      {/* One step at a time: Save while anything is unsaved, then Approve takes its place. */}
+      {isSaved ? (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <Button type="button" variant="brand" size="lg" disabled={isApproving} onClick={onApprove}>
+            {isApproving ? "Approving…" : "Approve Run"}
+          </Button>
+          <p className="text-sm text-gray-600">Saved. Check the total, then approve. To change a figure, edit it above and save again.</p>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <Button type="submit" variant="brand" size="lg" disabled={isPending}>
+            {isPending ? "Saving…" : "Save Payroll"}
+          </Button>
+          <p className="text-sm text-gray-600">Enter the days worked and save. You can approve the run after saving.</p>
+        </div>
+      )}
     </form>
   );
 }

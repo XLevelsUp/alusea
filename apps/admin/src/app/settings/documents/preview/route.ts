@@ -75,13 +75,11 @@ export async function GET(request: Request) {
           workerType: 'monthly',
         },
         daysWorked: 26,
-        daysInPeriod: 30,
-        enteredAmountPaise: 3000000,
-        basePaise: 2600000,
+        basePaise: 2459016,
         overtimePaise: 150000,
         bonusPaise: 200000,
-        grossPaise: 2950000,
-        netPaise: 2950000,
+        grossPaise: 2809016,
+        netPaise: 2809016,
       }),
       'sample-payslip'
     )
