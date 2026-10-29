@@ -52,3 +52,6 @@ apps/marketing/public/videos/*reel*.mp4
 
 # Print-quality brochure original: too large for git; the site serves the web-sized copy in public/brochure
 apps/marketing/Alusea Catalogue Final.pdf
+
+# Original Insta360 360-degree photos for the virtual showroom: large; the site serves the converted copies in public/tour
+apps/marketing/tour-source/

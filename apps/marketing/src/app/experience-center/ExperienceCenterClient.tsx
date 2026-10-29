@@ -4,6 +4,7 @@ import { useState } from "react";
 import PageBanner from "@/components/layout/PageBanner";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import TourEntry from "./TourEntry";
 
 type DbZone = {
   id: string;
@@ -84,6 +85,8 @@ export default function ExperienceCenterClient({ dbZones }: { dbZones: DbZone[] 
       <PageBanner crumb="Experience Center" title={<>Interactive <span className="text-plate-white/80">Virtual Tour</span></>}>
         <p>Click the images to walk through our Experience Center.</p>
       </PageBanner>
+
+      <TourEntry />
 
       {/* Interactive Tour Section */}
       <div className="shell section">

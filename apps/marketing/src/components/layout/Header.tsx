@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { CalendarCheck, ChevronDown, Download, MapPin, Menu, Phone, X } from "lucide-react";
 import { BROCHURE_FILENAME, BROCHURE_HREF, CONSULTATION_HREF, PHONE_DISPLAY, PHONE_HREF, SHOWROOM_MAP_URL } from "@/lib/site";
 import { SPACES } from "@/lib/spaces";
+import TourButton from "@/components/tour/TourButton";
 
 const NAV_LINKS = [
   { name: "Who We Are", href: "/about" },
@@ -86,7 +87,7 @@ const Header = () => {
           : "text-blueberry after:scale-x-0 after:bg-berry-bloom hover:text-berry-bloom"
     }`;
 
-  const pill = `flex items-center gap-2 rounded-full border px-4 py-1.5 text-[13px] font-medium transition-colors duration-300 ${
+  const pill = `flex items-center gap-2 whitespace-nowrap rounded-full border px-4 py-1.5 text-[13px] font-medium transition-colors duration-300 ${
     overVideo
       ? "border-white/40 bg-black/25 text-white backdrop-blur-sm hover:bg-black/45"
       : "border-stem-grey/60 text-blueberry hover:border-blueberry hover:bg-blueberry hover:text-white"
@@ -120,21 +121,23 @@ const Header = () => {
             // Folded links must not be reachable by keyboard while they cannot be seen.
             inert={isScrolled}
           >
+            <TourButton className={pill} />
             <Link href={CONSULTATION_HREF} className={pill}>
               <CalendarCheck aria-hidden="true" className="size-4" />
               Book a Consultation
             </Link>
-            <a href={SHOWROOM_MAP_URL} target="_blank" rel="noopener noreferrer" className={pill}>
+            {/* On narrower laptops these three show their icon alone, so all five fit on one line. */}
+            <a href={SHOWROOM_MAP_URL} target="_blank" rel="noopener noreferrer" aria-label="Locate Us" title="Locate Us" className={pill}>
               <MapPin aria-hidden="true" className="size-4" />
-              Locate Us
+              <span className="hidden xl:inline">Locate Us</span>
             </a>
-            <a href={BROCHURE_HREF} download={BROCHURE_FILENAME} className={pill}>
+            <a href={BROCHURE_HREF} download={BROCHURE_FILENAME} aria-label="Download Brochure" title="Download Brochure" className={pill}>
               <Download aria-hidden="true" className="size-4" />
-              Download Brochure
+              <span className="hidden xl:inline">Download Brochure</span>
             </a>
-            <a href={PHONE_HREF} aria-label={`Call Alusea on ${PHONE_DISPLAY}`} className={pill}>
+            <a href={PHONE_HREF} aria-label={`Call Alusea on ${PHONE_DISPLAY}`} title="Call Us" className={pill}>
               <Phone aria-hidden="true" className="size-4" />
-              Call Us
+              <span className="hidden xl:inline">Call Us</span>
             </a>
           </div>
 
@@ -167,9 +170,13 @@ const Header = () => {
                 </Link>
               )
             )}
-            {/* Once the quick actions fold away, the two main ones stay within reach here. */}
+            {/* Once the quick actions fold away, the main ones stay within reach here. */}
             {isScrolled && (
               <>
+                <TourButton className="flex items-center gap-2 whitespace-nowrap rounded-full border border-blueberry p-2.5 text-[13px] font-semibold text-blueberry transition-colors duration-300 hover:bg-blueberry hover:text-white xl:px-5">
+                  {/* Narrow laptops keep the icon alone so the row still fits. */}
+                  <span className="sr-only xl:not-sr-only xl:whitespace-nowrap">Experience Centre</span>
+                </TourButton>
                 <a
                   href={BROCHURE_HREF}
                   download={BROCHURE_FILENAME}
@@ -298,6 +305,10 @@ const Header = () => {
             >
               Book a Consultation
             </Link>
+            <TourButton
+              onClick={closeMenu}
+              className="flex w-full items-center justify-center gap-2 rounded-card border border-blueberry py-4 text-sm font-bold uppercase tracking-widest text-blueberry transition-colors hover:bg-blueberry hover:text-white"
+            />
             <a
               href={SHOWROOM_MAP_URL}
               target="_blank"

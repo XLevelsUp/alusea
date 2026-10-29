@@ -668,3 +668,138 @@ body:has([data-not-found]) section[aria-label="Instagram reels"] {
   display: none;
 }
 
+/* The virtual showroom page fills the screen on its own: the site's header, footer, Instagram band and floating buttons are left out, and the page does not scroll. */
+body:has([data-vr-room]) {
+  overflow: hidden;
+}
+
+body:has([data-vr-room]) header,
+body:has([data-vr-room]) footer,
+body:has([data-vr-room]) section[aria-label="Instagram reels"],
+body:has([data-vr-room]) [aria-label="Go Back"],
+body:has([data-vr-room]) [aria-label="Chat with Alusea on WhatsApp"] {
+  display: none;
+}
+
+/* Arrows and hotspots stay hidden while the opening globe turns, and fade in once it lands at eye level. */
+.tour-arrow,
+.psv-marker {
+  transition: opacity 0.5s var(--ease-out);
+}
+
+/* Important because the markers plugin writes its own opacity straight onto each hotspot. */
+.tour-intro .tour-arrow,
+.tour-intro .psv-marker {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+/* Floor arrows: a dark disc with a white chevron, laid back so it reads as lying on the floor. */
+.tour-arrow {
+  display: flex;
+  width: 72px;
+  height: 72px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  perspective: 240px;
+}
+
+.tour-arrow-disc {
+  display: flex;
+  width: 60px;
+  height: 60px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #fff;
+  background: rgb(20 24 36 / 0.78);
+  border: 2px solid rgb(255 255 255 / 0.85);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.45);
+  transform: rotateX(48deg);
+  transition: transform 0.2s var(--ease-out), background-color 0.2s var(--ease-out);
+}
+
+.tour-arrow:hover .tour-arrow-disc {
+  background: var(--color-blueberry);
+  transform: rotateX(48deg) scale(1.1);
+}
+
+/* A pressed arrow dips slightly, so the tap is felt before the step begins. */
+.tour-arrow:active .tour-arrow-disc {
+  background: var(--color-blueberry);
+  transform: rotateX(48deg) scale(0.92);
+  transition-duration: 0.08s;
+}
+
+/* Keyboard users see which arrow is selected. */
+.tour-arrow:focus-visible {
+  outline: none;
+}
+
+.tour-arrow:focus-visible .tour-arrow-disc {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+/* Product hotspots: a dark disc with a plus or a play sign and a soft pulse, so they read as tappable on bright walls. */
+.tour-hotspot {
+  position: relative;
+  display: flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 999px;
+  color: #fff;
+  background: rgb(20 24 36 / 0.82);
+  border: 2px solid rgb(255 255 255 / 0.85);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.4);
+  transition: background-color 0.2s var(--ease-out), transform 0.2s var(--ease-out);
+}
+
+.tour-hotspot:hover {
+  background: var(--color-blueberry);
+  transform: scale(1.08);
+}
+
+/* Keyboard users see which hotspot is selected. */
+.tour-hotspot:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+.tour-hotspot::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 999px;
+  border: 2px solid rgb(20 24 36 / 0.6);
+  animation: tour-hotspot-pulse 2.2s var(--ease-out) infinite;
+}
+
+@keyframes tour-hotspot-pulse {
+  from { transform: scale(1); opacity: 0.9; }
+  to { transform: scale(1.7); opacity: 0; }
+}
+
+/* The hotspot panel slides up on phones and in from the side on larger screens. */
+@keyframes tour-panel-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+.tour-panel-in {
+  animation: tour-panel-in 0.3s var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-hotspot::after,
+  .tour-panel-in {
+    animation: none;
+  }
+}

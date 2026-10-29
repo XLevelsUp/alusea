@@ -35,6 +35,7 @@ import ProductShowcase from "@/components/sections/ProductShowcase";
 // import ProjectGallery from "@/components/sections/ProjectGallery";
 import Testimonials from "@/components/sections/Testimonials";
 import ContactCTA from "@/components/sections/ContactCTA";
+import StudioCTA from "@/components/sections/StudioCTA";
 
 export default function Home() {
   return (
@@ -50,6 +51,7 @@ export default function Home() {
       {/* <ProjectGallery /> */}
       <Testimonials />
       <ContactCTA />
+      <StudioCTA />
 
       {/* Invisible SEO Text targeting 200+ word requirements without affecting UI */}
       <div className="sr-only">

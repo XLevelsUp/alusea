@@ -41,7 +41,7 @@ export default function robots(): MetadataRoute.Robots {
       // that drive referral traffic. Content navigation guided via /llms.txt.
       {
         userAgent: "PerplexityBot",
-        allow: ["/", "/products", "/services", "/alusea-difference", "/experience-center", "/about", "/projects", "/catalogue"],
+        allow: ["/", "/products", "/services", "/alusea-difference", "/experience-center", "/vr-room","/about", "/projects", "/catalogue"],
         disallow: ["/api/", "/_next/", "/data-deletion"],
         crawlDelay: 10,
       },

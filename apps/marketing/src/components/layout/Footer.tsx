@@ -1,5 +1,6 @@
 "use client";
 
+import TourButton from "@/components/tour/TourButton";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -107,6 +108,7 @@ const Footer = () => {
               <MapPin aria-hidden="true" className="size-4" />
               Open in Maps
             </a>
+            <TourButton className="mt-3 flex min-h-11 w-fit items-center gap-2 rounded-full border border-white/40 px-4 text-sm font-medium text-white transition-colors duration-300 hover:bg-white hover:text-blueberry" />
           </address>
         </div>
 
