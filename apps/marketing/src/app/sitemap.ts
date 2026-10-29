@@ -82,6 +82,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
+      url: `${BASE_URL}/vr-room`,
+      lastModified: new Date("2026-10-28"),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
       url: `${BASE_URL}/privacy-policy`,
       lastModified: new Date("2026-01-01"),
       changeFrequency: "yearly",
