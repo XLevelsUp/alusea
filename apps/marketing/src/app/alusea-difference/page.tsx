@@ -44,7 +44,7 @@ export default function FeaturesPage() {
             Our aluminium architectural systems are built to surpass industry standards, providing unmatched durability, security, and thermal performance.
           </p>
           <p className="lede mx-auto mt-6 max-w-3xl text-berry-bloom">
-            At ALU-SEA, we believe your doors and windows are more than just fittings—they&apos;re the first impression of your home. As reputable suppliers of aluminium sliding doors and premium architectural systems, we provide affordable aluminium windows and doors that elevate your living spaces without compromising on quality or aesthetics.
+            At ALU-SEA, we believe your doors and windows are more than just fittings—they&apos;re the first impression of your home. As reputable suppliers of aluminium sliding doors and premium architectural systems, we provide aluminium windows and doors that elevate your living spaces without compromising on quality or aesthetics.
           </p>
         </div>
       </div>
