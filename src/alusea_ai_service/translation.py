@@ -1,5 +1,6 @@
 import os
 import re
+import time
 from concurrent.futures import ThreadPoolExecutor
 
 import httpx
@@ -66,6 +67,7 @@ def keeps_facts(english: str, translated: str) -> bool:
 
 
 def ask_sarvam(text: str, source: str, target: str, mode: str, script: str | None = None) -> str | None:
+    started = time.perf_counter()
     try:
         response = httpx.post(
             SARVAM_TRANSLATE_URL,
@@ -81,6 +83,7 @@ def ask_sarvam(text: str, source: str, target: str, mode: str, script: str | Non
             },
             timeout=15,
         )
+        count(translate_wait=time.perf_counter() - started)
         response.raise_for_status()
         count(translate_requests=1, translate_characters=len(text))
         return response.json()["translated_text"].strip()

@@ -4,6 +4,7 @@ import io
 import itertools
 import os
 import secrets
+import time
 import uuid
 from collections.abc import Callable
 from contextlib import asynccontextmanager
@@ -18,7 +19,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel, Field
 
 from alusea_ai_service.agent import generate_reply, reply_language
-from alusea_ai_service.call import call_turn, not_heard, start_call
+from alusea_ai_service.call import call_turn, fillers, not_heard, start_call
 from alusea_ai_service.limits import allow, give_back, is_callback_message, reached
 from alusea_ai_service.safe_log import clean_error
 from alusea_ai_service.small_talk import limit_message, small_talk, sorry_message
@@ -315,8 +316,10 @@ async def post_call_speech(
     remember_visitor(response, visitor_id)
     meter = call_meter(visitor_id)
     before = meter.snapshot()
+    started = time.perf_counter()
     with metering(meter):
         reply = await answer_speech(visitor_id, speech, content_type, language, meter, newest_turn_check(visitor_id))
+    meter.add(turn_wait=time.perf_counter() - started)
     print(summary(before, meter.snapshot()))
     return reply
 
@@ -342,6 +345,12 @@ def newest_turn_check(visitor_id: str) -> Callable[[], bool]:
     while len(newest_turns) > MAX_TRACKED_VISITORS:
         newest_turns.pop(next(iter(newest_turns)))
     return lambda: newest_turns.get(visitor_id) == number
+
+
+@app.get("/call/fillers")
+def get_call_fillers(language: Language) -> dict:
+    """Short "one moment" phrases in Sara's voice, for the page to play while a slow reply is on its way."""
+    return {"audio": fillers(language)}
 
 
 @app.post("/call/retry")

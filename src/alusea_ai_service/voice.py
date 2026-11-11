@@ -2,6 +2,7 @@ import base64
 import hashlib
 import io
 import json
+import time
 import os
 import re
 import wave
@@ -148,6 +149,7 @@ def speech_seconds(audio: bytes) -> float:
 def write_part(audio: bytes, content_type: str, language_code: str, terms_language: str) -> dict | None:
     """Turn one part of speech into text. An empty transcript means no words were heard, and None means Sarvam failed."""
     for _ in range(LISTEN_TRIES):
+        started = time.perf_counter()
         try:
             response = httpx.post(
                 SARVAM_LISTEN_URL,
@@ -161,6 +163,7 @@ def write_part(audio: bytes, content_type: str, language_code: str, terms_langua
                 files={"file": ("speech", audio, content_type)},
                 timeout=LISTEN_TIMEOUT_SECONDS,
             )
+            count(listen_wait=time.perf_counter() - started)
             response.raise_for_status()
             answer = response.json()
             transcript = (answer.get("transcript") or "").strip()
@@ -182,6 +185,7 @@ def speak(text: str, language: str) -> str | None:
         saved.touch()
         return saved.read_text(encoding="ascii")
 
+    started = time.perf_counter()
     try:
         response = httpx.post(
             SARVAM_URL,
@@ -189,6 +193,7 @@ def speak(text: str, language: str) -> str | None:
             json={"text": text, "language_code": language, "model": VOICE_MODEL, "speaker": VOICE_SPEAKER},
             timeout=30,
         )
+        count(voice_wait=time.perf_counter() - started)
         response.raise_for_status()
         # Joining and re-encoding gives one clean audio string, even if Sarvam sends parts.
         audio = base64.b64encode(base64.b64decode("".join(response.json()["audios"]))).decode("ascii")

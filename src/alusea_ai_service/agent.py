@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import time
 from urllib.parse import urlparse
 
 from dotenv import load_dotenv
@@ -255,19 +256,25 @@ def filtered_matches(name: str, raw_arguments: str | None, result: dict) -> list
 def send_to_model(messages: list[dict], request: dict):
     """Ask Groq's main model, then its backup model, then the free backup. If none can help, Groq's last error stands."""
     for model in (request["model"], GROQ_BACKUP_MODEL):
+        started = time.perf_counter()
         try:
             answer = client.chat.completions.create(messages=messages, **{**request, "model": model})
+            count(ai_wait=time.perf_counter() - started)
             count(ai_requests=1, ai_tokens=getattr(getattr(answer, "usage", None), "total_tokens", 0))
             return answer
         except RateLimitError as error:
+            count(ai_wait=time.perf_counter() - started)
             print(f"Groq's rate limit was reached on {model}.")
             last_error = error
         except (APIConnectionError, InternalServerError) as error:
+            count(ai_wait=time.perf_counter() - started)
             # This includes timeouts and Groq's own server errors.
             print(f"Groq couldn't answer on {model}: {clean_error(error)}")
             last_error = error
     print("Asking the free backup model.")
+    started = time.perf_counter()
     answer = ask_backup(messages, request)
+    count(ai_wait=time.perf_counter() - started)
     if answer is None:
         raise last_error
     count(ai_requests=1)

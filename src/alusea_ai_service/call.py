@@ -172,6 +172,21 @@ def voiced(shown: dict, language: str, speak_it: bool = True) -> dict:
     return {**shown, "audio": speak(" ".join(part for part in parts if part), language)}
 
 
+# Said while a slow reply is on its way, like a salesperson saying "one moment" instead of going quiet.
+FILLERS = {
+    "en-IN": ("Hmm, let me check.", "One moment, please.", "Sure, just a second."),
+    "ta-IN": ("ம்ம், ஒரு நிமிஷம் பாக்கறேன்.", "கொஞ்சம் இருங்க.", "சரி, இதோ பாக்கறேன்."),
+    "ml-IN": ("ഒരു നിമിഷം, ഞാൻ നോക്കട്ടെ.", "ശരി, ഒന്ന് നോക്കട്ടെ.", "ഒരു സെക്കൻഡ്."),
+    "te-IN": ("ఒక్క నిమిషం, చూస్తాను.", "సరే, ఒక్క క్షణం.", "హ్మ్, చూస్తున్నాను."),
+    "kn-IN": ("ಒಂದು ನಿಮಿಷ, ನೋಡ್ತೀನಿ.", "ಸರಿ, ಒಂದು ಕ್ಷಣ.", "ಹ್ಮ್, ನೋಡ್ತಿದ್ದೀನಿ."),
+}
+
+
+def fillers(language: str) -> list[str]:
+    """The filler phrases as audio. Each is made once and then comes from saved audio, so they cost nothing after the first time."""
+    return [audio for audio in (speak(phrase, language) for phrase in FILLERS[language]) if audio]
+
+
 def start_call(language: str) -> dict:
     return voiced({"content": CALL_TEXT[language]["greeting"], "products": []}, language)
 

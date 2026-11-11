@@ -726,6 +726,8 @@
     const CALL_SPEECH_CONFIDENCE = 0.75;
     // A call waits this long in silence before sending, so a short pause doesn't split one sentence into two paid turns.
     const CALL_PAUSE_MS = 1300;
+    // If a reply isn't back by then, Sara says a short "one moment" phrase.
+    const FILLER_DELAY_MS = 1500;
     // The server reads up to this much aloud.
     const MAX_LISTEN_CHARACTERS = 1500;
     const LINKABLE_HOSTS = ["www.alusea.in", "alusea.in", "wa.me"];
@@ -778,6 +780,11 @@
     let callLanguage = "en-IN";
     let newestCallerMessage = null;
     let saraSpeaking = false;
+    let callFillers = [];
+    let fillerLanguage = null;
+    let lastFiller = -1;
+    let fillerTimer = null;
+    const fillerAudio = new Audio();
     let waitingForReply = false;
     let saraInterrupted = false;
 
@@ -1120,6 +1127,7 @@
     function endCall(message) {
       inCall = false;
       callTurn++;
+      stopFiller();
       saraSpeaking = false;
       waitingForReply = false;
       clearInterval(callClock);
@@ -1164,7 +1172,43 @@
       else setCallState(waitingForReply ? "thinking" : "waiting");
     }
 
+    // The phrases for the call's language, loaded again if the customer switches language.
+    async function loadFillers(language) {
+      if (fillerLanguage === language) return;
+      fillerLanguage = language;
+      try {
+        const response = await fetch(`/call/fillers?language=${encodeURIComponent(language)}`);
+        if (response.ok && fillerLanguage === language) callFillers = (await response.json()).audio;
+      } catch {
+        callFillers = [];
+      }
+    }
+
+    // Starts a timer: if this turn's reply is still on its way, Sara says one filler phrase, never the same one twice in a row.
+    function planFiller(turn) {
+      stopFiller();
+      fillerTimer = setTimeout(() => {
+        if (!inCall || turn !== callTurn || !waitingForReply || saraSpeaking || callFillers.length === 0) return;
+        let choice = Math.floor(Math.random() * callFillers.length);
+        if (callFillers.length > 1 && choice === lastFiller) choice = (choice + 1) % callFillers.length;
+        lastFiller = choice;
+        fillerAudio.src = `data:audio/wav;base64,${callFillers[choice]}`;
+        fillerAudio.play().catch(() => {});
+      }, FILLER_DELAY_MS);
+    }
+
+    function stopFiller() {
+      clearTimeout(fillerTimer);
+      fillerTimer = null;
+      fillerAudio.pause();
+    }
+
+    function fillerPlaying() {
+      return !fillerAudio.paused && !fillerAudio.ended;
+    }
+
     function showCallReply(data) {
+      clearTimeout(fillerTimer);
       addMessage("assistant", data.content || labels().cardIntro);
       addCards(data.products);
       saraInterrupted = false;
@@ -1184,11 +1228,21 @@
       callAudio.onended = finishSpeaking;
       callAudio.onerror = finishSpeaking;
       callAudio.src = `data:audio/wav;base64,${data.audio}`;
-      callAudio.play().catch(finishSpeaking);
+      // A filler that's still playing finishes first, so the two never talk over each other.
+      const playReply = () => {
+        if (inCall && saraSpeaking && !saraInterrupted) callAudio.play().catch(finishSpeaking);
+      };
+      // "pause" fires both when the filler ends and when it is stopped.
+      if (fillerPlaying()) {
+        fillerAudio.addEventListener("pause", playReply, { once: true });
+      } else {
+        playReply();
+      }
     }
 
     // If the customer starts talking, Sara pauses straight away so it feels like a real call.
     function pauseSaraForCaller() {
+      stopFiller();
       if (!saraSpeaking) return;
       saraInterrupted = true;
       callAudio.pause();
@@ -1242,6 +1296,7 @@
     async function sendCallerSpeech(samples) {
       waitingForReply = true;
       showCallState();
+      planFiller(callTurn + 1);
       const data = await sendCallRequest(`/call/speech?language=${encodeURIComponent(callLanguage)}`, {
         headers: { "Content-Type": "audio/wav" },
         body: encodeWav(samples.slice(-MAX_SPEECH_SECONDS * SPEECH_SAMPLE_RATE)),
@@ -1258,7 +1313,10 @@
         showCallState();
         return;
       }
-      if (data.language) callLanguage = data.language;
+      if (data.language) {
+        callLanguage = data.language;
+        loadFillers(callLanguage);
+      }
       if (data.heard) {
         newestCallerMessage = addMessage("user", data.heard);
         showStarters(false);
@@ -1308,6 +1366,9 @@
       callBackButton.disabled = true;
       // Made during the tap, so browsers allow it to play later replies.
       callAudio = new Audio();
+      // iPhones only play sound that a tap started, so a silent clip unlocks the filler phrases now.
+      fillerAudio.src = silentClip();
+      fillerAudio.play().catch(() => {});
       setCallState("connecting");
       voiceStatus.hidden = false;
       callTimer.textContent = "";
@@ -1327,6 +1388,7 @@
       callEndsAt = Date.now() + CALL_LIMIT_MS;
       updateCallClock();
       callClock = setInterval(updateCallClock, 1000);
+      loadFillers(callLanguage);
       const data = await sendCallRequest("/call/start", {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ language: languageSelect.value }),

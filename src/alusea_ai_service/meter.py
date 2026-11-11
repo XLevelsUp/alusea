@@ -25,6 +25,12 @@ COUNTS = (
     "check_characters",
     "ai_requests",
     "ai_tokens",
+    # Seconds spent waiting on each service, and on the whole turn.
+    "listen_wait",
+    "translate_wait",
+    "ai_wait",
+    "voice_wait",
+    "turn_wait",
 )
 
 
@@ -63,6 +69,9 @@ def summary(before: dict, after: dict) -> str:
         f" | translating {after['translate_characters']:,} characters in {after['translate_requests']} requests ₹{total['translating']:.2f}"
         f" | voice {after['voice_characters']:,} characters ₹{total['voice']:.2f} (+{after['cached_voice_characters']:,} from saved audio, free)"
         f" | AI {after['ai_requests']} requests, {after['ai_tokens']:,} tokens"
+        f" | this turn took {after['turn_wait'] - before['turn_wait']:.1f}s: listening {after['listen_wait'] - before['listen_wait']:.1f}s,"
+        f" translating {after['translate_wait'] - before['translate_wait']:.1f}s, AI {after['ai_wait'] - before['ai_wait']:.1f}s,"
+        f" voice {after['voice_wait'] - before['voice_wait']:.1f}s"
     )
 
 
