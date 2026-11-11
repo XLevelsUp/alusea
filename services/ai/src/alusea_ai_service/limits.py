@@ -1,0 +1,115 @@
+"""Daily limits, so one person can't use up the credit for everyone. Any number can be changed in .env, such as LIMIT_CALL_VISITOR=5."""
+import hashlib
+import hmac
+import os
+import re
+import secrets
+import threading
+from datetime import datetime, timedelta, timezone
+
+from alusea_ai_service.store import DATA_DIR, limit_reached, return_allowance, take_allowance
+
+INDIA = timezone(timedelta(hours=5, minutes=30))
+SCOPES = ("visitor", "ip", "site")
+# Uses per day for each visitor, each IP address and the whole site.
+# A home or office can share one IP address, so its limit is higher than one visitor's.
+DAILY_LIMITS = {
+    "call": (3, 6, 10),
+    # The calls above are only started by the page, so this stops speech being sent without one.
+    "call_turn": (90, 180, 300),
+    "message": (30, 60, 200),
+    "listen": (10, 20, 50),
+    "mic": (20, 40, 100),
+    # Separate from messages, so a customer who has run out can still leave their number.
+    "callback": (5, 10, 50),
+    # Wrong passwords on the leads page, counted per IP address and for the site.
+    "leads_login": (10, 10, 50),
+}
+# Without LIMIT_HASH_SECRET, a random key is made once and kept in this file, so counts survive a restart.
+SECRET_FILE = DATA_DIR / "limits.secret"
+# The key is read once and kept, instead of reading the file on every limit check.
+hash_keys: dict = {}
+hash_key_lock = threading.Lock()
+# Typed messages per minute for each visitor and each IP address.
+BURST_LIMITS = (10, 20)
+CALL_ME_BACK_PHRASES = {
+    "Call me back",
+    "எனக்கு call பண்ணுங்க",
+    "എന്നെ തിരിച്ചു വിളിക്കൂ",
+    "నాకు call చేయండి",
+    "ನನಗೆ call ಮಾಡಿ",
+}
+MIN_PHONE_DIGITS = 10
+
+
+def setting(kind: str, scope: str, default: int) -> int:
+    return int(os.getenv(f"LIMIT_{kind.upper()}_{scope.upper()}", default))
+
+
+def is_callback_message(message: str) -> bool:
+    """A request for a call back, or a message that gives a phone number."""
+    return message.strip() in CALL_ME_BACK_PHRASES or len(re.sub(r"\D", "", message)) >= MIN_PHONE_DIGITS
+
+
+def hash_key() -> bytes:
+    """The secret for hashing. Without it, an IP address could be found again by trying every address."""
+    if os.getenv("LIMIT_HASH_SECRET"):
+        return os.environ["LIMIT_HASH_SECRET"].encode()
+    with hash_key_lock:
+        if SECRET_FILE not in hash_keys:
+            if not SECRET_FILE.exists():
+                # Written in full to a temporary file, then linked into place in one step, so nobody ever reads a
+                # half-written key. If another process got there first, its key is used.
+                temporary = SECRET_FILE.with_name(f"{SECRET_FILE.name}.{secrets.token_hex(8)}.tmp")
+                temporary.write_text(secrets.token_hex(32), encoding="ascii")
+                try:
+                    os.link(temporary, SECRET_FILE)
+                except FileExistsError:
+                    pass
+                finally:
+                    temporary.unlink(missing_ok=True)
+            key = SECRET_FILE.read_text(encoding="ascii").strip().encode()
+            if not key:
+                raise RuntimeError(f"{SECRET_FILE} is empty. Delete it, and a new key will be made.")
+            hash_keys[SECRET_FILE] = key
+        return hash_keys[SECRET_FILE]
+
+
+def hidden(period: str, value: str) -> str:
+    """Counters are stored under a keyed hash, so the table doesn't keep anyone's IP address."""
+    return hmac.new(hash_key(), f"{period}|{value}".encode(), hashlib.sha256).hexdigest()[:32]
+
+
+def reached(kind: str, visitor_id: str | None, ip: str) -> bool:
+    """Say whether a limit has been reached, without counting a use."""
+    return limit_reached(daily_counters(kind, visitor_id, ip, datetime.now(INDIA).strftime("%Y-%m-%d")))
+
+
+def daily_counters(kind: str, visitor_id: str | None, ip: str, today: str) -> list[tuple[str, str, str, str, int]]:
+    keys = {"visitor": visitor_id, "ip": ip, "site": "site"}
+    return [
+        (today, kind, scope, hidden(today, keys[scope]), setting(kind, scope, DAILY_LIMITS[kind][position]))
+        for position, scope in enumerate(SCOPES)
+        if keys[scope]
+    ]
+
+
+def give_back(kind: str, visitor_id: str | None, ip: str) -> None:
+    """Return a use after Sara failed, so a customer isn't charged for an apology. The per-minute limit stays."""
+    return_allowance(daily_counters(kind, visitor_id, ip, datetime.now(INDIA).strftime("%Y-%m-%d")))
+
+
+def allow(kind: str, visitor_id: str | None, ip: str) -> bool:
+    """Count one use, or return False without counting if any limit has been reached."""
+    now = datetime.now(INDIA)
+    today = now.strftime("%Y-%m-%d")
+    this_minute = now.strftime("%Y-%m-%d %H:%M")
+    keys = {"visitor": visitor_id, "ip": ip}
+    counters = daily_counters(kind, visitor_id, ip, today)
+    if kind == "message":
+        counters += [
+            (this_minute, "burst", scope, hidden(this_minute, keys[scope]), setting("burst", scope, BURST_LIMITS[position]))
+            for position, scope in enumerate(SCOPES[:2])
+            if keys[scope]
+        ]
+    return take_allowance(counters, today)
