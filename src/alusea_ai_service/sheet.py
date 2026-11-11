@@ -29,12 +29,12 @@ def sheet_settings() -> tuple[str, str] | None:
     return (url, secret) if url and secret else None
 
 
-def send_lead(lead_id: int, name: str, phone: str, note: str, language: str) -> None:
+def send_lead(lead_id: int, uid: str, name: str, phone: str, note: str, language: str) -> None:
     """Copy a new lead to the team's Google Sheet, if one is set up. The lead is already saved, so a failure loses nothing."""
     if not sheet_settings():
         return
     when = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
-    threading.Thread(target=post_lead, args=(lead_id, when, name, phone, note, language), daemon=True).start()
+    threading.Thread(target=post_lead, args=(lead_id, uid, when, name, phone, note, language), daemon=True).start()
 
 
 def resend_unsent_leads() -> None:
@@ -42,13 +42,15 @@ def resend_unsent_leads() -> None:
     if not sheet_settings():
         return
     for lead in unsent_leads():
-        post_lead(lead["id"], lead["created_at"], lead["name"], lead["phone"], lead["note"], lead["language"])
+        post_lead(lead["id"], lead["uid"] or f"lead-{lead['id']}", lead["created_at"], lead["name"], lead["phone"], lead["note"], lead["language"])
 
 
-def post_lead(lead_id: int, when: str, name: str, phone: str, note: str, language: str) -> None:
+def post_lead(lead_id: int, uid: str, when: str, name: str, phone: str, note: str, language: str) -> None:
     url, secret = sheet_settings()
     lead = {
         "secret": secret,
+        # If an earlier try reached the sheet but its answer was lost, the script sees this id and doesn't add the lead twice.
+        "id": uid,
         "when": when,
         "name": as_text(name),
         "phone": as_text(phone),

@@ -14,6 +14,7 @@ from alusea_ai_service.translation import to_english, translate_reply
 from alusea_ai_service.voice import speak
 
 CALL_HISTORY_SENT_TO_MODEL = 12
+# Turns are kept in order within one server process, so Sara runs as a single process.
 MAX_TURN_LOCKS = 1000
 turn_locks: OrderedDict[str, threading.Lock] = OrderedDict()
 turn_locks_guard = threading.Lock()
@@ -180,8 +181,11 @@ def turn_lock(visitor_id: str) -> threading.Lock:
     with turn_locks_guard:
         lock = turn_locks.setdefault(visitor_id, threading.Lock())
         turn_locks.move_to_end(visitor_id)
-        while len(turn_locks) > MAX_TURN_LOCKS:
-            turn_locks.popitem(last=False)
+        # Only locks nobody is using are removed, oldest first, so a turn in progress keeps its lock.
+        for old_visitor in [key for key, old_lock in turn_locks.items() if not old_lock.locked()]:
+            if len(turn_locks) <= MAX_TURN_LOCKS:
+                break
+            del turn_locks[old_visitor]
         return lock
 
 

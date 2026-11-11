@@ -1,10 +1,12 @@
 import os
 import sqlite3
+import uuid
 from contextlib import closing
 from pathlib import Path
 
 # Where the database and saved audio live. On the server, set DATA_DIR to a folder that is backed up.
 DATA_DIR = Path(os.getenv("DATA_DIR") or Path(__file__).resolve().parents[2])
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH = DATA_DIR / "chat.db"
 # A copy to the Google Sheet is tried again for this long, then left to the leads page.
 SHEET_RETRY_DAYS = 7
@@ -69,6 +71,9 @@ def init_db() -> None:
         lead_columns = [row["name"] for row in connection.execute("PRAGMA table_info(leads)")]
         if "sheet_sent" not in lead_columns:
             connection.execute("ALTER TABLE leads ADD COLUMN sheet_sent INTEGER NOT NULL DEFAULT 1")
+        # A unique id the Google Sheet uses to skip a lead it already has. Lead numbers start again in a new database, so they can't do this.
+        if "uid" not in lead_columns:
+            connection.execute("ALTER TABLE leads ADD COLUMN uid TEXT")
 
 
 def limit_reached(counters: list[tuple[str, str, str, str, int]]) -> bool:
@@ -121,13 +126,15 @@ def delete_old_messages(days: int) -> int:
         return connection.execute("DELETE FROM messages WHERE created_at < datetime('now', ?)", (f"-{days} days",)).rowcount
 
 
-def save_lead(visitor_id: str | None, name: str, phone: str, note: str, language: str) -> int:
-    """Save a customer's callback request for the sales team, and return its number."""
+def save_lead(visitor_id: str | None, name: str, phone: str, note: str, language: str) -> tuple[int, str]:
+    """Save a customer's callback request for the sales team, and return its number and unique id."""
+    uid = uuid.uuid4().hex
     with closing(connect()) as connection, connection:
-        return connection.execute(
-            "INSERT INTO leads (visitor_id, name, phone, note, language, sheet_sent) VALUES (?, ?, ?, ?, ?, 0)",
-            (visitor_id, name, phone, note, language),
+        lead_id = connection.execute(
+            "INSERT INTO leads (visitor_id, name, phone, note, language, sheet_sent, uid) VALUES (?, ?, ?, ?, ?, 0, ?)",
+            (visitor_id, name, phone, note, language, uid),
         ).lastrowid
+    return lead_id, uid
 
 
 def mark_sheet_sent(lead_id: int) -> None:
@@ -140,7 +147,7 @@ def unsent_leads() -> list[dict]:
     with closing(connect()) as connection:
         rows = connection.execute(
             """
-            SELECT id, created_at, name, phone, note, language FROM leads
+            SELECT id, uid, created_at, name, phone, note, language FROM leads
             WHERE sheet_sent = 0 AND created_at > datetime('now', ?) AND created_at < datetime('now', ?)
             ORDER BY id
             """,

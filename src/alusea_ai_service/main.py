@@ -249,12 +249,21 @@ async def read_speech(request: Request) -> bytes:
     return b"".join(chunks)
 
 
+async def read_speech_or_give_back(request: Request, kind: str, visitor_id: str | None) -> bytes:
+    """Read a recording. A refused one, empty or too big, doesn't use up the customer's limit."""
+    try:
+        return await read_speech(request)
+    except HTTPException:
+        give_back(kind, visitor_id, client_ip(request))
+        raise
+
+
 @app.post("/speech")
 async def post_speech(request: Request, language: Language, alusea_chat_id: str | None = Cookie(default=None)) -> dict:
     """Write speech out in the customer's own language, so they can check it before sending."""
     check_speech_size(request)
     require_allowance("mic", request, valid_visitor_id(alusea_chat_id))
-    speech = await read_speech(request)
+    speech = await read_speech_or_give_back(request, "mic", valid_visitor_id(alusea_chat_id))
     content_type = request.headers.get("content-type", "audio/wav")
     heard = await run_in_threadpool(listen, speech, content_type, language)
     if heard is None:
@@ -284,7 +293,7 @@ async def post_call_speech(
     check_speech_size(request)
     visitor_id = valid_visitor_id(alusea_chat_id) or str(uuid.uuid4())
     require_allowance("call_turn", request, visitor_id)
-    speech = await read_speech(request)
+    speech = await read_speech_or_give_back(request, "call_turn", visitor_id)
     content_type = request.headers.get("content-type", "audio/wav")
     remember_visitor(response, visitor_id)
     meter = call_meter(visitor_id)

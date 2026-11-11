@@ -37,8 +37,8 @@ def request_callback(name: str | None, phone: str | None, note: str | None, visi
         return {"error": "That doesn't look like a 10-digit mobile number. Ask them to check it."}
     phone = f"+91{digits}"
     note = (note or "").strip()[:MAX_NOTE_CHARACTERS]
-    lead_id = save_lead(visitor_id, name, phone, note, language)
-    send_lead(lead_id, name, phone, note, language)
+    lead_id, uid = save_lead(visitor_id, name, phone, note, language)
+    send_lead(lead_id, uid, name, phone, note, language)
     return {"saved": True}
 
 

@@ -1,4 +1,12 @@
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Loaded here, before any other part of Sara is imported, so every setting in .env is seen, including DATA_DIR.
+# The project's own .env is found by its path, wherever Sara is started from. Settings already set aren't replaced.
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+load_dotenv()
 
 
 def serve() -> None:
