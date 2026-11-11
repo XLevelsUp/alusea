@@ -1,5 +1,5 @@
 // Paste this into your Google Sheet: Extensions -> Apps Script.
-// It adds each new Gayu lead as a row on the first sheet. Requests without the secret code are ignored.
+// It adds each new Sara lead as a row on the first sheet. Requests without the secret code are ignored.
 // Set the code under Project Settings -> Script properties, with the property name SECRET.
 
 const HEADERS = ["When (UTC)", "Name", "Phone", "What they want", "Language"];

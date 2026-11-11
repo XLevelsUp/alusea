@@ -56,7 +56,7 @@ def daily_counters(kind: str, visitor_id: str | None, ip: str, today: str) -> li
 
 
 def give_back(kind: str, visitor_id: str | None, ip: str) -> None:
-    """Return a use after Gayu failed, so a customer isn't charged for an apology. The per-minute limit stays."""
+    """Return a use after Sara failed, so a customer isn't charged for an apology. The per-minute limit stays."""
     return_allowance(daily_counters(kind, visitor_id, ip, datetime.now(INDIA).strftime("%Y-%m-%d")))
 
 

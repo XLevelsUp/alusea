@@ -36,7 +36,7 @@ HOURS_WORDS = ("open", "timing", "hours", "holiday")
 
 CALL_TEXT = {
     "en-IN": {
-        "greeting": "Hi, this is Gayu from Alusea! I'm so glad you called. Tell me about your home or project.",
+        "greeting": "Hi, this is Sara from Alusea! I'm so glad you called. Tell me about your home or project.",
         "doors": "Sure, I'd love to help! Here are some doors on your screen. Which part of your home are they for?",
         "windows": "Sure, I'd love to help! Here are some windows on your screen. Which part of your home are they for?",
         "address": "Our showroom is at No 178, A Ramachandra Road, RS Puram, Coimbatore. Please call +91 96260 22722 to confirm timings before you visit.",
@@ -46,7 +46,7 @@ CALL_TEXT = {
         "estimate": "The starting estimate is {amount} for {area} square feet. Our team confirms the final price after measuring.",
     },
     "ta-IN": {
-        "greeting": "வணக்கம், நான் Alusea-ல இருந்து காயு பேசறேன்! நீங்க phone பண்ணதுல ரொம்ப சந்தோஷம். உங்க வீடு இல்லன்னா project பத்தி கொஞ்சம் சொல்லுங்க.",
+        "greeting": "வணக்கம், நான் Alusea-ல இருந்து சாரா பேசறேன்! நீங்க phone பண்ணதுல ரொம்ப சந்தோஷம். உங்க வீடு இல்லன்னா project பத்தி கொஞ்சம் சொல்லுங்க.",
         "doors": "கண்டிப்பா உதவி பண்றேன்! உங்க screen-ல கொஞ்சம் doors இருக்கு பாருங்க. எந்த room-க்கு door வேணும்?",
         "windows": "கண்டிப்பா உதவி பண்றேன்! உங்க screen-ல கொஞ்சம் windows இருக்கு பாருங்க. எந்த room-க்கு window வேணும்?",
         "address": "எங்க showroom No 178, A Ramachandra Road, RS Puram, Coimbatore-ல இருக்கு. வர்றதுக்கு முன்னாடி +91 96260 22722-க்கு phone பண்ணி நேரத்த கேட்டுக்கோங்க.",
@@ -56,7 +56,7 @@ CALL_TEXT = {
         "estimate": "{area} square feet-க்கு ஆரம்ப estimate {amount}. அளந்து பாத்ததுக்கு அப்புறம் எங்க team final price-அ சொல்லுவாங்க.",
     },
     "ml-IN": {
-        "greeting": "നമസ്കാരം, ഞാൻ Alusea-യിൽ നിന്നുള്ള ഗായു ആണ്! വിളിച്ചതിൽ വളരെ സന്തോഷം. നിങ്ങളുടെ വീടിനെക്കുറിച്ചോ project-നെക്കുറിച്ചോ ഒന്ന് പറയാമോ?",
+        "greeting": "നമസ്കാരം, ഞാൻ Alusea-യിൽ നിന്നുള്ള സാറാ ആണ്! വിളിച്ചതിൽ വളരെ സന്തോഷം. നിങ്ങളുടെ വീടിനെക്കുറിച്ചോ project-നെക്കുറിച്ചോ ഒന്ന് പറയാമോ?",
         "doors": "തീർച്ചയായും സഹായിക്കാം! നിങ്ങളുടെ screen-ൽ കുറച്ച് doors ഉണ്ട്. ഏത് room-ലേക്കാണ് door വേണ്ടത്?",
         "windows": "തീർച്ചയായും സഹായിക്കാം! നിങ്ങളുടെ screen-ൽ കുറച്ച് windows ഉണ്ട്. ഏത് room-ലേക്കാണ് window വേണ്ടത്?",
         "address": "ഞങ്ങളുടെ showroom No 178, A Ramachandra Road, RS Puram, Coimbatore-ലാണ്. വരുന്നതിന് മുമ്പ് +91 96260 22722 എന്ന നമ്പറിൽ വിളിച്ച് സമയം ചോദിക്കണേ.",
@@ -66,7 +66,7 @@ CALL_TEXT = {
         "estimate": "{area} square feet-ന് starting estimate {amount} ആണ്. അളന്നതിന് ശേഷം ഞങ്ങളുടെ team final price ഉറപ്പിക്കും.",
     },
     "te-IN": {
-        "greeting": "నమస్కారం, నేను Alusea నుంచి గాయు మాట్లాడుతున్నాను! మీరు call చేసినందుకు చాలా సంతోషం. మీ ఇల్లు గురించి లేదా మీ project గురించి చెప్పండి.",
+        "greeting": "నమస్కారం, నేను Alusea నుంచి సారా మాట్లాడుతున్నాను! మీరు call చేసినందుకు చాలా సంతోషం. మీ ఇల్లు గురించి లేదా మీ project గురించి చెప్పండి.",
         "doors": "తప్పకుండా సహాయం చేస్తాను! మీ screen మీద కొన్ని doors ఉన్నాయి. ఏ room కోసం door కావాలి?",
         "windows": "తప్పకుండా సహాయం చేస్తాను! మీ screen మీద కొన్ని windows ఉన్నాయి. ఏ room కోసం window కావాలి?",
         "address": "మా showroom No 178, A Ramachandra Road, RS Puram, Coimbatore-లో ఉంది. మీరు వచ్చే ముందు +91 96260 22722-కి call చేసి timings కనుక్కోండి.",
@@ -76,7 +76,7 @@ CALL_TEXT = {
         "estimate": "{area} square feet-కి starting estimate {amount}. మా team కొలతలు తీసుకున్న తర్వాత final price confirm చేస్తుంది.",
     },
     "kn-IN": {
-        "greeting": "ನಮಸ್ಕಾರ, ನಾನು Alusea-ದಿಂದ ಗಾಯು ಮಾತಾಡ್ತಿದ್ದೀನಿ! ನೀವು call ಮಾಡಿದ್ದಕ್ಕೆ ತುಂಬಾ ಖುಷಿ ಆಯ್ತು. ನಿಮ್ಮ ಮನೆ ಅಥವಾ project ಬಗ್ಗೆ ಹೇಳಿ.",
+        "greeting": "ನಮಸ್ಕಾರ, ನಾನು Alusea-ದಿಂದ ಸಾರಾ ಮಾತಾಡ್ತಿದ್ದೀನಿ! ನೀವು call ಮಾಡಿದ್ದಕ್ಕೆ ತುಂಬಾ ಖುಷಿ ಆಯ್ತು. ನಿಮ್ಮ ಮನೆ ಅಥವಾ project ಬಗ್ಗೆ ಹೇಳಿ.",
         "doors": "ಖಂಡಿತ ಸಹಾಯ ಮಾಡ್ತೀನಿ! ನಿಮ್ಮ screen ಮೇಲೆ ಕೆಲವು door-ಗಳು ಇವೆ. ಯಾವ room-ಗೆ door ಬೇಕು?",
         "windows": "ಖಂಡಿತ ಸಹಾಯ ಮಾಡ್ತೀನಿ! ನಿಮ್ಮ screen ಮೇಲೆ ಕೆಲವು window-ಗಳು ಇವೆ. ಯಾವ room-ಗೆ window ಬೇಕು?",
         "address": "ನಮ್ಮ showroom No 178, A Ramachandra Road, RS Puram, Coimbatore-ನಲ್ಲಿದೆ. ಬರೋಕೆ ಮುಂಚೆ +91 96260 22722-ಗೆ call ಮಾಡಿ timings ಕೇಳ್ಕೊಳ್ಳಿ.",
@@ -117,7 +117,7 @@ def quick_reply(message: str, language: str, first_message: bool) -> str | None:
     lines = CALL_TEXT[language]
     wants_doors = has_word(text, DOOR_WORDS)
     wants_windows = has_word(text, WINDOW_WORDS)
-    # Later in a conversation, even "door" may be answering Gayu's question, so the AI needs to see it.
+    # Later in a conversation, even "door" may be answering Sara's question, so the AI needs to see it.
     if first_message and is_plain_request(text) and wants_doors != wants_windows:
         reply, category = (lines["doors"], "Doors") if wants_doors else (lines["windows"], "Windows")
         return set_cards(reply, [product["id"] for product in get_products(category)])

@@ -43,7 +43,7 @@ MAX_SPOKEN_CHARACTERS = 1500
 # When the saved audio passes this size, the clips not played for longest are deleted.
 MAX_VOICE_CACHE_BYTES = int(os.getenv("MAX_VOICE_CACHE_MB", "500")) * 1_000_000
 
-# The only file that knows the voice provider. Gayu sounds the same in every language.
+# The only file that knows the voice provider. Sara sounds the same in every language.
 VOICE_MODEL = "bulbul:v3"
 VOICE_SPEAKER = "kavitha"
 

@@ -222,7 +222,7 @@ async def post_speech(request: Request, language: Language, alusea_chat_id: str 
 
 @app.post("/speak")
 def post_speak(request: SpeakRequest, http_request: Request, alusea_chat_id: str | None = Cookie(default=None)) -> dict:
-    """Read a reply aloud in Gayu's own voice, the same as on calls. Saved audio makes a repeat free."""
+    """Read a reply aloud in Sara's own voice, the same as on calls. Saved audio makes a repeat free."""
     require_allowance("listen", http_request, valid_visitor_id(alusea_chat_id))
     audio = speak(request.text, request.language)
     if audio is None:
@@ -306,7 +306,7 @@ def get_leads(_: None = Depends(require_team)) -> str:
     ) or '<tr><td colspan="5">No callback requests yet.</td></tr>'
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Gayu leads</title>
+<title>Sara leads</title>
 <style>body{{font-family:system-ui,sans-serif;margin:16px;color:#1f2933}}table{{border-collapse:collapse;width:100%}}
 th,td{{border-bottom:1px solid #d9dee3;padding:8px;text-align:left;vertical-align:top}}a.button{{display:inline-block;margin:8px 0 16px;padding:8px 12px;background:#1f6feb;color:#fff;border-radius:6px;text-decoration:none}}</style>
 </head><body><h1>Callback requests</h1><a class="button" href="/leads.csv">Download as spreadsheet</a>
@@ -325,7 +325,7 @@ def get_leads_spreadsheet(_: None = Depends(require_team)) -> Response:
     return Response(
         "﻿" + sheet.getvalue(),
         media_type="text/csv; charset=utf-8",
-        headers={"Content-Disposition": 'attachment; filename="gayu-leads.csv"', "Cache-Control": "no-store"},
+        headers={"Content-Disposition": 'attachment; filename="sara-leads.csv"', "Cache-Control": "no-store"},
     )
 
 

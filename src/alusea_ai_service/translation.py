@@ -36,8 +36,8 @@ MAX_PIECES_AT_ONCE = 4
 MAX_LENGTH_GROWTH = 3
 LINK = re.compile(r"https?://[^\s<>()]+")
 # Sarvam may leave the name in English letters or misspell it, so it always matches the rest of the page.
-GAYU_NAME = {"ta-IN": "காயு", "ml-IN": "ഗായു", "te-IN": "గాయు", "kn-IN": "ಗಾಯು"}
-MISSPELT_NAME = re.compile("Gayu|గేయు|ಗೇಯು")
+ASSISTANT_NAME = {"ta-IN": "சாரா", "ml-IN": "സാറാ", "te-IN": "సారా", "kn-IN": "ಸಾರಾ"}
+MISSPELT_NAME = re.compile(r"(?<![A-Za-z])Sara(?![A-Za-z])")
 
 
 def pieces_of(text: str) -> list[str]:
@@ -94,7 +94,7 @@ def translate_piece(english: str, language: str, script: str | None = None) -> s
     for mode in TRANSLATE_MODES:
         translated = ask_sarvam(english, "en-IN", language, mode, script)
         if translated and keeps_facts(english, translated):
-            return translated if script else MISSPELT_NAME.sub(GAYU_NAME[language], translated)
+            return translated if script else MISSPELT_NAME.sub(ASSISTANT_NAME[language], translated)
         print(f"The {mode} translation failed or changed something, so it wasn't used.")
     return english
 
