@@ -73,14 +73,25 @@ def test_ip_addresses_are_hashed_with_a_secret_key():
     assert limits.hidden("2026-11-11", "1.2.3.4") == hashed
 
 
-def test_the_secret_key_is_made_once_even_when_requests_race():
-    keys = []
-    threads = [threading.Thread(target=lambda: keys.append(limits.hash_key())) for _ in range(10)]
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join()
-    assert len(set(keys)) == 1
+def test_the_secret_key_is_made_once_even_when_requests_race(tmp_path, monkeypatch):
+    # Repeated with a new key file each time, because a race may only show up now and then.
+    for attempt in range(25):
+        monkeypatch.setattr(limits, "SECRET_FILE", tmp_path / f"limits{attempt}.secret")
+        keys = []
+        threads = [threading.Thread(target=lambda: keys.append(limits.hash_key())) for _ in range(10)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        assert len(set(keys)) == 1 and len(keys[0]) == 64
+    assert not list(tmp_path.glob("*.tmp"))
+
+
+def test_a_key_made_by_another_process_is_used(tmp_path, monkeypatch):
+    secret_file = tmp_path / "shared.secret"
+    secret_file.write_text("a" * 64, encoding="ascii")
+    monkeypatch.setattr(limits, "SECRET_FILE", secret_file)
+    assert limits.hash_key() == b"a" * 64
 
 
 def test_raw_ip_addresses_are_not_stored():

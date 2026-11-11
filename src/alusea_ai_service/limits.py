@@ -4,6 +4,7 @@ import hmac
 import os
 import re
 import secrets
+import threading
 from datetime import datetime, timedelta, timezone
 
 from alusea_ai_service.store import DATA_DIR, limit_reached, return_allowance, take_allowance
@@ -26,6 +27,9 @@ DAILY_LIMITS = {
 }
 # Without LIMIT_HASH_SECRET, a random key is made once and kept in this file, so counts survive a restart.
 SECRET_FILE = DATA_DIR / "limits.secret"
+# The key is read once and kept, instead of reading the file on every limit check.
+hash_keys: dict = {}
+hash_key_lock = threading.Lock()
 # Typed messages per minute for each visitor and each IP address.
 BURST_LIMITS = (10, 20)
 CALL_ME_BACK_PHRASES = {
@@ -51,13 +55,24 @@ def hash_key() -> bytes:
     """The secret for hashing. Without it, an IP address could be found again by trying every address."""
     if os.getenv("LIMIT_HASH_SECRET"):
         return os.environ["LIMIT_HASH_SECRET"].encode()
-    # Created only if missing, in one step, so two requests at the very first moment can't make different keys.
-    try:
-        with open(SECRET_FILE, "x", encoding="ascii") as new_file:
-            new_file.write(secrets.token_hex(32))
-    except FileExistsError:
-        pass
-    return SECRET_FILE.read_text(encoding="ascii").strip().encode()
+    with hash_key_lock:
+        if SECRET_FILE not in hash_keys:
+            if not SECRET_FILE.exists():
+                # Written in full to a temporary file, then linked into place in one step, so nobody ever reads a
+                # half-written key. If another process got there first, its key is used.
+                temporary = SECRET_FILE.with_name(f"{SECRET_FILE.name}.{secrets.token_hex(8)}.tmp")
+                temporary.write_text(secrets.token_hex(32), encoding="ascii")
+                try:
+                    os.link(temporary, SECRET_FILE)
+                except FileExistsError:
+                    pass
+                finally:
+                    temporary.unlink(missing_ok=True)
+            key = SECRET_FILE.read_text(encoding="ascii").strip().encode()
+            if not key:
+                raise RuntimeError(f"{SECRET_FILE} is empty. Delete it, and a new key will be made.")
+            hash_keys[SECRET_FILE] = key
+        return hash_keys[SECRET_FILE]
 
 
 def hidden(period: str, value: str) -> str:
