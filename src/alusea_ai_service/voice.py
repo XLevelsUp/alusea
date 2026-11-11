@@ -3,6 +3,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import wave
 from array import array
 from concurrent.futures import ThreadPoolExecutor
@@ -112,7 +113,8 @@ def listen(audio: bytes, content_type: str, language: str) -> tuple[str, str] | 
     if not text:
         return "", language
     first = next(part for part in heard if part["transcript"])
-    spoken = chosen_language(first.get("language_code"), first.get("language_probability"), len(text.split()), language)
+    # Only words with letters count, so a phone number or a short name can't switch the call to English.
+    spoken = chosen_language(first.get("language_code"), first.get("language_probability"), len(re.findall(r"[^\W\d_]{2,}", text)), language)
     if spoken == first.get("language_code"):
         return text, spoken
     # Detection picked a language we don't trust, so its words are wrong too. This time Sarvam is told the language.

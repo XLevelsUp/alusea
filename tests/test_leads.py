@@ -19,9 +19,9 @@ PROJECT = Path(__file__).parents[1]
 
 
 def test_a_mobile_number_is_saved_in_one_format():
-    assert request_callback("Ravi", "98765 43210", "door", "v1", "en-IN") == {"saved": True}
-    assert request_callback("Priya", "+91-98765-43211", "", "v2", "en-IN") == {"saved": True}
-    assert request_callback("Anu", "09876543212", "", "v3", "en-IN") == {"saved": True}
+    assert request_callback("Ravi", "98765 43210", "door", "v1", "en-IN")["saved"]
+    assert request_callback("Priya", "+91-98765-43211", "", "v2", "en-IN")["saved"]
+    assert request_callback("Anu", "09876543212", "", "v3", "en-IN")["saved"]
     assert sorted(lead["phone"] for lead in store.load_leads()) == ["+919876543210", "+919876543211", "+919876543212"]
 
 
@@ -133,7 +133,11 @@ const sheet = {
   appendRow: (values) => rows.push([...values]),
   getRange: (row, column, numRows = 1) => ({
     ...cell(row, column),
-    createTextFinder: (text) => ({ matchEntireCell: () => ({ findNext: () => rows.slice(row - 1, row - 1 + numRows).some((r) => r[column - 1] === text) ? {} : null }) }),
+    setValues: (values) => { rows[row - 1] = [...values[0]]; },
+    createTextFinder: (text) => ({ matchEntireCell: () => ({ findNext: () => {
+      const index = rows.slice(row - 1, row - 1 + numRows).findIndex((r) => r[column - 1] === text);
+      return index < 0 ? null : { getRow: () => row + index };
+    } }) }),
   }),
 };
 const SpreadsheetApp = { getActiveSpreadsheet: () => ({ getSheets: () => [sheet] }) };
@@ -143,11 +147,12 @@ const ContentService = { MimeType: { JSON: "json" }, createTextOutput: (text) =>
 eval(fs.readFileSync(process.argv[2], "utf8"));
 const send = (body) => doPost({ postData: { contents: JSON.stringify(body) } });
 const lead = { secret: "secret", id: "abc123", when: "2026-11-11", name: "=Ravi", phone: "+919876543210", note: "door", language: "Tamil" };
-const results = [send(lead), send(lead), send({ ...lead, id: "def456" }), send({ ...lead, secret: "wrong", id: "x" })];
+const results = [send(lead), send(lead), send({ ...lead, name: "Kokki Kumar" }), send({ ...lead, id: "def456" }), send({ ...lead, secret: "wrong", id: "x" })];
 console.log(JSON.stringify({ results, rows }));
 """, encoding="utf-8")
     output = subprocess.run(["node", str(harness), str(PROJECT / "google_sheet_script.gs")], capture_output=True, text=True, check=True)
     outcome = json.loads(output.stdout)
-    assert outcome["results"] == [{"ok": True}, {"ok": True, "duplicate": True}, {"ok": True}, {"ok": False}]
+    assert outcome["results"] == [{"ok": True}, {"ok": True, "updated": True}, {"ok": True, "updated": True}, {"ok": True}, {"ok": False}]
     assert len(outcome["rows"]) == 3
-    assert outcome["rows"][1][1] == "'=Ravi"
+    assert outcome["rows"][1][1] == "Kokki Kumar"
+    assert outcome["rows"][2][1] == "'=Ravi"

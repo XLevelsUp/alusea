@@ -83,6 +83,10 @@ TOOLS = [
                         "type": "string",
                         "description": "One word from a product's name, such as partition or pivot",
                     },
+                    "exclude": {
+                        "type": "string",
+                        "description": "One word; leaves out products whose name has it, such as window when they want a door",
+                    },
                 },
             },
         },
@@ -151,7 +155,14 @@ TOOLS = [
 ]
 # A longer unfiltered list goes to the AI in short form, so a question stays within Groq's per-minute limit.
 MAX_FULL_DETAILS = 6
-SEARCH_FILTERS = ("category", "max_price", "cheaper_than", "name")
+SEARCH_FILTERS = ("category", "max_price", "cheaper_than", "name", "exclude")
+REFUSAL_WORDS = re.compile(r"\b(can't|can’t|cannot|can not|unable|not able|not possible|impossible|won't be able)\b", re.IGNORECASE)
+POSITIVE_REMINDER = (
+    "Your last reply said what you or the team can't do, which turns a customer away. Say it again the way a good salesperson would, "
+    "with what you and the team can do instead, such as working out the best price, a callback or the phone number. "
+    "Still promise nothing the details don't state, such as a discount."
+)
+EXCLUDE_MEANS = {"window": "Doors", "windows": "Doors", "door": "Windows", "doors": "Windows"}
 # These tools don't look up the catalogue, so they don't decide which cards appear.
 NON_CATALOGUE_TOOLS = {"request_callback"}
 
@@ -178,11 +189,15 @@ def run_tool(name: str, raw_arguments: str | None, visitor_id: str | None = None
         if name == "request_callback":
             return request_callback(arguments.get("name"), arguments.get("phone"), arguments.get("note"), visitor_id, language)
         if name == "get_products":
+            # Leaving out windows with no other search means they want doors, so it searches doors, not everything else.
+            if arguments.get("exclude") and not any(arguments.get(key) for key in ("category", "name", "cheaper_than", "max_price")):
+                arguments["category"] = EXCLUDE_MEANS.get(arguments["exclude"].strip().lower())
             products = get_products(
                 arguments.get("category"),
                 arguments.get("max_price"),
                 arguments.get("cheaper_than"),
                 arguments.get("name"),
+                arguments.get("exclude"),
             )
             if len(products) > MAX_FULL_DETAILS and not any(arguments.get(key) for key in SEARCH_FILTERS):
                 return {
@@ -216,6 +231,7 @@ def filtered_matches(name: str, raw_arguments: str | None, result: dict) -> list
     is_filtered = (
         arguments.get("category")
         or arguments.get("name")
+        or arguments.get("exclude")
         or arguments.get("max_price") is not None
         or arguments.get("cheaper_than")
     )
@@ -325,6 +341,7 @@ def generate_reply(
     used_catalogue = False
     script_retried = False
     empty_retried = False
+    refusal_retried = False
 
     for tool_round in range(1, MAX_TOOL_ROUNDS + 1):
         # The last round must answer in words, so the customer gets a reply instead of an apology.
@@ -346,6 +363,13 @@ def generate_reply(
                 print("The reply wasn't in English, so asking again.")
                 messages.append({"role": "assistant", "content": reply})
                 messages.append({"role": "system", "content": f"Your last reply used the wrong language or script. Say it again. {reminder}"})
+                continue
+            # A salesperson never says no. If the reply still refuses, it's asked for once more, positively.
+            if not refusal_retried and tool_round < MAX_TOOL_ROUNDS and REFUSAL_WORDS.search(reply):
+                refusal_retried = True
+                print("The reply said what Sara can't do, so asking for a positive one.")
+                messages.append({"role": "assistant", "content": reply})
+                messages.append({"role": "system", "content": f"{POSITIVE_REMINDER} {reminder}"})
                 continue
             # An estimate shows only that product. After a filtered search, cards come from its
             # results, so none can be skipped or added.

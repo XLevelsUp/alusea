@@ -1,5 +1,6 @@
 import re
 import threading
+from collections.abc import Callable
 from collections import OrderedDict
 
 from groq import RateLimitError
@@ -13,7 +14,8 @@ from alusea_ai_service.tools import get_products
 from alusea_ai_service.translation import to_english, translate_reply
 from alusea_ai_service.voice import speak
 
-CALL_HISTORY_SENT_TO_MODEL = 12
+# Fewer earlier messages means fewer AI tokens on every turn, which keeps calls within Groq's limits.
+CALL_HISTORY_SENT_TO_MODEL = 8
 # Turns are kept in order within one server process, so Sara runs as a single process.
 MAX_TURN_LOCKS = 1000
 turn_locks: OrderedDict[str, threading.Lock] = OrderedDict()
@@ -159,8 +161,10 @@ def price_line(products: list[dict], language: str) -> str:
     return ""
 
 
-def voiced(shown: dict, language: str) -> dict:
+def voiced(shown: dict, language: str, speak_it: bool = True) -> dict:
     """Add the audio. The screen shows the reply, and the voice also says the price."""
+    if not speak_it:
+        return {**shown, "audio": None}
     price = price_line(shown["products"], language)
     # A closing question stays last, so the customer can answer it straight after hearing it.
     closing = ENDING_QUESTION.match(shown["content"])
@@ -197,13 +201,22 @@ def turn_lock(visitor_id: str) -> threading.Lock:
         return lock
 
 
-def call_turn(visitor_id: str, message: str, language: str, can_wait: bool = True, understood: str | None = None) -> dict:
+def call_turn(
+    visitor_id: str,
+    message: str,
+    language: str,
+    can_wait: bool = True,
+    understood: str | None = None,
+    still_wanted: Callable[[], bool] = lambda: True,
+) -> dict:
     """Answer one spoken message at a time for each visitor, so overlapping turns are saved in order."""
     with turn_lock(visitor_id):
-        return answer_turn(visitor_id, message, language, can_wait, understood)
+        return answer_turn(visitor_id, message, language, can_wait, understood, still_wanted)
 
 
-def answer_turn(visitor_id: str, message: str, language: str, can_wait: bool, understood: str | None) -> dict:
+def answer_turn(
+    visitor_id: str, message: str, language: str, can_wait: bool, understood: str | None, still_wanted: Callable[[], bool]
+) -> dict:
     """Answer one spoken message, written in the customer's own script. A failed answer is spoken too, so the call can carry on."""
     try:
         history = load_for_model(visitor_id, limit=CALL_HISTORY_SENT_TO_MODEL)
@@ -214,7 +227,9 @@ def answer_turn(visitor_id: str, message: str, language: str, can_wait: bool, un
             understood = understood or to_english(message, language)
             reply = small_talk(understood, language) or quick_reply(understood, language, not history)
         if reply is None:
-            english = generate_reply(history, understood, language, call=True, visitor_id=visitor_id)
+            # Their own words go with the translation, so a mistranslated sentence can still be understood.
+            asked = understood if understood == message else f"{understood}\n(Their own words: {message})"
+            english = generate_reply(history, asked, language, call=True, visitor_id=visitor_id)
             reply = translate_reply(english, language)
         save_exchange(visitor_id, message, reply, english, understood)
     except RateLimitError as error:
@@ -233,4 +248,5 @@ def answer_turn(visitor_id: str, message: str, language: str, can_wait: bool, un
         # Only the error itself: visitors' messages stay out of the logs.
         print(f"Call turn failed: {clean_error(error)}")
         return voiced({"content": sorry_message(language), "products": []}, language)
-    return voiced(present(reply), language)
+    # If the customer has already said something newer, this reply is still shown, but not spoken or paid to voice.
+    return voiced(present(reply), language, speak_it=still_wanted())

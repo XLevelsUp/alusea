@@ -143,6 +143,25 @@ def save_lead(visitor_id: str | None, name: str, phone: str, note: str, language
     return lead_id, uid
 
 
+def recent_lead(visitor_id: str, minutes: int) -> tuple[int, str] | None:
+    """Return the number and unique id of this visitor's lead from the last few minutes, if there is one."""
+    with closing(connect()) as connection:
+        row = connection.execute(
+            "SELECT id, uid FROM leads WHERE visitor_id = ? AND created_at > datetime('now', ?) ORDER BY id DESC LIMIT 1",
+            (visitor_id, f"-{minutes} minutes"),
+        ).fetchone()
+    return (row["id"], row["uid"] or f"lead-{row['id']}") if row else None
+
+
+def update_lead(lead_id: int, name: str, phone: str, note: str) -> None:
+    """Correct a lead, and send it to the Google Sheet again so the sheet is corrected too."""
+    with closing(connect()) as connection, connection:
+        connection.execute(
+            "UPDATE leads SET name = ?, phone = ?, note = ?, sheet_sent = 0 WHERE id = ?",
+            (name, phone, note, lead_id),
+        )
+
+
 def mark_sheet_sent(lead_id: int) -> None:
     with closing(connect()) as connection, connection:
         connection.execute("UPDATE leads SET sheet_sent = 1 WHERE id = ?", (lead_id,))

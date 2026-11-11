@@ -1,9 +1,11 @@
 import asyncio
 import csv
 import io
+import itertools
 import os
 import secrets
 import uuid
+from collections.abc import Callable
 from contextlib import asynccontextmanager
 from html import escape
 from pathlib import Path
@@ -35,6 +37,10 @@ STATIC_DIR = Path(__file__).parent / "static"
 CHAT_RETENTION_DAYS = int(os.getenv("CHAT_RETENTION_DAYS", "90"))
 SECONDS_PER_DAY = 24 * 60 * 60
 SHEET_RETRY_SECONDS = 15 * 60
+# The newest spoken turn for each visitor, so an older reply that's overtaken isn't paid to voice.
+MAX_TRACKED_VISITORS = 1000
+newest_turns: dict[str, int] = {}
+turn_numbers = itertools.count(1)
 # Browser protections. The page may only be framed by Alusea's own sites, and only it may use the microphone.
 SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
@@ -310,12 +316,14 @@ async def post_call_speech(
     meter = call_meter(visitor_id)
     before = meter.snapshot()
     with metering(meter):
-        reply = await answer_speech(visitor_id, speech, content_type, language, meter)
+        reply = await answer_speech(visitor_id, speech, content_type, language, meter, newest_turn_check(visitor_id))
     print(summary(before, meter.snapshot()))
     return reply
 
 
-async def answer_speech(visitor_id: str, speech: bytes, content_type: str, language: str, meter: Meter) -> dict:
+async def answer_speech(
+    visitor_id: str, speech: bytes, content_type: str, language: str, meter: Meter, still_wanted: Callable[[], bool]
+) -> dict:
     heard = await run_in_threadpool(listen, speech, content_type, language)
     if heard is None:
         return {"heard": "", **await run_in_threadpool(not_heard, language)}
@@ -323,8 +331,17 @@ async def answer_speech(visitor_id: str, speech: bytes, content_type: str, langu
     if not message:
         return {"heard": "", "content": "", "products": [], "audio": None}
     meter.add(turns=1)
-    reply = await run_in_threadpool(call_turn, visitor_id, message, spoken_language)
+    reply = await run_in_threadpool(call_turn, visitor_id, message, spoken_language, True, None, still_wanted)
     return {"heard": message, "language": spoken_language, **reply}
+
+
+def newest_turn_check(visitor_id: str) -> Callable[[], bool]:
+    """Number this spoken turn, and return a check that says whether it's still the visitor's newest one."""
+    number = next(turn_numbers)
+    newest_turns[visitor_id] = number
+    while len(newest_turns) > MAX_TRACKED_VISITORS:
+        newest_turns.pop(next(iter(newest_turns)))
+    return lambda: newest_turns.get(visitor_id) == number
 
 
 @app.post("/call/retry")

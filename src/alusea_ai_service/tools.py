@@ -7,7 +7,7 @@ import httpx
 from dotenv import load_dotenv
 
 from alusea_ai_service.sheet import send_lead
-from alusea_ai_service.store import save_lead
+from alusea_ai_service.store import recent_lead, save_lead, update_lead
 
 load_dotenv()
 
@@ -21,6 +21,7 @@ MAX_QUANTITY = 500
 MAX_TOTAL_BUDGET = 100_000_000
 MAX_NAME_CHARACTERS = 60
 MAX_NOTE_CHARACTERS = 300
+LEAD_CORRECTION_MINUTES = 60
 
 
 def request_callback(name: str | None, phone: str | None, note: str | None, visitor_id: str | None, language: str) -> dict:
@@ -37,9 +38,15 @@ def request_callback(name: str | None, phone: str | None, note: str | None, visi
         return {"error": "That doesn't look like a 10-digit mobile number. Ask them to check it."}
     phone = f"+91{digits}"
     note = (note or "").strip()[:MAX_NOTE_CHARACTERS]
-    lead_id, uid = save_lead(visitor_id, name, phone, note, language)
+    # A correction soon after, such as a misheard name, updates the same request instead of adding a second lead.
+    earlier = recent_lead(visitor_id, LEAD_CORRECTION_MINUTES) if visitor_id else None
+    if earlier:
+        lead_id, uid = earlier
+        update_lead(lead_id, name, phone, note)
+    else:
+        lead_id, uid = save_lead(visitor_id, name, phone, note, language)
     send_lead(lead_id, uid, name, phone, note, language)
-    return {"saved": True}
+    return {"saved": True, "updated": bool(earlier)}
 
 
 def log_query(response: httpx.Response) -> None:
@@ -70,6 +77,7 @@ def get_products(
     max_price: float | None = None,
     cheaper_than: str | None = None,
     name: str | None = None,
+    exclude: str | None = None,
 ) -> list[dict]:
     """Return products for the model, optionally filtered. Prices are left out on purpose: only the cards show them."""
     params = {
@@ -98,7 +106,11 @@ def get_products(
     )
     log_query(response)
     response.raise_for_status()
-    return response.json()
+    products = response.json()
+    # The Sliding category has both doors and windows, so a door search can leave out the windows.
+    if exclude:
+        products = [product for product in products if exclude.strip().lower() not in product["name"].lower()]
+    return products
 
 
 def budget_options(budget: float, category: str | None = None) -> dict:

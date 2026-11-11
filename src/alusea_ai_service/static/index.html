@@ -724,6 +724,8 @@
     const SPEECH_SAMPLE_RATE = 16000;
     const MAX_SPEECH_SECONDS = 180;
     const CALL_SPEECH_CONFIDENCE = 0.75;
+    // A call waits this long in silence before sending, so a short pause doesn't split one sentence into two paid turns.
+    const CALL_PAUSE_MS = 1300;
     // The server reads up to this much aloud.
     const MAX_LISTEN_CHARACTERS = 1500;
     const LINKABLE_HOSTS = ["www.alusea.in", "alusea.in", "wa.me"];
@@ -774,6 +776,7 @@
     let callTurn = 0;
     // Starts as the menu's language, then follows what the customer speaks.
     let callLanguage = "en-IN";
+    let newestCallerMessage = null;
     let saraSpeaking = false;
     let waitingForReply = false;
     let saraInterrupted = false;
@@ -1204,22 +1207,35 @@
       showCallState();
     }
 
-    async function sendCallRequest(path, options) {
+    // An answer overtaken by newer speech comes back marked late, so its words and cards can still be shown.
+    async function sendCallRequest(path, options, keepLate = false) {
       const turn = ++callTurn;
       try {
         const response = await fetch(path, { method: "POST", ...options });
-        if (!inCall || turn !== callTurn) return null;
+        const current = turn === callTurn;
+        if (!inCall || (!current && !keepLate)) return null;
         if (response.status === 429) {
-          endCall(labels().callLimit);
+          if (current) endCall(labels().callLimit);
           return null;
         }
         if (!response.ok) throw new Error("The call request failed.");
         const data = await response.json();
-        return inCall && turn === callTurn ? data : null;
+        if (!inCall) return null;
+        return turn === callTurn ? data : { ...data, late: true };
       } catch {
         if (inCall && turn === callTurn) endCall(labels().error);
         return null;
       }
+    }
+
+    // An overtaken answer goes before the newer sentence that overtook it, so the call reads in the order it was said.
+    function showLateReply(data) {
+      const before = messages.children.length;
+      addMessage("user", data.heard);
+      addMessage("assistant", data.content || labels().cardIntro);
+      addCards(data.products);
+      const added = [...messages.children].slice(before);
+      if (newestCallerMessage?.isConnected) added.forEach((element) => messages.insertBefore(element, newestCallerMessage));
     }
 
     // A newer sentence replaces any answer still on its way, like talking over someone on a call.
@@ -1229,8 +1245,13 @@
       const data = await sendCallRequest(`/call/speech?language=${encodeURIComponent(callLanguage)}`, {
         headers: { "Content-Type": "audio/wav" },
         body: encodeWav(samples.slice(-MAX_SPEECH_SECONDS * SPEECH_SAMPLE_RATE)),
-      });
+      }, true);
       if (!data) return;
+      // The customer has said something newer, so this answer is shown without being spoken, keeping its estimate card.
+      if (data.late) {
+        if (data.heard) showLateReply(data);
+        return;
+      }
       waitingForReply = false;
       if (!data.heard && !data.content) {
         resumeSara();
@@ -1239,7 +1260,7 @@
       }
       if (data.language) callLanguage = data.language;
       if (data.heard) {
-        addMessage("user", data.heard);
+        newestCallerMessage = addMessage("user", data.heard);
         showStarters(false);
       }
       showCallReply(data);
@@ -1266,6 +1287,7 @@
       callListener = await createSpeechListener({
         // Stricter than the mic button, because a call's mic stays open and hears the whole room.
         positiveSpeechThreshold: CALL_SPEECH_CONFIDENCE,
+        redemptionMs: CALL_PAUSE_MS,
         onSpeechStart: () => setCallState("hearing"),
         onSpeechRealStart: pauseSaraForCaller,
         onVADMisfire: ignoreShortSound,
