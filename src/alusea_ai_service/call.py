@@ -38,7 +38,13 @@ PLAIN_REQUEST_WORDS = {
 # These need a real answer, so they go to the AI even in a short message.
 SPECIFIC_WORDS = ("sliding", "pivot", "fold", "not ", "don't", "difference", "compare", "which", "best", "better", "why", "how")
 ADDRESS_WORDS = ("where", "address", "location")
-HOURS_WORDS = ("open", "timing", "hours", "holiday")
+HOURS_WORDS = ("timing", "hours", "holiday")
+# "Open" also describes doors and windows, so it only means opening hours alongside a word about time or the showroom.
+OPEN_WORDS = ("open",)
+WHEN_WORDS = (
+    "when", "time", "today", "tomorrow", "now", "day", "showroom", "shop", "office",
+    "sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday",
+)
 
 CALL_TEXT = {
     "en-IN": {
@@ -46,7 +52,7 @@ CALL_TEXT = {
         "doors": "Sure, I'd love to help! Here are some doors on your screen. Which part of your home are they for?",
         "windows": "Sure, I'd love to help! Here are some windows on your screen. Which part of your home are they for?",
         "address": "Our showroom is at No 178, A Ramachandra Road, RS Puram, Coimbatore. Please call +91 96260 22722 to confirm timings before you visit.",
-        "hours": "Please call +91 96260 22722 to confirm our timings before you visit.",
+        "hours": "We're open 8 am to 5 pm. Please call +91 96260 22722 before you visit to check we're open that day.",
         "price_from": "Prices start from {price} per square foot.",
         "budget": "At starting prices, {amount} could cover up to about {area} square feet, depending on the product.",
         "estimate": "The starting estimate is {amount} for {area} square feet. Our team confirms the final price after measuring.",
@@ -56,7 +62,7 @@ CALL_TEXT = {
         "doors": "கண்டிப்பா உதவி பண்றேன்! உங்க screen-ல கொஞ்சம் doors இருக்கு பாருங்க. எந்த room-க்கு door வேணும்?",
         "windows": "கண்டிப்பா உதவி பண்றேன்! உங்க screen-ல கொஞ்சம் windows இருக்கு பாருங்க. எந்த room-க்கு window வேணும்?",
         "address": "எங்க showroom No 178, A Ramachandra Road, RS Puram, Coimbatore-ல இருக்கு. வர்றதுக்கு முன்னாடி +91 96260 22722-க்கு phone பண்ணி நேரத்த கேட்டுக்கோங்க.",
-        "hours": "வர்றதுக்கு முன்னாடி +91 96260 22722-க்கு phone பண்ணி நேரத்த கேட்டுக்கோங்க.",
+        "hours": "எங்க நேரம் காலை 8 மணியிலிருந்து சாயங்காலம் 5 மணி வரைக்கும். வர்றதுக்கு முன்னாடி +91 96260 22722-க்கு phone பண்ணி அன்னைக்கு திறந்திருக்கான்னு கேட்டுக்கோங்க.",
         "price_from": "விலை ஒரு square foot-க்கு {price}-ல இருந்து ஆரம்பிக்குது.",
         "budget": "ஆரம்ப விலையில, {amount}-க்கு சுமார் {area} square feet வரைக்கும் வரலாம். இது product-அ பொறுத்தது.",
         "estimate": "{area} square feet-க்கு ஆரம்ப estimate {amount}. அளந்து பாத்ததுக்கு அப்புறம் எங்க team final price-அ சொல்லுவாங்க.",
@@ -66,7 +72,7 @@ CALL_TEXT = {
         "doors": "തീർച്ചയായും സഹായിക്കാം! നിങ്ങളുടെ screen-ൽ കുറച്ച് doors ഉണ്ട്. ഏത് room-ലേക്കാണ് door വേണ്ടത്?",
         "windows": "തീർച്ചയായും സഹായിക്കാം! നിങ്ങളുടെ screen-ൽ കുറച്ച് windows ഉണ്ട്. ഏത് room-ലേക്കാണ് window വേണ്ടത്?",
         "address": "ഞങ്ങളുടെ showroom No 178, A Ramachandra Road, RS Puram, Coimbatore-ലാണ്. വരുന്നതിന് മുമ്പ് +91 96260 22722 എന്ന നമ്പറിൽ വിളിച്ച് സമയം ചോദിക്കണേ.",
-        "hours": "വരുന്നതിന് മുമ്പ് +91 96260 22722 എന്ന നമ്പറിൽ വിളിച്ച് സമയം ചോദിക്കണേ.",
+        "hours": "ഞങ്ങൾ രാവിലെ 8 മുതൽ വൈകിട്ട് 5 വരെ ആണ് പ്രവർത്തിക്കുന്നത്. വരുന്നതിന് മുമ്പ് +91 96260 22722 എന്ന നമ്പറിൽ വിളിച്ച് ആ ദിവസം തുറന്നിരിക്കുമോ എന്ന് ചോദിക്കണേ.",
         "price_from": "വില ഒരു square foot-ന് {price} മുതൽ തുടങ്ങുന്നു.",
         "budget": "തുടക്ക വിലയിൽ, {amount}-ന് ഏകദേശം {area} square feet വരെ കിട്ടാം. ഇത് product-നെ ആശ്രയിച്ചിരിക്കും.",
         "estimate": "{area} square feet-ന് starting estimate {amount} ആണ്. അളന്നതിന് ശേഷം ഞങ്ങളുടെ team final price ഉറപ്പിക്കും.",
@@ -76,7 +82,7 @@ CALL_TEXT = {
         "doors": "తప్పకుండా సహాయం చేస్తాను! మీ screen మీద కొన్ని doors ఉన్నాయి. ఏ room కోసం door కావాలి?",
         "windows": "తప్పకుండా సహాయం చేస్తాను! మీ screen మీద కొన్ని windows ఉన్నాయి. ఏ room కోసం window కావాలి?",
         "address": "మా showroom No 178, A Ramachandra Road, RS Puram, Coimbatore-లో ఉంది. మీరు వచ్చే ముందు +91 96260 22722-కి call చేసి timings కనుక్కోండి.",
-        "hours": "మీరు వచ్చే ముందు +91 96260 22722-కి call చేసి timings కనుక్కోండి.",
+        "hours": "మేము ఉదయం 8 నుంచి సాయంత్రం 5 వరకు పని చేస్తాము. మీరు వచ్చే ముందు +91 96260 22722-కి call చేసి ఆ రోజు తెరిచి ఉంటుందో కనుక్కోండి.",
         "price_from": "ధరలు square foot-కి {price} నుండి మొదలవుతాయి.",
         "budget": "మొదటి ధరల ప్రకారం, {amount}-కి సుమారు {area} square feet వరకు రావచ్చు. ఇది product-ని బట్టి ఉంటుంది.",
         "estimate": "{area} square feet-కి starting estimate {amount}. మా team కొలతలు తీసుకున్న తర్వాత final price confirm చేస్తుంది.",
@@ -86,7 +92,7 @@ CALL_TEXT = {
         "doors": "ಖಂಡಿತ ಸಹಾಯ ಮಾಡ್ತೀನಿ! ನಿಮ್ಮ screen ಮೇಲೆ ಕೆಲವು door-ಗಳು ಇವೆ. ಯಾವ room-ಗೆ door ಬೇಕು?",
         "windows": "ಖಂಡಿತ ಸಹಾಯ ಮಾಡ್ತೀನಿ! ನಿಮ್ಮ screen ಮೇಲೆ ಕೆಲವು window-ಗಳು ಇವೆ. ಯಾವ room-ಗೆ window ಬೇಕು?",
         "address": "ನಮ್ಮ showroom No 178, A Ramachandra Road, RS Puram, Coimbatore-ನಲ್ಲಿದೆ. ಬರೋಕೆ ಮುಂಚೆ +91 96260 22722-ಗೆ call ಮಾಡಿ timings ಕೇಳ್ಕೊಳ್ಳಿ.",
-        "hours": "ಬರೋಕೆ ಮುಂಚೆ +91 96260 22722-ಗೆ call ಮಾಡಿ timings ಕೇಳ್ಕೊಳ್ಳಿ.",
+        "hours": "ನಾವು ಬೆಳಿಗ್ಗೆ 8 ರಿಂದ ಸಂಜೆ 5 ರವರೆಗೆ ಕೆಲಸ ಮಾಡ್ತೀವಿ. ಬರೋಕೆ ಮುಂಚೆ +91 96260 22722-ಗೆ call ಮಾಡಿ ಆ ದಿನ ತೆರೆದಿರುತ್ತಾ ಅಂತ ಕೇಳ್ಕೊಳ್ಳಿ.",
         "price_from": "ಪ್ರತಿ square foot-ಗೆ price {price}-ರಿಂದ ಶುರು ಆಗುತ್ತೆ.",
         "budget": "ಶುರುವಿನ price-ನಲ್ಲಿ, {amount}-ಗೆ ಸುಮಾರು {area} square feet ವರೆಗೆ ಬರಬಹುದು. ಇದು product ಮೇಲೆ depend ಆಗುತ್ತೆ.",
         "estimate": "{area} square feet-ಗೆ starting estimate {amount}. ನಮ್ಮ team ಅಳತೆ ಮಾಡಿದ ಮೇಲೆ final price confirm ಮಾಡುತ್ತೆ.",
@@ -129,7 +135,8 @@ def quick_reply(message: str, language: str, first_message: bool) -> str | None:
         return set_cards(reply, [product["id"] for product in get_products(category)])
     if word_count <= SHORT_QUESTION_WORDS and has_word(text, ADDRESS_WORDS):
         return lines["address"]
-    if word_count <= SHORT_QUESTION_WORDS and has_word(text, HOURS_WORDS):
+    asks_hours = has_word(text, HOURS_WORDS) or (has_word(text, OPEN_WORDS) and has_word(text, WHEN_WORDS))
+    if word_count <= SHORT_QUESTION_WORDS and asks_hours:
         return lines["hours"]
     return None
 
