@@ -12,6 +12,7 @@ import httpx
 from dotenv import load_dotenv
 
 from alusea_ai_service.meter import count, in_threads
+from alusea_ai_service.store import DATA_DIR
 
 load_dotenv()
 
@@ -38,7 +39,7 @@ SURE_OF_LANGUAGE = 0.9
 # A short answer like "yes" or "8 feet" is English in any language, so it doesn't change the language.
 MIN_WORDS_TO_SWITCH_TO_ENGLISH = 3
 # Saved audio means a repeated sentence is only paid for once.
-CACHE_DIR = Path(__file__).parents[2] / "voice_cache"
+CACHE_DIR = DATA_DIR / "voice_cache"
 MAX_SPOKEN_CHARACTERS = 1500
 # When the saved audio passes this size, the clips not played for longest are deleted.
 MAX_VOICE_CACHE_BYTES = int(os.getenv("MAX_VOICE_CACHE_MB", "500")) * 1_000_000
@@ -127,8 +128,10 @@ def write_parts(parts: list[bytes], content_type: str, language_code: str, terms
     """Write every part of the speech, keeping them in order. None means every part failed."""
     with ThreadPoolExecutor(max_workers=MAX_PARTS_AT_ONCE) as pool:
         heard = list(in_threads(pool, lambda part: write_part(part, content_type, language_code, terms_language), parts))
-    written = [part for part in heard if part is not None]
-    return written or None
+    # A missing part could drop a size or a budget, so the customer is asked to say it again instead.
+    if any(part is None for part in heard):
+        return None
+    return heard
 
 
 def speech_seconds(audio: bytes) -> float:

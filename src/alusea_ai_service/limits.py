@@ -1,10 +1,12 @@
 """Daily limits, so one person can't use up the credit for everyone. Any number can be changed in .env, such as LIMIT_CALL_VISITOR=5."""
 import hashlib
+import hmac
 import os
 import re
+import secrets
 from datetime import datetime, timedelta, timezone
 
-from alusea_ai_service.store import return_allowance, take_allowance
+from alusea_ai_service.store import DATA_DIR, limit_reached, return_allowance, take_allowance
 
 INDIA = timezone(timedelta(hours=5, minutes=30))
 SCOPES = ("visitor", "ip", "site")
@@ -19,7 +21,11 @@ DAILY_LIMITS = {
     "mic": (20, 40, 100),
     # Separate from messages, so a customer who has run out can still leave their number.
     "callback": (5, 10, 50),
+    # Wrong passwords on the leads page, counted per IP address and for the site.
+    "leads_login": (10, 10, 50),
 }
+# Without LIMIT_HASH_SECRET, a random key is made once and kept in this file, so counts survive a restart.
+SECRET_FILE = DATA_DIR / "limits.secret"
 # Typed messages per minute for each visitor and each IP address.
 BURST_LIMITS = (10, 20)
 CALL_ME_BACK_PHRASES = {
@@ -41,9 +47,23 @@ def is_callback_message(message: str) -> bool:
     return message.strip() in CALL_ME_BACK_PHRASES or len(re.sub(r"\D", "", message)) >= MIN_PHONE_DIGITS
 
 
+def hash_key() -> bytes:
+    """The secret for hashing. Without it, an IP address could be found again by trying every address."""
+    if os.getenv("LIMIT_HASH_SECRET"):
+        return os.environ["LIMIT_HASH_SECRET"].encode()
+    if not SECRET_FILE.exists():
+        SECRET_FILE.write_text(secrets.token_hex(32), encoding="ascii")
+    return SECRET_FILE.read_text(encoding="ascii").strip().encode()
+
+
 def hidden(period: str, value: str) -> str:
-    """Counters are stored under a hash, so the table doesn't keep anyone's IP address."""
-    return hashlib.sha256(f"{period}|{value}".encode()).hexdigest()[:32]
+    """Counters are stored under a keyed hash, so the table doesn't keep anyone's IP address."""
+    return hmac.new(hash_key(), f"{period}|{value}".encode(), hashlib.sha256).hexdigest()[:32]
+
+
+def reached(kind: str, visitor_id: str | None, ip: str) -> bool:
+    """Say whether a limit has been reached, without counting a use."""
+    return limit_reached(daily_counters(kind, visitor_id, ip, datetime.now(INDIA).strftime("%Y-%m-%d")))
 
 
 def daily_counters(kind: str, visitor_id: str | None, ip: str, today: str) -> list[tuple[str, str, str, str, int]]:

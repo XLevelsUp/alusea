@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from html import escape
 from pathlib import Path
 from typing import Literal
-from alusea_ai_service.cards import present
+from alusea_ai_service.cards import present, present_many
 from fastapi import Cookie, Depends, FastAPI, HTTPException, Request, Response
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, HTMLResponse
@@ -17,12 +17,13 @@ from pydantic import BaseModel, Field
 
 from alusea_ai_service.agent import generate_reply, reply_language
 from alusea_ai_service.call import call_turn, not_heard, start_call
-from alusea_ai_service.limits import allow, give_back, is_callback_message
+from alusea_ai_service.limits import allow, give_back, is_callback_message, reached
 from alusea_ai_service.safe_log import clean_error
 from alusea_ai_service.small_talk import limit_message, small_talk, sorry_message
 from alusea_ai_service.meter import Meter, call_meter, metering, summary
 from alusea_ai_service.prompt import LANGUAGES as LANGUAGE_NAMES
 from alusea_ai_service.store import delete_messages, delete_old_messages, init_db, last_language, load_for_model, load_leads, load_messages, save_exchange
+from alusea_ai_service.sheet import as_text, resend_unsent_leads
 from alusea_ai_service.translation import ENGLISH_LETTERS, language_in_letters, translate_reply
 from alusea_ai_service.voice import MAX_SPOKEN_CHARACTERS, listen, speak
 
@@ -33,6 +34,14 @@ STATIC_DIR = Path(__file__).parent / "static"
 # The same as the cookie, so nothing is kept after a visitor's chat would have been forgotten anyway.
 CHAT_RETENTION_DAYS = int(os.getenv("CHAT_RETENTION_DAYS", "90"))
 SECONDS_PER_DAY = 24 * 60 * 60
+SHEET_RETRY_SECONDS = 15 * 60
+# Browser protections. The page may only be framed by Alusea's own sites, and only it may use the microphone.
+SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "microphone=(self), camera=(), geolocation=()",
+    "Content-Security-Policy": "frame-ancestors 'self' https://www.alusea.in https://alusea.in; object-src 'none'; base-uri 'self'",
+}
 # Set COOKIE_SECURE=true on the live site, which uses HTTPS. Local testing on http:// needs it off.
 COOKIE_SECURE = os.getenv("COOKIE_SECURE", "").lower() == "true"
 Language = Literal["en-IN", "ta-IN", "ml-IN", "te-IN", "kn-IN"]
@@ -48,17 +57,34 @@ async def delete_old_chats_daily() -> None:
         await asyncio.sleep(SECONDS_PER_DAY)
 
 
+async def resend_leads_regularly() -> None:
+    while True:
+        await run_in_threadpool(resend_unsent_leads)
+        await asyncio.sleep(SHEET_RETRY_SECONDS)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
-    cleaner = asyncio.create_task(delete_old_chats_daily())
+    tasks = [asyncio.create_task(delete_old_chats_daily()), asyncio.create_task(resend_leads_regularly())]
     yield
-    cleaner.cancel()
+    for task in tasks:
+        task.cancel()
 
 
 # The automatic API pages are off, so the live site doesn't list its endpoints.
 app = FastAPI(title="Alusea AI Service", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 team_login = HTTPBasic()
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.update(SECURITY_HEADERS)
+    # Only over HTTPS, so local testing on http:// isn't affected.
+    if COOKIE_SECURE:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000"
+    return response
 
 
 class ChatRequest(BaseModel):
@@ -129,13 +155,15 @@ def get_chat(alusea_chat_id: str | None = Cookie(default=None)) -> dict:
     visitor_id = valid_visitor_id(alusea_chat_id)
     if not visitor_id:
         return {"messages": []}
+    saved = load_messages(visitor_id)
+    shown = iter(present_many([item["content"] for item in saved if item["role"] == "assistant"]))
     return {
-    "messages": [
-        {"role": item["role"], **present(item["content"])} if item["role"] == "assistant"
-        else {"role": item["role"], "content": item["content"], "products": []}
-        for item in load_messages(visitor_id)
-    ]
-}
+        "messages": [
+            {"role": item["role"], **next(shown)} if item["role"] == "assistant"
+            else {"role": item["role"], "content": item["content"], "products": []}
+            for item in saved
+        ]
+    }
 
 
 @app.post("/chat")
@@ -200,18 +228,33 @@ def post_call_start(
     return reply
 
 
-async def read_speech(request: Request) -> bytes:
-    speech = await request.body()
-    if not speech or len(speech) > MAX_SPEECH_BYTES:
+def check_speech_size(request: Request) -> None:
+    """Refuse a recording that says it's too big before reading any of it."""
+    declared = request.headers.get("content-length")
+    if declared is not None and (not declared.isdigit() or int(declared) > MAX_SPEECH_BYTES):
         raise HTTPException(status_code=413, detail="That recording is empty or too long.")
-    return speech
+
+
+async def read_speech(request: Request) -> bytes:
+    """Read a recording, stopping as soon as it passes the size limit, so a huge upload can't fill the memory."""
+    chunks = []
+    size = 0
+    async for chunk in request.stream():
+        size += len(chunk)
+        if size > MAX_SPEECH_BYTES:
+            raise HTTPException(status_code=413, detail="That recording is empty or too long.")
+        chunks.append(chunk)
+    if not size:
+        raise HTTPException(status_code=413, detail="That recording is empty or too long.")
+    return b"".join(chunks)
 
 
 @app.post("/speech")
 async def post_speech(request: Request, language: Language, alusea_chat_id: str | None = Cookie(default=None)) -> dict:
     """Write speech out in the customer's own language, so they can check it before sending."""
-    speech = await read_speech(request)
+    check_speech_size(request)
     require_allowance("mic", request, valid_visitor_id(alusea_chat_id))
+    speech = await read_speech(request)
     content_type = request.headers.get("content-type", "audio/wav")
     heard = await run_in_threadpool(listen, speech, content_type, language)
     if heard is None:
@@ -238,10 +281,11 @@ async def post_call_speech(
     language: Language,
     alusea_chat_id: str | None = Cookie(default=None),
 ) -> dict:
-    speech = await read_speech(request)
-    content_type = request.headers.get("content-type", "audio/wav")
+    check_speech_size(request)
     visitor_id = valid_visitor_id(alusea_chat_id) or str(uuid.uuid4())
     require_allowance("call_turn", request, visitor_id)
+    speech = await read_speech(request)
+    content_type = request.headers.get("content-type", "audio/wav")
     remember_visitor(response, visitor_id)
     meter = call_meter(visitor_id)
     before = meter.snapshot()
@@ -282,18 +326,18 @@ def post_call_retry(
     return reply
 
 
-def require_team(credentials: HTTPBasicCredentials = Depends(team_login)) -> None:
-    """Let in only someone with the leads password from .env. Without one set, the page stays off."""
+def require_team(request: Request, credentials: HTTPBasicCredentials = Depends(team_login)) -> None:
+    """Let in only someone with the leads password from .env. Without one set, the page stays off. Wrong passwords are limited."""
     password = os.getenv("LEADS_PASSWORD")
     if not password:
         raise HTTPException(status_code=404)
+    ip = client_ip(request)
+    if reached("leads_login", None, ip):
+        raise HTTPException(status_code=429, detail="Too many wrong passwords today. Try again tomorrow.")
     if not secrets.compare_digest(credentials.password.encode(), password.encode()):
+        allow("leads_login", None, ip)
+        print("Wrong password on the leads page.")
         raise HTTPException(status_code=401, headers={"WWW-Authenticate": "Basic"})
-
-
-def spreadsheet_safe(value: str) -> str:
-    """Stop a spreadsheet from running a cell as a formula, and keep phone numbers as text."""
-    return f"'{value}" if value[:1] in ("=", "+", "-", "@") else value
 
 
 @app.get("/leads", response_class=HTMLResponse)
@@ -320,7 +364,7 @@ def get_leads_spreadsheet(_: None = Depends(require_team)) -> Response:
     writer.writerow(["When (UTC)", "Name", "Phone", "What they want", "Language"])
     for lead in load_leads():
         language = LANGUAGE_NAMES.get(lead["language"], lead["language"] or "")
-        writer.writerow([spreadsheet_safe(str(value)) for value in (lead["created_at"], lead["name"], lead["phone"], lead["note"], language)])
+        writer.writerow([as_text(value) for value in (lead["created_at"], lead["name"], lead["phone"], lead["note"], language)])
     # The mark at the start lets Excel read Tamil and other scripts correctly.
     return Response(
         "﻿" + sheet.getvalue(),
@@ -332,7 +376,7 @@ def get_leads_spreadsheet(_: None = Depends(require_team)) -> Response:
 @app.delete("/chat")
 def delete_chat(response: Response, alusea_chat_id: str | None = Cookie(default=None)) -> dict:
     visitor_id = valid_visitor_id(alusea_chat_id)
+    # The visitor keeps their cookie, so a new chat doesn't reset their daily limits.
     if visitor_id:
         delete_messages(visitor_id)
-    response.delete_cookie(COOKIE_NAME)
     return {"ok": True}

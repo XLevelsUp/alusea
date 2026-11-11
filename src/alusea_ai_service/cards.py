@@ -90,10 +90,17 @@ def load_cards(ids: list[str]) -> list[dict]:
     ]
 
 
-def present(content: str) -> dict:
+def present_many(contents: list[str]) -> list[dict]:
+    """Turn several saved replies into text and cards with one catalogue request, for loading a whole chat."""
+    all_ids = list(dict.fromkeys(product_id for content in contents for product_id in split_reply(content)[1]))
+    loaded = {card["id"]: card for card in load_cards(all_ids)}
+    return [present(content, loaded) for content in contents]
+
+
+def present(content: str, loaded: dict[str, dict] | None = None) -> dict:
     """Turn a saved reply into text plus product cards for the page."""
     text, ids, sizes, budgets = split_reply(content)
-    cards = load_cards(ids)
+    cards = load_cards(ids) if loaded is None else [dict(loaded[product_id]) for product_id in ids if product_id in loaded]
     for card in cards:
         if card["id"] in sizes:
             area = area_sq_ft(*sizes[card["id"]])

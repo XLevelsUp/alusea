@@ -1,4 +1,6 @@
 import re
+import threading
+from collections import OrderedDict
 
 from groq import RateLimitError
 
@@ -12,6 +14,9 @@ from alusea_ai_service.translation import to_english, translate_reply
 from alusea_ai_service.voice import speak
 
 CALL_HISTORY_SENT_TO_MODEL = 12
+MAX_TURN_LOCKS = 1000
+turn_locks: OrderedDict[str, threading.Lock] = OrderedDict()
+turn_locks_guard = threading.Lock()
 SHORT_QUESTION_WORDS = 12
 ENDING_QUESTION = re.compile(r"^(.*[.!])\s+([^.!?]+\?)$", re.DOTALL)
 RETRY_WAIT = re.compile(r"try again in (?:(\d+)m)?([\d.]+)(ms|s)\b")
@@ -171,7 +176,22 @@ def retry_seconds(error: RateLimitError) -> float | None:
     return int(wait[1] or 0) * 60 + float(wait[2]) / (1000 if wait[3] == "ms" else 1)
 
 
+def turn_lock(visitor_id: str) -> threading.Lock:
+    with turn_locks_guard:
+        lock = turn_locks.setdefault(visitor_id, threading.Lock())
+        turn_locks.move_to_end(visitor_id)
+        while len(turn_locks) > MAX_TURN_LOCKS:
+            turn_locks.popitem(last=False)
+        return lock
+
+
 def call_turn(visitor_id: str, message: str, language: str, can_wait: bool = True, understood: str | None = None) -> dict:
+    """Answer one spoken message at a time for each visitor, so overlapping turns are saved in order."""
+    with turn_lock(visitor_id):
+        return answer_turn(visitor_id, message, language, can_wait, understood)
+
+
+def answer_turn(visitor_id: str, message: str, language: str, can_wait: bool, understood: str | None) -> dict:
     """Answer one spoken message, written in the customer's own script. A failed answer is spoken too, so the call can carry on."""
     try:
         history = load_for_model(visitor_id, limit=CALL_HISTORY_SENT_TO_MODEL)

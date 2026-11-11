@@ -20,10 +20,10 @@ function doPost(event) {
   }
 }
 
-// A value starting with = + - or @ is kept as text, so the sheet never runs it as a formula.
+// A value starting with = + - or @, even after spaces or control characters, is kept as text, so the sheet never runs it as a formula.
 function asText(value) {
   const text = String(value || "");
-  return /^[=+\-@]/.test(text) ? "'" + text : text;
+  return /^[\s\x00-\x1f]*[=+\-@]|^[\t\r]/.test(text) ? "'" + text : text;
 }
 
 function reply(body) {

@@ -24,7 +24,7 @@ from alusea_ai_service.tools import SITE_URL, budget_options, estimate_price, ge
 
 load_dotenv()
 
-MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
+MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")
 # Groq's limits are per model, so this can answer when the main model has reached its limit. Its tone is flatter.
 GROQ_BACKUP_MODEL = os.getenv("GROQ_BACKUP_MODEL", "openai/gpt-oss-120b")
 # Normal replies take a few seconds, so a longer wait is better spent on the next model.
@@ -200,7 +200,7 @@ def run_tool(name: str, raw_arguments: str | None, visitor_id: str | None = None
                 arguments.get("width"),
                 arguments.get("height"),
                 arguments.get("unit") or "ft",
-                arguments.get("quantity") or 1,
+                1 if arguments.get("quantity") is None else arguments["quantity"],
             )
         return {"error": f"Unknown tool: {name}"}
     except Exception as error:
@@ -234,8 +234,8 @@ def send_to_model(messages: list[dict], request: dict):
         except RateLimitError as error:
             print(f"Groq's rate limit was reached on {model}.")
             last_error = error
-        except APIConnectionError as error:
-            # This includes timeouts.
+        except (APIConnectionError, InternalServerError) as error:
+            # This includes timeouts and Groq's own server errors.
             print(f"Groq couldn't answer on {model}: {clean_error(error)}")
             last_error = error
     print("Asking the free backup model.")
@@ -260,10 +260,6 @@ def ask_model(messages: list[dict], can_use_tools: bool = True):
     for attempt in range(1, MAX_MODEL_TRIES + 1):
         try:
             return send_to_model(sent, request)
-        except InternalServerError as error:
-            if attempt == MAX_MODEL_TRIES:
-                raise
-            print(f"Groq failed on try {attempt}, so trying again: {clean_error(error)}")
         except BadRequestError as error:
             if "tool_use_failed" not in str(error):
                 raise

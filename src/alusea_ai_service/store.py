@@ -1,9 +1,14 @@
+import os
 import sqlite3
 from contextlib import closing
 from pathlib import Path
 
-# Keeps the database in the top project folder, wherever the service is started from.
-DB_PATH = Path(__file__).resolve().parents[2] / "chat.db"
+# Where the database and saved audio live. On the server, set DATA_DIR to a folder that is backed up.
+DATA_DIR = Path(os.getenv("DATA_DIR") or Path(__file__).resolve().parents[2])
+DB_PATH = DATA_DIR / "chat.db"
+# A copy to the Google Sheet is tried again for this long, then left to the leads page.
+SHEET_RETRY_DAYS = 7
+SHEET_RETRY_AFTER_MINUTES = 2
 
 
 def connect() -> sqlite3.Connection:
@@ -60,6 +65,23 @@ def init_db() -> None:
             )
             """
         )
+        # Leads saved before this column existed had already gone to the sheet, so they count as sent.
+        lead_columns = [row["name"] for row in connection.execute("PRAGMA table_info(leads)")]
+        if "sheet_sent" not in lead_columns:
+            connection.execute("ALTER TABLE leads ADD COLUMN sheet_sent INTEGER NOT NULL DEFAULT 1")
+
+
+def limit_reached(counters: list[tuple[str, str, str, str, int]]) -> bool:
+    """Say whether any counter has reached its limit, without counting a use."""
+    with closing(connect()) as connection:
+        for period, kind, scope, key, limit in counters:
+            row = connection.execute(
+                "SELECT count FROM limit_counts WHERE period = ? AND kind = ? AND scope = ? AND key = ?",
+                (period, kind, scope, key),
+            ).fetchone()
+            if (row["count"] if row else 0) >= limit:
+                return True
+    return False
 
 
 def take_allowance(counters: list[tuple[str, str, str, str, int]], today: str) -> bool:
@@ -99,13 +121,32 @@ def delete_old_messages(days: int) -> int:
         return connection.execute("DELETE FROM messages WHERE created_at < datetime('now', ?)", (f"-{days} days",)).rowcount
 
 
-def save_lead(visitor_id: str | None, name: str, phone: str, note: str, language: str) -> None:
-    """Save a customer's callback request for the sales team."""
+def save_lead(visitor_id: str | None, name: str, phone: str, note: str, language: str) -> int:
+    """Save a customer's callback request for the sales team, and return its number."""
     with closing(connect()) as connection, connection:
-        connection.execute(
-            "INSERT INTO leads (visitor_id, name, phone, note, language) VALUES (?, ?, ?, ?, ?)",
+        return connection.execute(
+            "INSERT INTO leads (visitor_id, name, phone, note, language, sheet_sent) VALUES (?, ?, ?, ?, ?, 0)",
             (visitor_id, name, phone, note, language),
-        )
+        ).lastrowid
+
+
+def mark_sheet_sent(lead_id: int) -> None:
+    with closing(connect()) as connection, connection:
+        connection.execute("UPDATE leads SET sheet_sent = 1 WHERE id = ?", (lead_id,))
+
+
+def unsent_leads() -> list[dict]:
+    """Recent leads the Google Sheet hasn't received. The newest are left alone, as they may still be on their way."""
+    with closing(connect()) as connection:
+        rows = connection.execute(
+            """
+            SELECT id, created_at, name, phone, note, language FROM leads
+            WHERE sheet_sent = 0 AND created_at > datetime('now', ?) AND created_at < datetime('now', ?)
+            ORDER BY id
+            """,
+            (f"-{SHEET_RETRY_DAYS} days", f"-{SHEET_RETRY_AFTER_MINUTES} minutes"),
+        ).fetchall()
+    return [dict(row) for row in rows]
 
 
 def load_leads() -> list[dict]:
