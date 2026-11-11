@@ -24,7 +24,9 @@ MAX_NOTE_CHARACTERS = 300
 LEAD_CORRECTION_MINUTES = 60
 
 
-def request_callback(name: str | None, phone: str | None, note: str | None, visitor_id: str | None, language: str) -> dict:
+def request_callback(
+    name: str | None, phone: str | None, note: str | None, visitor_id: str | None, language: str, correction: bool = False
+) -> dict:
     """Save a callback request after checking the phone number looks like an Indian mobile number."""
     name = (name or "").strip()[:MAX_NAME_CHARACTERS]
     digits = re.sub(r"\D", "", str(phone or ""))
@@ -38,8 +40,8 @@ def request_callback(name: str | None, phone: str | None, note: str | None, visi
         return {"error": "That doesn't look like a 10-digit mobile number. Ask them to check it."}
     phone = f"+91{digits}"
     note = (note or "").strip()[:MAX_NOTE_CHARACTERS]
-    # A correction soon after, such as a misheard name, updates the same request instead of adding a second lead.
-    earlier = recent_lead(visitor_id, LEAD_CORRECTION_MINUTES) if visitor_id else None
+    # Only a correction, such as a misheard name, updates the request just made. A separate enquiry is always a new lead.
+    earlier = recent_lead(visitor_id, LEAD_CORRECTION_MINUTES) if correction and visitor_id else None
     if earlier:
         lead_id, uid = earlier
         update_lead(lead_id, name, phone, note)

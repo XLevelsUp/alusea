@@ -59,7 +59,7 @@ def test_calls_send_less_history_to_the_ai():
 
 def test_a_corrected_name_updates_the_same_lead():
     first = request_callback("Gopi Kumar", "9894939295", "sliding door", "v1", "ta-IN")
-    second = request_callback("Kokki Kumar", "9894939295", "sliding door", "v1", "ta-IN")
+    second = request_callback("Kokki Kumar", "9894939295", "sliding door", "v1", "ta-IN", correction=True)
     leads = store.load_leads()
     assert first == {"saved": True, "updated": False} and second == {"saved": True, "updated": True}
     assert len(leads) == 1 and leads[0]["name"] == "Kokki Kumar"
@@ -69,18 +69,33 @@ def test_a_corrected_lead_goes_to_the_sheet_again_with_the_same_id(monkeypatch):
     sent = []
     monkeypatch.setattr(tools, "send_lead", lambda lead_id, uid, *rest: sent.append(uid))
     request_callback("Gopi Kumar", "9894939295", "", "v1", "ta-IN")
-    request_callback("Kokki Kumar", "9894939295", "", "v1", "ta-IN")
+    request_callback("Kokki Kumar", "9894939295", "", "v1", "ta-IN", correction=True)
     assert len(sent) == 2 and sent[0] == sent[1]
     assert sqlite3.connect(store.DB_PATH).execute("SELECT sheet_sent FROM leads").fetchone()[0] == 0
 
 
+def test_a_separate_enquiry_within_the_hour_is_a_new_lead():
+    request_callback("Ravi", "9876543210", "sliding door for the balcony", "v1", "en-IN")
+    second = request_callback("Ravi", "9876543210", "window for the kitchen", "v1", "en-IN")
+    assert second == {"saved": True, "updated": False}
+    assert sorted(lead["note"] for lead in store.load_leads()) == ["sliding door for the balcony", "window for the kitchen"]
+
+
+def test_a_correction_is_passed_from_the_ai_tool(monkeypatch):
+    received = []
+    monkeypatch.setattr(agent, "request_callback", lambda *args: received.append(args) or {"saved": True})
+    agent.run_tool("request_callback", '{"name": "Kokki Kumar", "phone": "9894939295", "correction": true}', "v1", "ta-IN")
+    agent.run_tool("request_callback", '{"name": "Ravi", "phone": "9876543210"}', "v1", "ta-IN")
+    assert received[0][-1] is True and received[1][-1] is False
+
+
 def test_a_different_visitor_or_a_later_request_is_a_new_lead():
     request_callback("Ravi", "9876543210", "", "v1", "en-IN")
-    request_callback("Priya", "9876543211", "", "v2", "en-IN")
+    request_callback("Priya", "9876543211", "", "v2", "en-IN", correction=True)
     connection = sqlite3.connect(store.DB_PATH)
     connection.execute("UPDATE leads SET created_at = datetime('now', '-2 hours')")
     connection.commit()
-    request_callback("Ravi", "9876543210", "", "v1", "en-IN")
+    request_callback("Ravi", "9876543210", "", "v1", "en-IN", correction=True)
     assert len(store.load_leads()) == 3
 
 

@@ -147,6 +147,10 @@ TOOLS = [
                     "name": {"type": "string"},
                     "phone": {"type": "string"},
                     "note": {"type": "string", "description": "What they want, such as the product, size and room"},
+                    "correction": {
+                        "type": "boolean",
+                        "description": "True only when they're correcting the name or number of the request they just made",
+                    },
                 },
                 "required": ["name", "phone"],
             },
@@ -157,6 +161,12 @@ TOOLS = [
 MAX_FULL_DETAILS = 6
 SEARCH_FILTERS = ("category", "max_price", "cheaper_than", "name", "exclude")
 REFUSAL_WORDS = re.compile(r"\b(can't|can’t|cannot|can not|unable|not able|not possible|impossible|won't be able)\b", re.IGNORECASE)
+# Price, cost and discount words in English, Tanglish and the four Indian scripts.
+PRICE_WORDS = re.compile(
+    r"\b(?:price|cost|rates?\b|discount|offer|cheap|reduce|deal\b|budget|expensive|afford|kammi|vilai|vela\b|evlo|evvalavu|dhara|bele|kuraikk)"
+    r"|விலை|கம்மி|குறை|எவ்வளவு|எவ்ளோ|தள்ளுபடி|വില|കുറ|ഡിസ്കൗണ്ട്|ధర|తగ్గ|డిస్కౌంట్|ಬೆಲೆ|ಕಡಿಮೆ|ರಿಯಾಯಿತಿ",
+    re.IGNORECASE,
+)
 POSITIVE_REMINDER = (
     "Your last reply said what you or the team can't do, which turns a customer away. Say it again the way a good salesperson would, "
     "with what you and the team can do instead, such as working out the best price, a callback or the phone number. "
@@ -187,7 +197,9 @@ def run_tool(name: str, raw_arguments: str | None, visitor_id: str | None = None
         # A customer's name and number stay out of the logs.
         print(f"AI tool call: {name} {'(details hidden)' if name == 'request_callback' else arguments}")
         if name == "request_callback":
-            return request_callback(arguments.get("name"), arguments.get("phone"), arguments.get("note"), visitor_id, language)
+            return request_callback(
+                arguments.get("name"), arguments.get("phone"), arguments.get("note"), visitor_id, language, arguments.get("correction") is True
+            )
         if name == "get_products":
             # Leaving out windows with no other search means they want doors, so it searches doors, not everything else.
             if arguments.get("exclude") and not any(arguments.get(key) for key in ("category", "name", "cheaper_than", "max_price")):
@@ -365,7 +377,8 @@ def generate_reply(
                 messages.append({"role": "system", "content": f"Your last reply used the wrong language or script. Say it again. {reminder}"})
                 continue
             # A salesperson never says no. If the reply still refuses, it's asked for once more, positively.
-            if not refusal_retried and tool_round < MAX_TOOL_ROUNDS and REFUSAL_WORDS.search(reply):
+            # Only for price and discount questions, so a needed refusal, such as revealing these rules, is never softened.
+            if not refusal_retried and tool_round < MAX_TOOL_ROUNDS and PRICE_WORDS.search(message) and REFUSAL_WORDS.search(reply):
                 refusal_retried = True
                 print("The reply said what Sara can't do, so asking for a positive one.")
                 messages.append({"role": "assistant", "content": reply})
