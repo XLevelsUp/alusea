@@ -22,7 +22,7 @@ from alusea_ai_service.safe_log import clean_error
 from alusea_ai_service.small_talk import limit_message, small_talk, sorry_message
 from alusea_ai_service.meter import Meter, call_meter, metering, summary
 from alusea_ai_service.prompt import LANGUAGES as LANGUAGE_NAMES
-from alusea_ai_service.store import delete_messages, delete_old_messages, init_db, last_language, load_for_model, load_leads, load_messages, save_exchange
+from alusea_ai_service.store import database_ok, delete_messages, delete_old_messages, init_db, last_language, load_for_model, load_leads, load_messages, save_exchange
 from alusea_ai_service.sheet import as_text, resend_unsent_leads
 from alusea_ai_service.translation import ENGLISH_LETTERS, language_in_letters, translate_reply
 from alusea_ai_service.voice import MAX_SPOKEN_CHARACTERS, listen, speak
@@ -137,6 +137,17 @@ def require_allowance(kind: str, request: Request, visitor_id: str | None, detai
     if not allow(kind, visitor_id, client_ip(request)):
         print(f"Limit reached: {kind}")
         raise HTTPException(status_code=429, detail=detail)
+
+
+@app.get("/health")
+def health() -> dict:
+    """For uptime monitoring: says whether Sara is running and her database answers. It uses no paid services."""
+    try:
+        database_ok()
+    except Exception as error:
+        print(f"Health check failed: {clean_error(error)}")
+        raise HTTPException(status_code=503, detail="The database isn't answering.")
+    return {"ok": True}
 
 
 @app.get("/alusea-logo.svg")

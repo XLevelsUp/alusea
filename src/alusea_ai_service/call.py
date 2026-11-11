@@ -189,7 +189,8 @@ def turn_lock(visitor_id: str) -> threading.Lock:
         lock = turn_locks.setdefault(visitor_id, threading.Lock())
         turn_locks.move_to_end(visitor_id)
         # Only locks nobody is using are removed, oldest first, so a turn in progress keeps its lock.
-        for old_visitor in [key for key, old_lock in turn_locks.items() if not old_lock.locked()]:
+        # This visitor's own lock is never removed here, even before it's first used.
+        for old_visitor in [key for key, old_lock in turn_locks.items() if not old_lock.locked() and key != visitor_id]:
             if len(turn_locks) <= MAX_TURN_LOCKS:
                 break
             del turn_locks[old_visitor]

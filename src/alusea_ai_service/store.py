@@ -13,6 +13,12 @@ SHEET_RETRY_DAYS = 7
 SHEET_RETRY_AFTER_MINUTES = 2
 
 
+def database_ok() -> None:
+    """Run the simplest query, so a broken or missing database raises an error."""
+    with closing(connect()) as connection:
+        connection.execute("SELECT 1 FROM messages LIMIT 1").fetchall()
+
+
 def connect() -> sqlite3.Connection:
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row

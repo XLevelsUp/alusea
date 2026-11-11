@@ -51,8 +51,12 @@ def hash_key() -> bytes:
     """The secret for hashing. Without it, an IP address could be found again by trying every address."""
     if os.getenv("LIMIT_HASH_SECRET"):
         return os.environ["LIMIT_HASH_SECRET"].encode()
-    if not SECRET_FILE.exists():
-        SECRET_FILE.write_text(secrets.token_hex(32), encoding="ascii")
+    # Created only if missing, in one step, so two requests at the very first moment can't make different keys.
+    try:
+        with open(SECRET_FILE, "x", encoding="ascii") as new_file:
+            new_file.write(secrets.token_hex(32))
+    except FileExistsError:
+        pass
     return SECRET_FILE.read_text(encoding="ascii").strip().encode()
 
 
