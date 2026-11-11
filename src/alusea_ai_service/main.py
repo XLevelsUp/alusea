@@ -1,0 +1,338 @@
+import asyncio
+import csv
+import io
+import os
+import secrets
+import uuid
+from contextlib import asynccontextmanager
+from html import escape
+from pathlib import Path
+from typing import Literal
+from alusea_ai_service.cards import present
+from fastapi import Cookie, Depends, FastAPI, HTTPException, Request, Response
+from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from pydantic import BaseModel, Field
+
+from alusea_ai_service.agent import generate_reply, reply_language
+from alusea_ai_service.call import call_turn, not_heard, start_call
+from alusea_ai_service.limits import allow, give_back, is_callback_message
+from alusea_ai_service.safe_log import clean_error
+from alusea_ai_service.small_talk import limit_message, small_talk, sorry_message
+from alusea_ai_service.meter import Meter, call_meter, metering, summary
+from alusea_ai_service.prompt import LANGUAGES as LANGUAGE_NAMES
+from alusea_ai_service.store import delete_messages, delete_old_messages, init_db, last_language, load_for_model, load_leads, load_messages, save_exchange
+from alusea_ai_service.translation import ENGLISH_LETTERS, language_in_letters, translate_reply
+from alusea_ai_service.voice import MAX_SPOKEN_CHARACTERS, listen, speak
+
+COOKIE_NAME = "alusea_chat_id"
+COOKIE_MAX_AGE_SECONDS = 90 * 24 * 60 * 60
+HISTORY_SENT_TO_MODEL = 12
+STATIC_DIR = Path(__file__).parent / "static"
+# The same as the cookie, so nothing is kept after a visitor's chat would have been forgotten anyway.
+CHAT_RETENTION_DAYS = int(os.getenv("CHAT_RETENTION_DAYS", "90"))
+SECONDS_PER_DAY = 24 * 60 * 60
+# Set COOKIE_SECURE=true on the live site, which uses HTTPS. Local testing on http:// needs it off.
+COOKIE_SECURE = os.getenv("COOKIE_SECURE", "").lower() == "true"
+Language = Literal["en-IN", "ta-IN", "ml-IN", "te-IN", "kn-IN"]
+# About 3 minutes of speech, which voice.py splits into parts for Sarvam.
+MAX_SPEECH_BYTES = 6_000_000
+
+
+async def delete_old_chats_daily() -> None:
+    while True:
+        deleted = await run_in_threadpool(delete_old_messages, CHAT_RETENTION_DAYS)
+        if deleted:
+            print(f"Deleted {deleted} chat messages older than {CHAT_RETENTION_DAYS} days.")
+        await asyncio.sleep(SECONDS_PER_DAY)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    cleaner = asyncio.create_task(delete_old_chats_daily())
+    yield
+    cleaner.cancel()
+
+
+# The automatic API pages are off, so the live site doesn't list its endpoints.
+app = FastAPI(title="Alusea AI Service", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+team_login = HTTPBasic()
+
+
+class ChatRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=4000)
+    language: Language = "en-IN"
+
+
+class CallStartRequest(BaseModel):
+    language: Language
+
+
+class SpeakRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=MAX_SPOKEN_CHARACTERS)
+    language: Language
+
+
+class CallRetryRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=4000)
+    language: Language
+    understood: str | None = Field(default=None, max_length=8000)
+
+
+def valid_visitor_id(value: str | None) -> str | None:
+    """Accept only a real UUID from the cookie, and ignore anything else."""
+    if not value:
+        return None
+    try:
+        return str(uuid.UUID(value))
+    except ValueError:
+        return None
+
+
+def remember_visitor(response: Response, visitor_id: str) -> None:
+    response.set_cookie(
+        key=COOKIE_NAME,
+        value=visitor_id,
+        max_age=COOKIE_MAX_AGE_SECONDS,
+        httponly=True,
+        samesite="lax",
+        secure=COOKIE_SECURE,
+    )
+
+
+def client_ip(request: Request) -> str:
+    """The visitor's address. On the live site, uvicorn must run with --proxy-headers so this isn't the proxy's."""
+    return request.client.host if request.client else "unknown"
+
+
+def require_allowance(kind: str, request: Request, visitor_id: str | None, detail: str = "Today's limit has been reached.") -> None:
+    if not allow(kind, visitor_id, client_ip(request)):
+        print(f"Limit reached: {kind}")
+        raise HTTPException(status_code=429, detail=detail)
+
+
+@app.get("/alusea-logo.svg")
+def logo() -> FileResponse:
+    return FileResponse(STATIC_DIR / "alusea-logo-dark.svg", media_type="image/svg+xml", headers={"Cache-Control": "public, max-age=86400"})
+
+
+@app.get("/")
+def home() -> FileResponse:
+    # The browser checks for a newer page on every visit, so changes show without a hard refresh.
+    return FileResponse(STATIC_DIR / "index.html", headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/chat")
+def get_chat(alusea_chat_id: str | None = Cookie(default=None)) -> dict:
+    visitor_id = valid_visitor_id(alusea_chat_id)
+    if not visitor_id:
+        return {"messages": []}
+    return {
+    "messages": [
+        {"role": item["role"], **present(item["content"])} if item["role"] == "assistant"
+        else {"role": item["role"], "content": item["content"], "products": []}
+        for item in load_messages(visitor_id)
+    ]
+}
+
+
+@app.post("/chat")
+def post_chat(
+    request: ChatRequest,
+    http_request: Request,
+    response: Response,
+    alusea_chat_id: str | None = Cookie(default=None),
+) -> dict:
+    message = request.message.strip()
+    if not message:
+        raise HTTPException(status_code=400, detail="Please enter a message.")
+
+    visitor_id = valid_visitor_id(alusea_chat_id) or str(uuid.uuid4())
+    language = reply_language(message)
+    limit_language = request.language if language == "en-IN" else language
+    kind = "callback" if is_callback_message(message) else "message"
+    require_allowance(kind, http_request, visitor_id, limit_message(limit_language))
+    script = None
+    if language == "en-IN":
+        language = language_in_letters(message, request.language, last_language(visitor_id))
+        script = None if language == "en-IN" else ENGLISH_LETTERS
+
+    try:
+        # The ready-made small talk is in each language's script, so Tanglish starts from the English and gets translated.
+        reply = small_talk(message, "en-IN" if script else language)
+        english = None
+        if reply is None:
+            history = load_for_model(visitor_id, limit=HISTORY_SENT_TO_MODEL)
+            english = generate_reply(history, message, request.language, visitor_id=visitor_id)
+            reply = translate_reply(english, language, script)
+        elif script:
+            english = reply
+            reply = translate_reply(english, language, script)
+        save_exchange(visitor_id, message, reply, english, language=language)
+    except Exception as error:
+        # Only the error itself: visitors' messages stay out of the logs.
+        print(f"Chat failed: {clean_error(error)}")
+        give_back(kind, visitor_id, client_ip(http_request))
+        raise HTTPException(status_code=502, detail=sorry_message("en-IN" if script else language))
+
+    remember_visitor(response, visitor_id)
+    return present(reply)
+
+
+@app.post("/call/start")
+def post_call_start(
+    request: CallStartRequest,
+    http_request: Request,
+    response: Response,
+    alusea_chat_id: str | None = Cookie(default=None),
+) -> dict:
+    visitor_id = valid_visitor_id(alusea_chat_id) or str(uuid.uuid4())
+    require_allowance("call", http_request, visitor_id)
+    remember_visitor(response, visitor_id)
+    # A new call's meter starts from zero.
+    meter = call_meter(visitor_id, new_call=True)
+    before = meter.snapshot()
+    with metering(meter):
+        reply = start_call(request.language)
+    print(summary(before, meter.snapshot()))
+    return reply
+
+
+async def read_speech(request: Request) -> bytes:
+    speech = await request.body()
+    if not speech or len(speech) > MAX_SPEECH_BYTES:
+        raise HTTPException(status_code=413, detail="That recording is empty or too long.")
+    return speech
+
+
+@app.post("/speech")
+async def post_speech(request: Request, language: Language, alusea_chat_id: str | None = Cookie(default=None)) -> dict:
+    """Write speech out in the customer's own language, so they can check it before sending."""
+    speech = await read_speech(request)
+    require_allowance("mic", request, valid_visitor_id(alusea_chat_id))
+    content_type = request.headers.get("content-type", "audio/wav")
+    heard = await run_in_threadpool(listen, speech, content_type, language)
+    if heard is None:
+        give_back("mic", valid_visitor_id(alusea_chat_id), client_ip(request))
+        raise HTTPException(status_code=502, detail="Speech to text failed.")
+    return {"text": heard[0]}
+
+
+@app.post("/speak")
+def post_speak(request: SpeakRequest, http_request: Request, alusea_chat_id: str | None = Cookie(default=None)) -> dict:
+    """Read a reply aloud in Gayu's own voice, the same as on calls. Saved audio makes a repeat free."""
+    require_allowance("listen", http_request, valid_visitor_id(alusea_chat_id))
+    audio = speak(request.text, request.language)
+    if audio is None:
+        give_back("listen", valid_visitor_id(alusea_chat_id), client_ip(http_request))
+        raise HTTPException(status_code=502, detail="Voice failed.")
+    return {"audio": audio}
+
+
+@app.post("/call/speech")
+async def post_call_speech(
+    request: Request,
+    response: Response,
+    language: Language,
+    alusea_chat_id: str | None = Cookie(default=None),
+) -> dict:
+    speech = await read_speech(request)
+    content_type = request.headers.get("content-type", "audio/wav")
+    visitor_id = valid_visitor_id(alusea_chat_id) or str(uuid.uuid4())
+    require_allowance("call_turn", request, visitor_id)
+    remember_visitor(response, visitor_id)
+    meter = call_meter(visitor_id)
+    before = meter.snapshot()
+    with metering(meter):
+        reply = await answer_speech(visitor_id, speech, content_type, language, meter)
+    print(summary(before, meter.snapshot()))
+    return reply
+
+
+async def answer_speech(visitor_id: str, speech: bytes, content_type: str, language: str, meter: Meter) -> dict:
+    heard = await run_in_threadpool(listen, speech, content_type, language)
+    if heard is None:
+        return {"heard": "", **await run_in_threadpool(not_heard, language)}
+    message, spoken_language = heard
+    if not message:
+        return {"heard": "", "content": "", "products": [], "audio": None}
+    meter.add(turns=1)
+    reply = await run_in_threadpool(call_turn, visitor_id, message, spoken_language)
+    return {"heard": message, "language": spoken_language, **reply}
+
+
+@app.post("/call/retry")
+def post_call_retry(
+    request: CallRetryRequest,
+    http_request: Request,
+    response: Response,
+    alusea_chat_id: str | None = Cookie(default=None),
+) -> dict:
+    """Try a spoken message again after the AI's rate limit. Its words are already known, so nothing is heard twice."""
+    visitor_id = valid_visitor_id(alusea_chat_id) or str(uuid.uuid4())
+    require_allowance("call_turn", http_request, visitor_id)
+    remember_visitor(response, visitor_id)
+    meter = call_meter(visitor_id)
+    before = meter.snapshot()
+    with metering(meter):
+        reply = call_turn(visitor_id, request.message, request.language, can_wait=False, understood=request.understood)
+    print(summary(before, meter.snapshot()))
+    return reply
+
+
+def require_team(credentials: HTTPBasicCredentials = Depends(team_login)) -> None:
+    """Let in only someone with the leads password from .env. Without one set, the page stays off."""
+    password = os.getenv("LEADS_PASSWORD")
+    if not password:
+        raise HTTPException(status_code=404)
+    if not secrets.compare_digest(credentials.password.encode(), password.encode()):
+        raise HTTPException(status_code=401, headers={"WWW-Authenticate": "Basic"})
+
+
+def spreadsheet_safe(value: str) -> str:
+    """Stop a spreadsheet from running a cell as a formula, and keep phone numbers as text."""
+    return f"'{value}" if value[:1] in ("=", "+", "-", "@") else value
+
+
+@app.get("/leads", response_class=HTMLResponse)
+def get_leads(_: None = Depends(require_team)) -> str:
+    rows = "".join(
+        f"<tr><td>{escape(lead['created_at'])} UTC</td><td>{escape(lead['name'])}</td>"
+        f"<td><a href=\"tel:{escape(lead['phone'])}\">{escape(lead['phone'])}</a></td>"
+        f"<td>{escape(lead['note'])}</td><td>{escape(LANGUAGE_NAMES.get(lead['language'], lead['language'] or ''))}</td></tr>"
+        for lead in load_leads()
+    ) or '<tr><td colspan="5">No callback requests yet.</td></tr>'
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gayu leads</title>
+<style>body{{font-family:system-ui,sans-serif;margin:16px;color:#1f2933}}table{{border-collapse:collapse;width:100%}}
+th,td{{border-bottom:1px solid #d9dee3;padding:8px;text-align:left;vertical-align:top}}a.button{{display:inline-block;margin:8px 0 16px;padding:8px 12px;background:#1f6feb;color:#fff;border-radius:6px;text-decoration:none}}</style>
+</head><body><h1>Callback requests</h1><a class="button" href="/leads.csv">Download as spreadsheet</a>
+<table><tr><th>When</th><th>Name</th><th>Phone</th><th>What they want</th><th>Language</th></tr>{rows}</table></body></html>"""
+
+
+@app.get("/leads.csv")
+def get_leads_spreadsheet(_: None = Depends(require_team)) -> Response:
+    sheet = io.StringIO()
+    writer = csv.writer(sheet)
+    writer.writerow(["When (UTC)", "Name", "Phone", "What they want", "Language"])
+    for lead in load_leads():
+        language = LANGUAGE_NAMES.get(lead["language"], lead["language"] or "")
+        writer.writerow([spreadsheet_safe(str(value)) for value in (lead["created_at"], lead["name"], lead["phone"], lead["note"], language)])
+    # The mark at the start lets Excel read Tamil and other scripts correctly.
+    return Response(
+        "﻿" + sheet.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="gayu-leads.csv"', "Cache-Control": "no-store"},
+    )
+
+
+@app.delete("/chat")
+def delete_chat(response: Response, alusea_chat_id: str | None = Cookie(default=None)) -> dict:
+    visitor_id = valid_visitor_id(alusea_chat_id)
+    if visitor_id:
+        delete_messages(visitor_id)
+    response.delete_cookie(COOKIE_NAME)
+    return {"ok": True}
