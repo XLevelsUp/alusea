@@ -55,3 +55,10 @@ def test_the_page_plays_a_filler_only_when_the_reply_is_slow(client):
     assert "FILLER_DELAY_MS = 1500" in page and "planFiller(callTurn + 1)" in page
     assert 'fillerAudio.addEventListener("pause", playReply' in page
     assert "fillerAudio.src = silentClip()" in page
+
+
+def test_the_phone_layout_folds_the_header_into_a_menu_and_keeps_one_call_button(client):
+    page = client.get("/").text
+    assert 'id="menu-button"' in page and 'class="header-menu" id="header-menu"' in page
+    assert ".chat:has(.welcome:not([hidden])) #call { display: none; }" in page
+    assert 'id="send-label"' in page and "animation-name: slide-up" in page

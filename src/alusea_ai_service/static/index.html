@@ -51,6 +51,8 @@
 
     /* The website's frosted glass header. */
     header {
+      position: relative;
+      z-index: 10;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -85,6 +87,9 @@
     .header-button:hover { background: var(--blueberry); color: var(--surface); }
     .header-button:disabled, #language:disabled { opacity: 0.6; cursor: not-allowed; }
     .header-button:disabled:hover { background: transparent; color: var(--blueberry); }
+    /* On a computer the menu's buttons sit in the header. On a phone they fold into the ⋯ menu. */
+    .menu-toggle { display: none; }
+    .header-menu { display: contents; }
 
     #messages {
       flex: 1;
@@ -302,6 +307,7 @@
       transition: background-color 0.25s;
     }
     #send:hover { background: var(--berry-bloom); }
+    #send svg { display: none; }
     #send:disabled { opacity: 0.6; cursor: not-allowed; }
 
     /* The signature: the call slides in like a glass sliding door, as a dark Blueberry panel with the website's window-frame linework. */
@@ -334,6 +340,7 @@
       pointer-events: none;
     }
     @keyframes slide-in { from { transform: translateX(100%); } }
+    @keyframes slide-up { from { transform: translateY(100%); } }
     @keyframes sheen { to { transform: translateX(120%); } }
     .call-orb {
       position: relative;
@@ -382,26 +389,94 @@
 
     @media (max-width: 640px) {
       :root { --gutter: 16px; }
-      .brand img { height: 44px; }
+
+      /* Header: logo, Sara, language and one ⋯ menu, so nothing is squeezed. */
+      header { padding-block: 6px; }
+      .brand { gap: 10px; }
+      .brand img { height: 40px; }
       .brand-name { padding-left: 10px; }
-      .tagline, .header-button .label { display: none; }
-      .header-button { width: 38px; padding: 0; justify-content: center; }
-      .cards {
-        grid-auto-flow: column;
-        grid-template-columns: none;
-        grid-auto-columns: 80%;
-        overflow-x: auto;
-        margin-inline: calc(var(--gutter) * -1);
-        padding: 2px var(--gutter) 10px;
-        scroll-snap-type: x mandatory;
-        scrollbar-width: none;
+      h1 { font-size: 17px; }
+      .tagline { display: none; }
+      .header-actions { position: relative; gap: 6px; }
+      .header-button, #language { height: 36px; }
+      #language { padding: 0 6px; font-size: 13px; }
+      .menu-toggle { display: inline-flex; width: 36px; padding: 0; justify-content: center; }
+      .header-menu {
+        display: none;
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        min-width: 210px;
+        flex-direction: column;
+        gap: 2px;
+        padding: 6px;
+        border-radius: 16px;
+        background: var(--surface);
+        box-shadow: 0 1px 2px rgb(47 58 85 / 0.1), 0 16px 40px -12px rgb(47 58 85 / 0.4);
       }
-      .card { scroll-snap-align: start; }
-      #send { padding: 0 16px; }
-      #call-bar { grid-template-columns: auto 1fr auto; gap: 12px 14px; padding-left: 22px; }
-      .call-title { letter-spacing: 0.14em; }
+      .header-menu.open { display: flex; animation: menu-in 0.18s var(--ease-out); }
+      @keyframes menu-in { from { opacity: 0; transform: translateY(-6px); } }
+      .header-menu .header-button { width: 100%; height: 46px; justify-content: flex-start; gap: 12px; padding: 0 12px; border: 0; border-radius: 10px; font-size: 14px; }
+      .header-menu .header-button:hover { background: var(--plate-white); color: var(--blueberry); }
+
+      /* Start screen: shorter, so the greeting and suggestions show without scrolling. */
+      .welcome { padding: 4px 0 0; }
+      .welcome .eyebrow-line { font-size: 11px; letter-spacing: 0.14em; gap: 10px; }
+      .welcome .eyebrow-line::before { width: 24px; }
+      .welcome h2 { max-width: none; margin: 10px 0 8px; font-size: 28px; }
+      .welcome p { margin-bottom: 16px; font-size: 15px; line-height: 1.55; }
+      /* One call button at a time: the big one on the start screen, then the one by the message box. */
+      .chat:has(.welcome:not([hidden])) #call { display: none; }
+
+      /* Suggestions wrap onto two rows instead of running off the screen. */
+      #starters { flex-wrap: wrap; overflow: visible; padding-top: 10px; }
+      .starter { flex: 0 1 auto; padding: 6px 13px; white-space: normal; text-align: left; }
+      /* The two short ones share a row, and the longer price question takes the next. */
+      .starter:nth-child(2) { order: 1; }
+
+      /* Product cards: a small photo beside the name and price, so two or three fit on screen. */
+      .cards { grid-template-columns: 1fr; gap: 10px; }
+      .card { display: grid; grid-template-columns: 104px 1fr; border-radius: 18px; }
+      .card:hover { transform: none; }
+      .photo { aspect-ratio: auto; height: 100%; min-height: 124px; }
+      .card-body { padding: 12px 14px; }
+      .eyebrow { font-size: 10px; letter-spacing: 0.16em; }
+      .card h2 { margin: 2px 0 4px; font-size: 16px; }
+      .card p { display: -webkit-box; margin-bottom: 8px; overflow: hidden; font-size: 13px; line-height: 1.45; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+      .card-foot { padding-top: 8px; }
+      .price { font-size: 16px; }
+      .view { display: none; }
+
+      /* Message box: Send is an arrow, so the box gets the room. */
+      form { gap: 6px; padding-top: 10px; }
+      #send { width: 46px; padding: 0; display: grid; place-items: center; }
+      #send svg { display: block; }
+      #send .send-label { display: none; }
+      #privacy-note { padding-bottom: 8px; text-align: center; font-size: 10.5px; }
+      #privacy-note a { white-space: nowrap; }
+
+      /* A call fills the lower half like a phone's call screen, with the chat still readable above it. */
+      .dock:has(#call-bar:not([hidden])) { display: flex; flex-direction: column; border-top: 0; background: transparent; }
+      #call-bar {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        align-content: center;
+        gap: 14px;
+        min-height: min(50dvh, 420px);
+        padding: 30px var(--gutter) 18px;
+        border-radius: 28px 28px 0 0;
+        text-align: center;
+        animation-name: slide-up;
+      }
+      #call-bar::before { inset: 10px auto auto 50%; width: 44px; height: 4px; border-radius: 4px; transform: translateX(-50%); }
+      .call-orb { width: 88px; height: 88px; font-size: 34px; }
+      .call-orb::after { inset: -8px; }
+      .call-title { justify-content: center; letter-spacing: 0.14em; }
       .call-title::before { display: none; }
-      #end-call { grid-column: 1 / -1; justify-content: center; }
+      #call-status { margin-top: 4px; font-size: 24px; }
+      .call-hint { margin-top: 2px; }
+      #end-call { width: 100%; min-height: 52px; justify-content: center; font-size: 15px; }
+      .dock:has(#call-bar:not([hidden])) #voice-status { order: 2; padding: 0 var(--gutter) 14px; background: var(--blueberry); color: rgb(245 246 243 / 0.7); text-align: center; font-size: 11px; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -431,6 +506,12 @@
           <option value="te-IN">తెలుగు</option>
           <option value="kn-IN">ಕನ್ನಡ</option>
         </select>
+        <button id="menu-button" class="header-button menu-toggle" type="button" aria-expanded="false" aria-controls="header-menu" aria-label="More options">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle>
+          </svg>
+        </button>
+        <div class="header-menu" id="header-menu">
         <button id="call-back" class="header-button" type="button">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"></path>
@@ -444,6 +525,7 @@
           </svg>
           <span class="label" id="new-chat-label">New chat</span>
         </button>
+        </div>
       </div>
     </header>
     <div id="messages" role="log" aria-live="polite"></div>
@@ -464,7 +546,12 @@
             <path d="M12 18v3"></path>
           </svg>
         </button>
-        <button id="send" type="submit">Send</button>
+        <button id="send" type="submit">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 19V5M5 12l7-7 7 7"></path>
+          </svg>
+          <span class="send-label" id="send-label">Send</span>
+        </button>
       </form>
       <p id="privacy-note"><span id="privacy-text"></span> <a href="https://www.alusea.in/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy policy</a></p>
       <div id="call-bar" data-state="connecting" hidden>
@@ -525,11 +612,12 @@
         callSpeaking: "Sara is speaking…",
         callLimit: "Voice calls are busy today. Please call us on +91 96260 22722 or message us on WhatsApp.",
         callTimeUp: "Your 5-minute call has ended. You can call again, or reach us on +91 96260 22722.",
-        privacyNote: "Sara is an AI and can make mistakes. Chats are saved to help you.",
+        privacyNote: "Sara is an AI and can make mistakes. Chats are saved.",
         welcomeTitle: "Let's find the right doors and windows for your home.",
         welcomeText: "Call Sara and talk it through in your language, or type below.",
         callSara: "Call Sara",
         callMeBack: "Call me back",
+        more: "More options",
         starters: ["Doors for my balcony", "Price for an 8×10 ft sliding door", "uPVC or aluminium?"],
         callTitle: "On a call with Sara",
         callHint: "Just speak. Sara stops when you talk.",
@@ -576,6 +664,7 @@
         welcomeText: "உங்க மொழியிலேயே சாராகிட்ட call-ல பேசுங்க, இல்லன்னா கீழ type பண்ணுங்க.",
         callSara: "சாராகிட்ட பேசுங்க",
         callMeBack: "எனக்கு call பண்ணுங்க",
+        more: "மேலும்",
         starters: ["பால்கனிக்கு door வேணும்", "8×10 அடி sliding door விலை என்ன?", "uPVC-ஆ aluminium-ஆ, எது நல்லது?"],
         callTitle: "சாராகிட்ட call-ல இருக்கீங்க",
         callHint: "பேசுங்க போதும். நீங்க பேசும்போது சாரா நிறுத்திடுவாங்க.",
@@ -622,6 +711,7 @@
         welcomeText: "നിങ്ങളുടെ ഭാഷയിൽ സാറായെ വിളിച്ച് സംസാരിക്കൂ, അല്ലെങ്കിൽ താഴെ type ചെയ്യൂ.",
         callSara: "സാറായെ വിളിക്കൂ",
         callMeBack: "എന്നെ തിരിച്ചു വിളിക്കൂ",
+        more: "കൂടുതൽ",
         starters: ["ബാൽക്കണിക്ക് ഒരു door വേണം", "8×10 അടി sliding door-ന് എന്താണ് വില?", "uPVC-യോ aluminium-മോ, ഏതാണ് നല്ലത്?"],
         callTitle: "സാറായുമായി call-ൽ ആണ്",
         callHint: "സംസാരിച്ചാൽ മതി. നിങ്ങൾ സംസാരിക്കുമ്പോൾ സാറാ നിർത്തും.",
@@ -668,6 +758,7 @@
         welcomeText: "మీ భాషలోనే సారాకు call చేసి మాట్లాడండి, లేదా కింద type చేయండి.",
         callSara: "సారాకు call చేయండి",
         callMeBack: "నాకు call చేయండి",
+        more: "మరిన్ని",
         starters: ["బాల్కనీకి door కావాలి", "8×10 అడుగుల sliding door ధర ఎంత?", "uPVC నా aluminium నా, ఏది మంచిది?"],
         callTitle: "సారాతో call లో ఉన్నారు",
         callHint: "మాట్లాడితే చాలు. మీరు మాట్లాడినప్పుడు సారా ఆగిపోతుంది.",
@@ -714,6 +805,7 @@
         welcomeText: "ನಿಮ್ಮ ಭಾಷೆಯಲ್ಲೇ ಸಾರಾಗೆ call ಮಾಡಿ ಮಾತಾಡಿ, ಇಲ್ಲಾಂದ್ರೆ ಕೆಳಗೆ type ಮಾಡಿ.",
         callSara: "ಸಾರಾಗೆ call ಮಾಡಿ",
         callMeBack: "ನನಗೆ call ಮಾಡಿ",
+        more: "ಇನ್ನಷ್ಟು",
         starters: ["ಬಾಲ್ಕನಿಗೆ door ಬೇಕು", "8×10 ಅಡಿ sliding door ಬೆಲೆ ಎಷ್ಟು?", "uPVC ನಾ aluminium ನಾ, ಯಾವುದು ಒಳ್ಳೆಯದು?"],
         callTitle: "ಸಾರಾ ಜೊತೆ call ನಲ್ಲಿದ್ದೀರಿ",
         callHint: "ಮಾತಾಡಿದ್ರೆ ಸಾಕು. ನೀವು ಮಾತಾಡುವಾಗ ಸಾರಾ ನಿಲ್ಲಿಸ್ತಾರೆ.",
@@ -759,6 +851,8 @@
     const endCallButton = document.getElementById("end-call");
     const callBackButton = document.getElementById("call-back");
     const starters = document.getElementById("starters");
+    const menuButton = document.getElementById("menu-button");
+    const headerMenu = document.getElementById("header-menu");
     const SPEAKER_ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"></path><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"></path></svg>';
     const STOP_ICON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg>';
     const CALL_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"></path></svg>';
@@ -801,7 +895,10 @@
       newChat.title = text.newChat;
       document.getElementById("call-back-label").textContent = text.callMeBack;
       callBackButton.title = text.callMeBack;
-      send.textContent = text.send;
+      document.getElementById("send-label").textContent = text.send;
+      send.setAttribute("aria-label", text.send);
+      menuButton.setAttribute("aria-label", text.more);
+      menuButton.title = text.more;
       mic.setAttribute("aria-label", text.speak);
       call.setAttribute("aria-label", text.callStart);
       call.title = text.callStart;
@@ -1141,6 +1238,7 @@
       languageSelect.disabled = false;
       newChat.disabled = false;
       callBackButton.disabled = false;
+      menuButton.disabled = false;
       if (message) addMessage("error", message);
     }
 
@@ -1364,6 +1462,8 @@
       languageSelect.disabled = true;
       newChat.disabled = true;
       callBackButton.disabled = true;
+      menuButton.disabled = true;
+      closeMenu();
       // Made during the tap, so browsers allow it to play later replies.
       callAudio = new Audio();
       // iPhones only play sound that a tap started, so a silent clip unlocks the filler phrases now.
@@ -1557,6 +1657,23 @@
     call.addEventListener("click", startCall);
     endCallButton.addEventListener("click", () => endCall());
     callBackButton.addEventListener("click", () => sendStarter(labels().callMeBack));
+
+    // The phone menu closes after a choice, a tap elsewhere or Escape.
+    function closeMenu() {
+      headerMenu.classList.remove("open");
+      menuButton.setAttribute("aria-expanded", "false");
+    }
+    menuButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      menuButton.setAttribute("aria-expanded", String(headerMenu.classList.toggle("open")));
+    });
+    headerMenu.addEventListener("click", closeMenu);
+    document.addEventListener("click", (event) => {
+      if (!headerMenu.contains(event.target)) closeMenu();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeMenu();
+    });
 
     // Earlier messages stay as written. The page's own text and later replies use the new language.
     languageSelect.addEventListener("change", () => {
