@@ -181,9 +181,10 @@ const SpacesSection = () => {
                   </span>
 
                   {/* The door: a slim aluminium frame around frosted glass, hinged on the left, swinging into the room. */}
-                  <span aria-hidden="true" className="door-leaf absolute inset-0">
-                    <span className="door-label absolute inset-0 bg-white/15 backdrop-blur-[5px]" />
-                    <span className="absolute inset-0 bg-[linear-gradient(115deg,rgb(255_255_255/0.32)_0%,transparent_32%,transparent_62%,rgb(255_255_255/0.14)_100%)]" />
+                  <span aria-hidden="true" className="door-leaf absolute inset-0 overflow-hidden rounded-t-[999px]">
+                    {/* Frosted glass across the whole door, cut to the door's own arch so none spills outside the curve. */}
+                    <span className="door-label absolute inset-0 rounded-t-[999px] bg-white/15 backdrop-blur-[5px] [clip-path:inset(0_round_999px_999px_0_0)]" />
+                    <span className="absolute inset-0 rounded-t-[999px] bg-[linear-gradient(115deg,rgb(255_255_255/0.32)_0%,transparent_32%,transparent_62%,rgb(255_255_255/0.14)_100%)]" />
                     <span className="absolute inset-0 rounded-t-[999px] border-[6px] border-stem-grey-deep lg:border-[10px]" />
                     <span className="absolute inset-x-0 top-[36%] h-1.5 bg-stem-grey-deep lg:h-2.5" />
                     <span className="absolute right-4 top-[58%] h-16 w-1.5 rounded-full bg-gradient-to-b from-plate-white to-stem-grey shadow-[0_2px_6px_rgb(0_0_0/0.35)] lg:right-7 lg:h-28 lg:w-2" />
