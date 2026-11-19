@@ -257,7 +257,7 @@ export default function RootLayout({
               new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
               j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
               'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-              })(window,document,'script','dataLayer','GTM-PM8VMKB8');
+              })(window,document,'script','dataLayer','GTM-THV6235M');
             `,
           }}
         />
@@ -270,6 +270,7 @@ export default function RootLayout({
           lazyOnload defers it until the page is idle. It's also staggered
           1s after GTM (below) so both scripts' main-thread work doesn't land
           in the same idle tick as one long task.
+          One gtag.js load reports to both Google Analytics properties listed in the config calls below.
         */}
         <DelayedScript
           delayMs={1000}
@@ -286,6 +287,7 @@ export default function RootLayout({
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
               gtag('config', 'G-KFWY6Y0W5T');
+              gtag('config', 'G-EVPJ6T5WZ2');
             `,
           }}
         />

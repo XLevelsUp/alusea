@@ -37,7 +37,7 @@ const AboutSection = () => {
             <p className="eyebrow">About Us</p>
             <h2 className="h-section mt-5 text-blueberry">Expertise in Windows &amp; Doors</h2>
             <p className="lede mt-6 max-w-2xl text-berry-bloom">
-              At ALU-SEA, we believe your doors and windows are more than just fittings—they&apos;re the first impression of your home. As reputable suppliers of aluminium sliding doors and premium architectural systems, we provide affordable aluminium windows and doors that elevate your living spaces without compromising on quality or aesthetics.
+              At ALU-SEA, we believe your doors and windows are more than just fittings—they&apos;re the first impression of your home. As reputable suppliers of aluminium sliding doors and premium architectural systems, we provide aluminium windows and doors that elevate your living spaces without compromising on quality or aesthetics.
             </p>
 
             <div className="mt-10 grid gap-8 border-t border-stem-grey/50 pt-10 sm:grid-cols-2">
