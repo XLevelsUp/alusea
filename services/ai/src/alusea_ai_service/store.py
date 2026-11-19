@@ -17,7 +17,7 @@ DB_PATH = DATA_DIR / "chat.db"
 # A Postgres connection string, such as Supabase's transaction pooler. Without it, the local SQLite file is used.
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 # Sara's tables in Postgres are kept in their own schema, which Supabase doesn't share through its public API.
-SCHEMA = "sara"
+SCHEMA = "ai"
 # A copy to the Google Sheet is tried again for this long, then left to the leads page.
 SHEET_RETRY_DAYS = 7
 SHEET_RETRY_AFTER_MINUTES = 2

@@ -11,7 +11,7 @@ and Sara, the Python AI sales agent, all on Vercel.
 
 Sara runs on Vercel as a Python function. Vercel doesn't keep files, so on
 Vercel her chats, leads and daily limits are saved in the Supabase database
-(schema `sara`, created automatically), and her two background jobs run from
+(schema `ai`, created automatically), and her two background jobs run from
 a daily Vercel cron. Locally, without `DATABASE_URL`, she still uses `chat.db`.
 
 ## One-time setup
@@ -66,23 +66,28 @@ Create a **third Vercel project** from this repo:
 **Sara's own database login (do this once, before the first deploy).** The
 `postgres` login from the Connect page can read and change every table,
 including employees' Aadhaar numbers, payroll and invoices. Sara only needs her
-own `sara` schema, so give her a login that can reach nothing else. In
-Supabase → **SQL Editor**, run once, with a long random password:
+own `ai` schema, so she gets a login that can reach nothing else.
+
+The migration `supabase/migrations/20261119000000_ai_chat_tables.sql` creates
+the `ai_service` login (without a password), the `ai` schema and its three
+tables (`ai.messages`, `ai.limit_counts`, `ai.leads`), owned by `ai_service`.
+Apply it with the other migrations (`supabase db push`), or paste it into the
+SQL Editor. Then set the login's password once, by hand, in the SQL Editor:
 
 ```sql
-CREATE ROLE sara_service LOGIN PASSWORD 'a-long-random-password';
-CREATE SCHEMA IF NOT EXISTS sara AUTHORIZATION sara_service;
+ALTER ROLE ai_service PASSWORD 'a-long-random-password';
 ```
 
-Sara then creates her three tables (`sara.messages`, `sara.limit_counts`,
-`sara.leads`) in that schema on her first start; there's no migration file for
-them. Build `DATABASE_URL` from the Transaction pooler string, replacing the
-user with `sara_service.<project-ref>` and the password with the one above.
+The password never goes in a migration file. Sara's startup code creates the
+same tables if they're missing, so she also works without the migration; a test
+checks the two describe the same tables. Build `DATABASE_URL` from the
+Transaction pooler string, replacing the user with `ai_service.<project-ref>`
+and the password with the one above.
 She still reads products through the public API with `ALUSEA_ANON_KEY`.
 
 To read Sara's data as a developer: Supabase → **Table Editor**, schema
-dropdown → `sara`, or query `sara.messages` in the SQL Editor. Chats are kept
-for 90 days; leads are kept until deleted. The `sara` schema isn't exposed to
+dropdown → `ai`, or query `ai.messages` in the SQL Editor. Chats are kept
+for 90 days; leads are kept until deleted. The `ai` schema isn't exposed to
 the public API, so the website's anon key can't read it.
 
 What's different on Vercel:
