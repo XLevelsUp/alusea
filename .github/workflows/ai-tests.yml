@@ -1,0 +1,29 @@
+# Runs Sara's (services/ai) tests whenever her code changes. The tests use fake services, so they need no keys and cost nothing.
+name: AI service tests
+
+on:
+  push:
+    paths:
+      - "services/ai/**"
+      - ".github/workflows/ai-tests.yml"
+  pull_request:
+    paths:
+      - "services/ai/**"
+      - ".github/workflows/ai-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/ai
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+      - run: uv sync --locked
+      - run: uv run pytest

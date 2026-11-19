@@ -1,0 +1,1783 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+  <title>Sara | Alusea</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@300;400;500&family=Noto+Sans+Kannada:wght@400;500;600&family=Noto+Sans+Malayalam:wght@400;500;600&family=Noto+Sans+Tamil:wght@400;500;600&family=Noto+Sans+Telugu:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.wasm.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.31/dist/bundle.min.js" defer></script>
+  <script>
+    // Inside the chat panel on alusea.in (?embed), the panel shows Sara's name, language and menu, so her own header hides.
+    // Set before the page draws, so the header never flashes.
+    if (window.parent !== window && new URLSearchParams(location.search).has("embed")) document.documentElement.classList.add("embedded");
+  </script>
+  <style>
+    /* The Alusea website's own palette, fonts and finishes, so Sara looks like part of alusea.in. */
+    :root {
+      color-scheme: light;
+      --plate-white: #f5f6f3;
+      --blueberry: #2f3a55;
+      --berry-bloom: #5c6b8a;
+      --stem-grey: #8d9295;
+      --stem-line: rgb(141 146 149 / 0.4);
+      --surface: #ffffff;
+      --stop: #b3261e;
+      --champagne: #f2c14e;
+      --radius-card: 1.5rem;
+      --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+      --indian-fonts: "Noto Sans Tamil", "Noto Sans Malayalam", "Noto Sans Telugu", "Noto Sans Kannada";
+      --body-font: Inter, var(--indian-fonts), system-ui, sans-serif;
+      --heading-font: Outfit, var(--indian-fonts), system-ui, sans-serif;
+      --gutter: 24px;
+      /* Brushed aluminium: very fine horizontal hairlines, the same finish as the website's light sections. */
+      --paper-grain: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'400'%20height%3D'400'%3E%3Cfilter%20id%3D'c'%20x%3D'0'%20y%3D'0'%20width%3D'100%25'%20height%3D'100%25'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'0.004%200.75'%20numOctaves%3D'2'%20seed%3D'7'%20stitchTiles%3D'stitch'%2F%3E%3CfeColorMatrix%20values%3D'0%200%200%200%200.18%200%200%200%200%200.23%200%200%200%200%200.33%200.2%200%200%200%20-0.045'%2F%3E%3C%2Ffilter%3E%3Crect%20width%3D'100%25'%20height%3D'100%25'%20filter%3D'url(%23c)'%2F%3E%3C%2Fsvg%3E");
+      /* Window frames in fine line, which the website lays over its large dark sections. */
+      --window-grid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='240'%3E%3Cg fill='none' stroke='white' stroke-opacity='0.07'%3E%3Crect x='20.5' y='20.5' width='140' height='200'/%3E%3Cpath d='M90.5 20.5v200M20.5 90.5h140'/%3E%3C/g%3E%3C/svg%3E");
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0;
+      height: 100dvh;
+      display: flex;
+      justify-content: center;
+      background: var(--plate-white) var(--paper-grain);
+      color: var(--blueberry);
+      font: 15px/1.6 var(--body-font);
+      -webkit-font-smoothing: antialiased;
+    }
+    button, select, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    :focus-visible { outline: 2px solid var(--berry-bloom); outline-offset: 3px; }
+
+    .chat { width: 100%; max-width: 880px; display: flex; flex-direction: column; }
+
+    /* The website's frosted glass header. */
+    header {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px var(--gutter);
+      background-color: color-mix(in srgb, var(--plate-white) 82%, transparent);
+      backdrop-filter: blur(24px) saturate(180%);
+      box-shadow: 0 1px 0 rgb(47 58 85 / 0.08), 0 12px 32px -20px rgb(47 58 85 / 0.35);
+    }
+    .brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .brand img { flex: none; height: 52px; width: auto; display: block; margin-left: -8px; }
+    .brand-name { min-width: 0; padding-left: 14px; border-left: 1px solid var(--stem-line); }
+    h1 { margin: 0; font: 500 18px/1.15 var(--heading-font); letter-spacing: -0.02em; }
+    .tagline { display: block; color: var(--berry-bloom); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .header-actions { flex: none; display: flex; align-items: center; gap: 8px; }
+    /* The website's outline pill, used for its header actions. */
+    .header-button, #language {
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 16px;
+      border: 1px solid var(--blueberry);
+      border-radius: 9999px;
+      background: transparent;
+      color: var(--blueberry);
+      font-size: 13px;
+      font-weight: 600;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    #language { padding: 0 10px; }
+    .header-button:hover { background: var(--blueberry); color: var(--surface); }
+    .header-button:disabled, #language:disabled { opacity: 0.6; cursor: not-allowed; }
+    .header-button:disabled:hover { background: transparent; color: var(--blueberry); }
+    /* On a computer the menu's buttons sit in the header. On a phone they fold into the ⋯ menu. */
+    .menu-toggle { display: none; }
+    .header-menu { display: contents; }
+    .embedded header { display: none; }
+
+    /* The conversation and the suggestions below it scroll together, so a short panel never squeezes the chat. */
+    .chat-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    #messages {
+      flex: 1 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: var(--gutter);
+    }
+
+    /* The website's small label above a heading, led by a short rule. */
+    .eyebrow-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      color: var(--berry-bloom);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+    .eyebrow-line::before { content: ""; width: 40px; height: 1px; background: currentColor; }
+    /* Wide letter spacing breaks up Indian scripts, so it's only for English. */
+    :root:not(:lang(en)) .eyebrow-line { letter-spacing: 0.02em; }
+    .chat:has(#call-bar:not([hidden])) #starters { display: none; }
+
+    .welcome { padding: 16px 0 12px; }
+    .welcome h2 {
+      max-width: 17ch;
+      margin: 14px 0 12px;
+      font: 400 clamp(30px, 5.4vw, 48px)/1.08 var(--heading-font);
+      letter-spacing: -0.025em;
+      text-wrap: balance;
+    }
+    .welcome p { max-width: 46ch; margin: 0 0 22px; color: var(--berry-bloom); font-size: 16px; line-height: 1.7; }
+
+    /* A card to start a call: Blueberry phone, Sara's words, and a gold arrow, with the website's sweep of light on hover. */
+    .call-cta {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      max-width: 380px;
+      padding: 10px 12px 10px 10px;
+      border: 1px solid rgb(47 58 85 / 0.1);
+      border-radius: 20px;
+      background: var(--surface);
+      color: var(--blueberry);
+      font: 500 16px var(--heading-font);
+      letter-spacing: -0.01em;
+      text-align: left;
+      box-shadow: 0 1px 2px rgb(47 58 85 / 0.06), 0 12px 28px -18px rgb(47 58 85 / 0.55);
+      transition: border-color 0.25s, transform 0.1s ease-out;
+    }
+    .call-cta-icon {
+      position: relative;
+      flex: none;
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border-radius: 9999px;
+      background: var(--blueberry);
+      color: var(--champagne);
+    }
+    .call-cta-icon::after { content: ""; position: absolute; inset: -5px; border: 1.5px solid rgb(47 58 85 / 0.16); border-radius: 9999px; }
+    .call-cta-go {
+      flex: none;
+      margin-left: auto;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 9999px;
+      background: rgb(242 193 78 / 0.22);
+      font: 600 16px var(--body-font);
+    }
+    .call-cta::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.28) 50%, transparent 65%);
+      transform: translateX(-120%);
+      transition: transform 0.8s var(--ease-out);
+      pointer-events: none;
+    }
+    .call-cta:hover { border-color: var(--blueberry); }
+    .call-cta:hover::after { transform: translateX(120%); }
+    .call-cta:active { transform: scale(0.97); }
+
+    .message {
+      max-width: min(85%, 620px);
+      padding: 10px 15px;
+      border-radius: 18px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    .message a { color: inherit; text-underline-offset: 2px; }
+    .assistant { align-self: flex-start; background: var(--surface); border-bottom-left-radius: 4px; box-shadow: 0 1px 2px rgb(47 58 85 / 0.08); }
+    .user { align-self: flex-end; background: var(--blueberry); color: var(--surface); border-bottom-right-radius: 4px; }
+    .error {
+      align-self: stretch;
+      max-width: none;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--stem-line);
+      border-left: 3px solid var(--stop);
+    }
+    .listen {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      margin-top: 8px;
+      padding: 0;
+      border: 1px solid var(--stem-line);
+      border-radius: 9999px;
+      background: var(--surface);
+      color: var(--berry-bloom);
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .listen:hover, .listen.playing { border-color: var(--blueberry); background: var(--blueberry); color: var(--surface); }
+
+    .typing {
+      align-self: flex-start;
+      display: flex;
+      gap: 5px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border-bottom-left-radius: 4px;
+      background: var(--surface);
+      box-shadow: 0 1px 2px rgb(47 58 85 / 0.08);
+    }
+    .typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--stem-grey); animation: blink 1.2s infinite; }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink { 0%, 80%, 100% { opacity: 0.3; } 40% { opacity: 1; background: var(--blueberry); } }
+
+    .cards {
+      flex: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+      gap: 16px;
+    }
+    /* The website's card: one generous corner and the soft lift of its palette card. */
+    .card {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-radius: var(--radius-card);
+      background: var(--surface);
+      color: inherit;
+      text-decoration: none;
+      box-shadow: 0 1px 2px rgb(47 58 85 / 0.08), 0 8px 24px -12px rgb(47 58 85 / 0.28);
+      transition: transform 0.3s var(--ease-out);
+    }
+    .card:hover { transform: translateY(-3px); }
+    .photo { aspect-ratio: 4 / 3; overflow: hidden; background: #e7e9e6; }
+    .photo img { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform 0.6s var(--ease-out); }
+    .card:hover .photo img { transform: scale(1.04); }
+    .card-body { flex: 1; display: flex; flex-direction: column; padding: 16px 18px 18px; }
+    .eyebrow { color: var(--berry-bloom); font-size: 11px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; }
+    .card h2 { margin: 6px 0 8px; font: 500 19px/1.25 var(--heading-font); letter-spacing: -0.02em; }
+    .card p { flex: 1; margin: 0 0 14px; color: var(--berry-bloom); font-size: 14px; }
+    .card-foot {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 8px 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--stem-line);
+    }
+    .card-foot > div { flex: 1 1 150px; }
+    .price-label { display: block; color: var(--berry-bloom); font-size: 12px; }
+    .price { font: 500 18px var(--heading-font); letter-spacing: -0.01em; }
+    .price-unit { color: var(--berry-bloom); font: 400 12px var(--body-font); }
+    .view { flex: none; margin-left: auto; font-size: 13px; font-weight: 600; white-space: nowrap; }
+    .price-note { flex: none; margin: 0; color: var(--berry-bloom); font-size: 12px; }
+
+    .dock { flex: none; background: var(--surface); border-top: 1px solid var(--stem-line); }
+    /* Suggestions sit on the chat background, one under another on the right, like messages the customer could send. */
+    #starters { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; padding: 4px var(--gutter) 12px; }
+    .starter {
+      max-width: 100%;
+      box-shadow: 0 1px 2px rgb(47 58 85 / 0.08);
+      padding: 7px 16px;
+      border: 1px solid var(--stem-line);
+      border-radius: 9999px;
+      background: var(--surface);
+      font-size: 13px;
+      text-align: right;
+      transition: border-color 0.3s;
+    }
+    .starter:hover { border-color: var(--blueberry); }
+    #voice-status { margin: 0; padding: 8px var(--gutter) 0; color: var(--berry-bloom); font-size: 12px; }
+    form { display: flex; align-items: flex-end; gap: 8px; padding: 12px var(--gutter) 6px; }
+    #privacy-note { margin: 0; padding: 0 var(--gutter) 10px; color: var(--berry-bloom); font-size: 11px; }
+    #privacy-note a { color: inherit; text-underline-offset: 2px; }
+    .dock:has(#call-bar:not([hidden])) #privacy-note { display: none; }
+    textarea {
+      flex: 1;
+      min-width: 0;
+      height: 46px;
+      padding: 10px 14px;
+      overflow-x: hidden;
+      border: 1px solid rgb(141 146 149 / 0.7);
+      border-radius: 12px;
+      background: var(--surface);
+      resize: none;
+      font: 16px/1.4 var(--body-font);
+    }
+    textarea:focus-visible { outline: 0; border-color: var(--blueberry); }
+    textarea::placeholder { color: var(--berry-bloom); white-space: nowrap; text-overflow: ellipsis; }
+    .round-button {
+      flex: none;
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--blueberry);
+      border-radius: 9999px;
+      background: transparent;
+      color: var(--blueberry);
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .round-button:hover, #mic.listening { background: var(--blueberry); color: var(--surface); }
+    #call { background: var(--blueberry); color: var(--surface); }
+    #call:hover { background: var(--berry-bloom); border-color: var(--berry-bloom); }
+    #send {
+      flex: none;
+      min-height: 46px;
+      padding: 0 22px;
+      border: 0;
+      border-radius: 9999px;
+      background: var(--blueberry);
+      color: var(--surface);
+      font-size: 14px;
+      font-weight: 600;
+      transition: background-color 0.25s;
+    }
+    #send:hover { background: var(--berry-bloom); }
+    #send svg { display: none; }
+    #send:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* The signature: the call slides in like a glass sliding door, as a dark Blueberry panel with the website's window-frame linework. */
+    #call-bar {
+      position: relative;
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      align-items: center;
+      gap: 16px;
+      padding: 18px var(--gutter) 20px 30px;
+      overflow: hidden;
+      background: var(--blueberry) var(--window-grid);
+      color: var(--plate-white);
+      animation: slide-in 0.6s var(--ease-out);
+    }
+    #call-bar::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 6px;
+      background: linear-gradient(90deg, #8d9295, #e9ebe8 45%, #a4a9ac);
+    }
+    #call-bar::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.16) 50%, transparent 65%);
+      transform: translateX(-120%);
+      animation: sheen 1.2s 0.4s var(--ease-out) forwards;
+      pointer-events: none;
+    }
+    @keyframes slide-in { from { transform: translateX(100%); } }
+    @keyframes slide-up { from { transform: translateY(100%); } }
+    @keyframes sheen { to { transform: translateX(120%); } }
+    .call-orb {
+      position: relative;
+      width: 54px;
+      height: 54px;
+      display: grid;
+      place-items: center;
+      border-radius: 9999px;
+      background: var(--plate-white);
+      color: var(--blueberry);
+      font: 500 21px var(--heading-font);
+    }
+    .call-orb img { width: 100%; height: 100%; display: block; border-radius: 9999px; }
+    .call-orb::after {
+      content: "";
+      position: absolute;
+      inset: -6px;
+      border: 2px solid rgb(245 246 243 / 0.3);
+      border-radius: 9999px;
+    }
+    #call-bar[data-state="connecting"] .call-orb::after { animation: breathe 1.4s ease-in-out infinite; }
+    #call-bar[data-state="hearing"] .call-orb::after { border-color: var(--plate-white); animation: ripple 0.9s ease-out infinite; }
+    #call-bar[data-state="thinking"] .call-orb::after { border-style: dashed; border-color: rgb(245 246 243 / 0.7); animation: spin 2.4s linear infinite; }
+    #call-bar[data-state="speaking"] .call-orb::after { border-color: var(--plate-white); animation: pulse 1.1s ease-in-out infinite; }
+    @keyframes breathe { 50% { opacity: 0.3; } }
+    @keyframes ripple { from { transform: scale(0.92); opacity: 1; } to { transform: scale(1.2); opacity: 0; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 50% { transform: scale(1.1); } }
+    .call-text { min-width: 0; }
+    .call-title { color: rgb(245 246 243 / 0.75); }
+    #call-status { display: block; margin-top: 2px; overflow-wrap: anywhere; font: 500 20px/1.3 var(--heading-font); letter-spacing: -0.02em; }
+    .call-hint { display: block; color: rgb(245 246 243 / 0.75); font-size: 12px; }
+    #call-timer { font: 400 16px var(--heading-font); color: rgb(245 246 243 / 0.85); font-variant-numeric: tabular-nums; }
+    #end-call {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 46px;
+      padding: 0 22px;
+      border: 0;
+      border-radius: 9999px;
+      background: var(--stop);
+      color: var(--surface);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 640px) {
+      :root { --gutter: 16px; }
+
+      /* Header: logo, Sara, language and one ⋯ menu, so nothing is squeezed. */
+      header { padding-block: 6px; }
+      .brand { gap: 10px; }
+      .brand img { height: 40px; }
+      .brand-name { padding-left: 10px; }
+      h1 { font-size: 17px; }
+      .tagline { display: none; }
+      .header-actions { position: relative; gap: 6px; }
+      .header-button, #language { height: 36px; }
+      #language { padding: 0 6px; font-size: 13px; }
+      .menu-toggle { display: inline-flex; width: 36px; padding: 0; justify-content: center; }
+      .header-menu {
+        display: none;
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        min-width: 210px;
+        flex-direction: column;
+        gap: 2px;
+        padding: 6px;
+        border-radius: 16px;
+        background: var(--surface);
+        box-shadow: 0 1px 2px rgb(47 58 85 / 0.1), 0 16px 40px -12px rgb(47 58 85 / 0.4);
+      }
+      .header-menu.open { display: flex; animation: menu-in 0.18s var(--ease-out); }
+      @keyframes menu-in { from { opacity: 0; transform: translateY(-6px); } }
+      .header-menu .header-button { width: 100%; height: 46px; justify-content: flex-start; gap: 12px; padding: 0 12px; border: 0; border-radius: 10px; font-size: 14px; }
+      .header-menu .header-button:hover { background: var(--plate-white); color: var(--blueberry); }
+
+      /* Start screen: shorter, so the greeting and suggestions show without scrolling. */
+      .welcome { padding: 4px 0 0; }
+      .welcome .eyebrow-line { font-size: 11px; letter-spacing: 0.14em; gap: 10px; }
+      .welcome .eyebrow-line::before { width: 24px; }
+      .welcome h2 { max-width: none; margin: 10px 0 8px; font-size: 28px; }
+      .welcome p { margin-bottom: 16px; font-size: 15px; line-height: 1.55; }
+      /* One call button at a time: the big one on the start screen, then the one by the message box. */
+      .chat:has(.welcome:not([hidden])) #call { display: none; }
+
+      #starters { gap: 6px; padding-bottom: 10px; }
+      .starter { padding: 6px 13px; }
+
+      /* Product cards: a small photo beside the name and price, so two or three fit on screen. */
+      .cards { grid-template-columns: 1fr; gap: 10px; }
+      .card { display: grid; grid-template-columns: 104px 1fr; border-radius: 18px; }
+      .card:hover { transform: none; }
+      .photo { aspect-ratio: auto; height: 100%; min-height: 124px; }
+      .card-body { padding: 12px 14px; }
+      .eyebrow { font-size: 10px; letter-spacing: 0.16em; }
+      .card h2 { margin: 2px 0 4px; font-size: 16px; }
+      .card p { display: -webkit-box; margin-bottom: 8px; overflow: hidden; font-size: 13px; line-height: 1.45; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+      .card-foot { padding-top: 8px; }
+      .price { font-size: 16px; }
+      .view { display: none; }
+
+      /* Message box: Send is an arrow, so the box gets the room. */
+      form { gap: 6px; padding-top: 10px; }
+      #send { width: 46px; padding: 0; display: grid; place-items: center; }
+      #send svg { display: block; }
+      #send .send-label { display: none; }
+      #privacy-note { padding-bottom: 8px; text-align: center; font-size: 10.5px; }
+      #privacy-note a { white-space: nowrap; }
+
+      /* A call fills the lower half like a phone's call screen, with the chat still readable above it. */
+      .dock:has(#call-bar:not([hidden])) { display: flex; flex-direction: column; border-top: 0; background: transparent; }
+      #call-bar {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        align-content: center;
+        gap: 14px;
+        min-height: min(50dvh, 420px);
+        padding: 30px var(--gutter) 18px;
+        border-radius: 28px 28px 0 0;
+        text-align: center;
+        animation-name: slide-up;
+      }
+      #call-bar::before { inset: 10px auto auto 50%; width: 44px; height: 4px; border-radius: 4px; transform: translateX(-50%); }
+      .call-orb { width: 88px; height: 88px; font-size: 34px; }
+      .call-orb::after { inset: -8px; }
+      .call-title { justify-content: center; letter-spacing: 0.14em; }
+      .call-title::before { display: none; }
+      #call-status { margin-top: 4px; font-size: 24px; }
+      .call-hint { margin-top: 2px; }
+      #end-call { width: 100%; min-height: 52px; justify-content: center; font-size: 15px; }
+      .dock:has(#call-bar:not([hidden])) #voice-status { order: 2; padding: 0 var(--gutter) 14px; background: var(--blueberry); color: rgb(245 246 243 / 0.7); text-align: center; font-size: 11px; }
+    }
+    /* In the alusea.in panel, the panel's header already names Sara, so the welcome is kept short. */
+    .embedded .welcome { padding: 2px 0 0; }
+    .embedded .welcome .eyebrow-line { display: none; }
+    .embedded .welcome h2 { max-width: none; margin: 0 0 6px; font-size: 21px; line-height: 1.25; }
+    .embedded .welcome p { margin-bottom: 12px; font-size: 13.5px; line-height: 1.5; }
+    /* The message box sits on the chat background, so the panel reads as one surface at any width. */
+    .embedded .dock:not(:has(#call-bar:not([hidden]))) { background: transparent; border-top-color: transparent; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+      #call-bar::after { display: none; }
+    }
+    @media (prefers-contrast: more), print {
+      body { background-image: none; }
+      #call-bar { background-image: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="chat">
+    <header>
+      <div class="brand">
+        <img src="/alusea-logo.svg" alt="Alusea" width="350" height="192">
+        <div class="brand-name">
+          <h1>Sara</h1>
+          <span class="tagline" id="tagline">Your Alusea showroom advisor</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <select id="language" aria-label="Choose language">
+          <option value="en-IN">English</option>
+          <option value="ta-IN">தமிழ்</option>
+          <option value="ml-IN">മലയാളം</option>
+          <option value="te-IN">తెలుగు</option>
+          <option value="kn-IN">ಕನ್ನಡ</option>
+        </select>
+        <button id="menu-button" class="header-button menu-toggle" type="button" aria-expanded="false" aria-controls="header-menu" aria-label="More options">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle>
+          </svg>
+        </button>
+        <div class="header-menu" id="header-menu">
+        <button id="call-back" class="header-button" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"></path>
+            <path d="M15 3h6v6M21 3l-7 7"></path>
+          </svg>
+          <span class="label" id="call-back-label">Call me back</span>
+        </button>
+        <button id="new-chat" class="header-button" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 5v14M5 12h14"></path>
+          </svg>
+          <span class="label" id="new-chat-label">New chat</span>
+        </button>
+        </div>
+      </div>
+    </header>
+    <div class="chat-scroll" id="chat-scroll">
+      <div id="messages" role="log" aria-live="polite"></div>
+      <div id="starters" role="group"></div>
+    </div>
+    <div class="dock">
+      <p id="voice-status" role="status" hidden>Listening… Your browser may send your speech to its provider to turn it into text.</p>
+      <form id="form">
+        <button id="call" class="round-button" type="button" aria-label="Start a voice call">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"></path>
+          </svg>
+        </button>
+        <textarea id="input" maxlength="4000" placeholder="Message Sara" aria-label="Your message"></textarea>
+        <button id="mic" class="round-button" type="button" aria-label="Speak your message" aria-pressed="false">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+            <path d="M5 11a7 7 0 0 0 14 0"></path>
+            <path d="M12 18v3"></path>
+          </svg>
+        </button>
+        <button id="send" type="submit">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 19V5M5 12l7-7 7 7"></path>
+          </svg>
+          <span class="send-label" id="send-label">Send</span>
+        </button>
+      </form>
+      <p id="privacy-note"><span id="privacy-text"></span> <a href="https://www.alusea.in/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy policy</a></p>
+      <div id="call-bar" data-state="connecting" hidden>
+        <div class="call-orb" aria-hidden="true"><img src="/sara.webp" alt="" width="54" height="54"></div>
+        <div class="call-text">
+          <span class="call-title eyebrow-line" id="call-title">On a call with Sara</span>
+          <span id="call-status" role="status"></span>
+          <span class="call-hint" id="call-hint">Just speak. Sara stops when you talk.</span>
+        </div>
+        <span id="call-timer"></span>
+        <button id="end-call" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M10.7 13.3a16 16 0 0 0 3.4 2.6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-3.3-2.6m-2.6-3.3A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9"></path>
+            <path d="M22 2 2 22"></path>
+          </svg>
+          <span id="end-call-label">End call</span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const LABELS = {
+      "en-IN": {
+        tagline: "Your Alusea showroom advisor",
+        greeting: "Hi, I'm Sara, Alusea's AI advisor! Tell me about your home or project, and I'll help you find the right doors and windows.",
+        placeholder: "Message Sara",
+        typing: "Sara is typing…",
+        newChat: "New chat",
+        send: "Send",
+        listen: "Listen",
+        stop: "Stop",
+        speak: "Speak your message",
+        chooseLanguage: "Choose language",
+        error: "Sorry, I'm having trouble replying right now. Please try again, or call us on +91 96260 22722.",
+        historyError: "Your earlier chat couldn't be loaded.",
+        noVoice: "Sara's voice couldn't load just now. Please try again.",
+        micDenied: "Please allow microphone access to speak to Sara.",
+        micNoSpeech: "I didn't catch that. Please tap the mic and try again.",
+        micNetwork: "Voice typing couldn't connect. Please check your internet and try again.",
+        micMissing: "I couldn't find a microphone. Please check yours and try again.",
+        micFallback: "Voice typing isn't working right now. Please type your message instead.",
+        startingFrom: "Starting from",
+        perSqFt: "per sq ft",
+        viewDetails: "View details →",
+        estimate: (rate) => `Estimated starting price, at ${rate} per sq ft`,
+        forArea: (area) => `for ${area} sq ft`,
+        budgetCovers: (amount, area) => `${amount} could cover about ${area} sq ft`,
+        cardIntro: "Here are a few that could work well for you.",
+        priceNote: "Your final price depends on the size, glass and hardware, and our team will confirm it after measuring.",
+        callPrivacy: "Your voice goes to our speech provider so Sara can understand you.",
+        callStart: "Start a voice call",
+        endCall: "End call",
+        callConnecting: "Connecting…",
+        callWaiting: "Waiting for you…",
+        callHearing: "Hearing you…",
+        callThinking: "Thinking…",
+        callFillers: ["Hmm, let me check…", "One moment, please…", "Sure, just a second…"],
+        callSpeaking: "Sara is speaking…",
+        callLimit: "Voice calls are busy today. Please call us on +91 96260 22722 or message us on WhatsApp.",
+        callTimeUp: "Your 5-minute call has ended. You can call again, or reach us on +91 96260 22722.",
+        privacyNote: "Sara is an AI and can make mistakes. Chats are saved.",
+        welcomeTitle: "Let's find the right doors and windows for your home.",
+        welcomeText: "Call Sara and talk it through in your language, or type below.",
+        callSara: "Call Sara",
+        callMeBack: "Call me back",
+        more: "More options",
+        starters: ["Doors for my balcony", "Price for an 8×10 ft sliding door", "uPVC vs aluminium"],
+        callTitle: "On a call with Sara",
+        callHint: "Just speak. Sara stops when you talk.",
+      },
+      "ta-IN": {
+        tagline: "உங்கள் Alusea ஷோரூம் ஆலோசகர்",
+        greeting: "வணக்கம், நான் சாரா, Alusea-வின் AI ஆலோசகர்! உங்கள் வீடு அல்லது திட்டத்தைப் பற்றி சொல்லுங்கள், சரியான கதவுகளையும் ஜன்னல்களையும் கண்டுபிடிக்க உதவுகிறேன்.",
+        placeholder: "சாராவிடம் கேளுங்கள்",
+        typing: "சாரா தட்டச்சு செய்கிறார்…",
+        newChat: "புதிய சாட்",
+        send: "அனுப்பு",
+        listen: "கேளுங்கள்",
+        stop: "நிறுத்து",
+        speak: "உங்கள் செய்தியைப் பேசுங்கள்",
+        chooseLanguage: "மொழியைத் தேர்ந்தெடுக்கவும்",
+        error: "மன்னிக்கவும், இப்போது பதிலளிப்பதில் சிக்கல் உள்ளது. மீண்டும் முயற்சிக்கவும், அல்லது +91 96260 22722 என்ற எண்ணில் அழைக்கவும்.",
+        historyError: "உங்கள் முந்தைய உரையாடலை ஏற்ற முடியவில்லை.",
+        noVoice: "சாராவோட குரல் இப்போ load ஆகல. கொஞ்சம் கழிச்சு மறுபடியும் try பண்ணுங்க.",
+        micDenied: "சாராவிடம் பேச மைக்ரோஃபோன் அனுமதியை வழங்கவும்.",
+        micNoSpeech: "எனக்குக் கேட்கவில்லை. மைக்கைத் தட்டி மீண்டும் முயற்சிக்கவும்.",
+        micNetwork: "குரல் தட்டச்சு இணைக்கப்படவில்லை. இணையத்தைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.",
+        micMissing: "மைக்ரோஃபோன் கிடைக்கவில்லை. உங்கள் மைக்கைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.",
+        micFallback: "குரல் தட்டச்சு இப்போது வேலை செய்யவில்லை. உங்கள் செய்தியைத் தட்டச்சு செய்யுங்கள்.",
+        startingFrom: "தொடக்க விலை",
+        perSqFt: "ஒரு சதுர அடிக்கு",
+        viewDetails: "விவரங்களைப் பார்க்க →",
+        estimate: (rate) => `தோராயமான தொடக்க விலை, ஒரு சதுர அடிக்கு ${rate}`,
+        forArea: (area) => `${area} சதுர அடிக்கு`,
+        budgetCovers: (amount, area) => `${amount}-க்கு சுமார் ${area} சதுர அடி வரை கிடைக்கலாம்`,
+        cardIntro: "உங்களுக்குப் பொருத்தமான சில தேர்வுகள் இதோ.",
+        priceNote: "உங்கள் இறுதி விலை அளவு, கண்ணாடி மற்றும் ஹார்ட்வேரைப் பொறுத்தது. அளவீடு செய்த பிறகு எங்கள் குழு அதை உறுதிப்படுத்தும்.",
+        callPrivacy: "சாரா உங்களைப் புரிந்துகொள்ள, உங்கள் குரல் எங்கள் பேச்சு சேவை வழங்குநருக்கு அனுப்பப்படும்.",
+        callStart: "குரல் அழைப்பைத் தொடங்கு",
+        endCall: "அழைப்பை முடி",
+        callConnecting: "இணைக்கிறது…",
+        callWaiting: "உங்களுக்காகக் காத்திருக்கேன்…",
+        callHearing: "நீங்க பேசறது கேக்குது…",
+        callThinking: "யோசிக்கிறேன்…",
+        callFillers: ["ம்ம், ஒரு நிமிஷம் பாக்கறேன்…", "கொஞ்சம் இருங்க…", "சரி, இதோ பாக்கறேன்…"],
+        callSpeaking: "சாரா பேசுகிறார்…",
+        callLimit: "இன்று குரல் அழைப்புகள் நிரம்பிவிட்டன. +91 96260 22722 என்ற எண்ணில் அழைக்கவும் அல்லது WhatsApp-ல் செய்தி அனுப்பவும்.",
+        callTimeUp: "உங்கள் 5 நிமிட அழைப்பு முடிந்தது. மீண்டும் அழைக்கலாம், அல்லது +91 96260 22722 என்ற எண்ணில் தொடர்பு கொள்ளலாம்.",
+        privacyNote: "சாரா ஒரு AI, தவறுகள் வரலாம். உங்க chat-அ save பண்ணுவோம்.",
+        welcomeTitle: "உங்க வீட்டுக்கு சரியான doors, windows-அ சேர்ந்து தேடலாம்.",
+        welcomeText: "உங்க மொழியிலேயே சாராகிட்ட call-ல பேசுங்க, இல்லன்னா கீழ type பண்ணுங்க.",
+        callSara: "சாராகிட்ட பேசுங்க",
+        callMeBack: "எனக்கு call பண்ணுங்க",
+        more: "மேலும்",
+        starters: ["பால்கனிக்கு door வேணும்", "8×10 அடி sliding door விலை என்ன?", "uPVC vs aluminium"],
+        callTitle: "சாராகிட்ட call-ல இருக்கீங்க",
+        callHint: "பேசுங்க போதும். நீங்க பேசும்போது சாரா நிறுத்திடுவாங்க.",
+      },
+      "ml-IN": {
+        tagline: "നിങ്ങളുടെ Alusea ഷോറൂം ഉപദേഷ്ടാവ്",
+        greeting: "നമസ്കാരം, ഞാൻ സാറാ, Alusea-യുടെ AI ഉപദേഷ്ടാവ്! നിങ്ങളുടെ വീടിനെക്കുറിച്ചോ പ്രോജക്റ്റിനെക്കുറിച്ചോ പറയൂ, ശരിയായ വാതിലുകളും ജനലുകളും കണ്ടെത്താൻ ഞാൻ സഹായിക്കാം.",
+        placeholder: "സാറായോട് ചോദിക്കൂ",
+        typing: "സാറാ ടൈപ്പ് ചെയ്യുന്നു…",
+        newChat: "പുതിയ ചാറ്റ്",
+        send: "അയക്കൂ",
+        listen: "കേൾക്കുക",
+        stop: "നിർത്തുക",
+        speak: "നിങ്ങളുടെ സന്ദേശം പറയുക",
+        chooseLanguage: "ഭാഷ തിരഞ്ഞെടുക്കുക",
+        error: "ക്ഷമിക്കണം, ഇപ്പോൾ മറുപടി നൽകാൻ പ്രശ്നമുണ്ട്. വീണ്ടും ശ്രമിക്കുക, അല്ലെങ്കിൽ +91 96260 22722 എന്ന നമ്പറിൽ വിളിക്കുക.",
+        historyError: "നിങ്ങളുടെ മുൻ ചാറ്റ് ലോഡ് ചെയ്യാനായില്ല.",
+        noVoice: "സാറായുടെ ശബ്ദം ഇപ്പോൾ load ആയില്ല. കുറച്ചു കഴിഞ്ഞ് വീണ്ടും try ചെയ്യൂ.",
+        micDenied: "സാറായോട് സംസാരിക്കാൻ മൈക്രോഫോൺ അനുമതി നൽകുക.",
+        micNoSpeech: "എനിക്ക് കേൾക്കാനായില്ല. മൈക്ക് തൊട്ട് വീണ്ടും ശ്രമിക്കുക.",
+        micNetwork: "വോയ്സ് ടൈപ്പിംഗ് കണക്റ്റ് ചെയ്യാനായില്ല. ഇന്റർനെറ്റ് പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.",
+        micMissing: "മൈക്രോഫോൺ കണ്ടെത്താനായില്ല. നിങ്ങളുടെ മൈക്ക് പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.",
+        micFallback: "വോയ്സ് ടൈപ്പിംഗ് ഇപ്പോൾ പ്രവർത്തിക്കുന്നില്ല. സന്ദേശം ടൈപ്പ് ചെയ്യുക.",
+        startingFrom: "തുടക്ക വില",
+        perSqFt: "ഒരു ചതുരശ്ര അടിക്ക്",
+        viewDetails: "വിശദാംശങ്ങൾ കാണുക →",
+        estimate: (rate) => `ഏകദേശ തുടക്ക വില, ഒരു ചതുരശ്ര അടിക്ക് ${rate}`,
+        forArea: (area) => `${area} ചതുരശ്ര അടിക്ക്`,
+        budgetCovers: (amount, area) => `${amount}-ന് ഏകദേശം ${area} ചതുരശ്ര അടി വരെ ലഭിച്ചേക്കാം`,
+        cardIntro: "നിങ്ങൾക്ക് അനുയോജ്യമായ ചില ഓപ്ഷനുകൾ ഇതാ.",
+        priceNote: "നിങ്ങളുടെ അന്തിമ വില വലുപ്പം, ഗ്ലാസ്, ഹാർഡ്‌വെയർ എന്നിവയെ ആശ്രയിച്ചിരിക്കും. അളവെടുത്ത ശേഷം ഞങ്ങളുടെ ടീം അത് സ്ഥിരീകരിക്കും.",
+        callPrivacy: "സാറായ്ക്ക് നിങ്ങളെ മനസ്സിലാക്കാൻ, നിങ്ങളുടെ ശബ്ദം ഞങ്ങളുടെ സ്പീച്ച് സേവനദാതാവിന് അയയ്ക്കും.",
+        callStart: "വോയ്സ് കോൾ തുടങ്ങുക",
+        endCall: "കോൾ നിർത്തുക",
+        callConnecting: "കണക്റ്റ് ചെയ്യുന്നു…",
+        callWaiting: "നിങ്ങൾക്കായി കാത്തിരിക്കുന്നു…",
+        callHearing: "നിങ്ങൾ പറയുന്നത് കേൾക്കുന്നു…",
+        callThinking: "ആലോചിക്കുന്നു…",
+        callFillers: ["ഒരു നിമിഷം, ഞാൻ നോക്കട്ടെ…", "ശരി, ഒന്ന് നോക്കട്ടെ…", "ഒരു സെക്കൻഡ്…"],
+        callSpeaking: "സാറാ സംസാരിക്കുന്നു…",
+        callLimit: "ഇന്ന് വോയ്സ് കോളുകൾ തിരക്കിലാണ്. +91 96260 22722 എന്ന നമ്പറിൽ വിളിക്കുക, അല്ലെങ്കിൽ WhatsApp-ൽ സന്ദേശം അയയ്ക്കുക.",
+        callTimeUp: "നിങ്ങളുടെ 5 മിനിറ്റ് കോൾ അവസാനിച്ചു. വീണ്ടും വിളിക്കാം, അല്ലെങ്കിൽ +91 96260 22722 എന്ന നമ്പറിൽ ബന്ധപ്പെടാം.",
+        privacyNote: "സാറാ ഒരു AI ആണ്, തെറ്റുകൾ വരാം. നിങ്ങളുടെ chat save ചെയ്യും.",
+        welcomeTitle: "നിങ്ങളുടെ വീടിന് പറ്റിയ doors, windows ഒരുമിച്ച് കണ്ടെത്താം.",
+        welcomeText: "നിങ്ങളുടെ ഭാഷയിൽ സാറായെ വിളിച്ച് സംസാരിക്കൂ, അല്ലെങ്കിൽ താഴെ type ചെയ്യൂ.",
+        callSara: "സാറായെ വിളിക്കൂ",
+        callMeBack: "എന്നെ തിരിച്ചു വിളിക്കൂ",
+        more: "കൂടുതൽ",
+        starters: ["ബാൽക്കണിക്ക് ഒരു door വേണം", "8×10 അടി sliding door-ന് എന്താണ് വില?", "uPVC vs aluminium"],
+        callTitle: "സാറായുമായി call-ൽ ആണ്",
+        callHint: "സംസാരിച്ചാൽ മതി. നിങ്ങൾ സംസാരിക്കുമ്പോൾ സാറാ നിർത്തും.",
+      },
+      "te-IN": {
+        tagline: "మీ Alusea షోరూమ్ సలహాదారు",
+        greeting: "నమస్కారం, నేను సారా, Alusea AI సలహాదారు! మీ ఇల్లు లేదా ప్రాజెక్ట్ గురించి చెప్పండి, సరైన తలుపులు మరియు కిటికీలను ఎంచుకోవడంలో సహాయం చేస్తాను.",
+        placeholder: "సారాను అడగండి",
+        typing: "సారా టైప్ చేస్తున్నారు…",
+        newChat: "కొత్త చాట్",
+        send: "పంపండి",
+        listen: "వినండి",
+        stop: "ఆపండి",
+        speak: "మీ సందేశాన్ని మాట్లాడండి",
+        chooseLanguage: "భాషను ఎంచుకోండి",
+        error: "క్షమించండి, ఇప్పుడు సమాధానం ఇవ్వడంలో సమస్య ఉంది. మళ్లీ ప్రయత్నించండి, లేదా +91 96260 22722 నంబర్‌కు కాల్ చేయండి.",
+        historyError: "మీ గత చాట్‌ను లోడ్ చేయలేకపోయాము.",
+        noVoice: "సారా వాయిస్ ఇప్పుడు load కాలేదు. కాసేపాగి మళ్లీ try చేయండి.",
+        micDenied: "సారాతో మాట్లాడటానికి మైక్రోఫోన్ అనుమతి ఇవ్వండి.",
+        micNoSpeech: "నాకు వినిపించలేదు. మైక్‌ను నొక్కి మళ్లీ ప్రయత్నించండి.",
+        micNetwork: "వాయిస్ టైపింగ్ కనెక్ట్ కాలేదు. ఇంటర్నెట్ చూసుకుని మళ్లీ ప్రయత్నించండి.",
+        micMissing: "మైక్రోఫోన్ కనిపించలేదు. మీ మైక్‌ను చూసుకుని మళ్లీ ప్రయత్నించండి.",
+        micFallback: "వాయిస్ టైపింగ్ ఇప్పుడు పని చేయడం లేదు. దయచేసి మీ సందేశాన్ని టైప్ చేయండి.",
+        startingFrom: "ప్రారంభ ధర",
+        perSqFt: "చదరపు అడుగుకు",
+        viewDetails: "వివరాలు చూడండి →",
+        estimate: (rate) => `అంచనా ప్రారంభ ధర, చదరపు అడుగుకు ${rate}`,
+        forArea: (area) => `${area} చదరపు అడుగులకు`,
+        budgetCovers: (amount, area) => `${amount}కు సుమారు ${area} చదరపు అడుగుల వరకు రావచ్చు`,
+        cardIntro: "మీకు సరిపోయే కొన్ని ఎంపికలు ఇవి.",
+        priceNote: "మీ తుది ధర పరిమాణం, గాజు మరియు హార్డ్‌వేర్‌పై ఆధారపడి ఉంటుంది. కొలతలు తీసుకున్న తర్వాత మా బృందం దాన్ని నిర్ధారిస్తుంది.",
+        callPrivacy: "సారా మిమ్మల్ని అర్థం చేసుకోవడానికి, మీ వాయిస్ మా స్పీచ్ సేవా ప్రదాతకు పంపబడుతుంది.",
+        callStart: "వాయిస్ కాల్ ప్రారంభించండి",
+        endCall: "కాల్ ముగించండి",
+        callConnecting: "కనెక్ట్ అవుతోంది…",
+        callWaiting: "మీ కోసం ఎదురుచూస్తున్నాను…",
+        callHearing: "మీరు చెప్పేది వింటున్నాను…",
+        callThinking: "ఆలోచిస్తున్నాను…",
+        callFillers: ["ఒక్క నిమిషం, చూస్తాను…", "సరే, ఒక్క క్షణం…", "హ్మ్, చూస్తున్నాను…"],
+        callSpeaking: "సారా మాట్లాడుతున్నారు…",
+        callLimit: "ఈ రోజు వాయిస్ కాల్స్ బిజీగా ఉన్నాయి. +91 96260 22722 నంబర్‌కు కాల్ చేయండి, లేదా WhatsApp‌లో సందేశం పంపండి.",
+        callTimeUp: "మీ 5 నిమిషాల కాల్ ముగిసింది. మళ్లీ కాల్ చేయవచ్చు, లేదా +91 96260 22722 నంబర్‌లో సంప్రదించవచ్చు.",
+        privacyNote: "సారా ఒక AI, తప్పులు రావచ్చు. మీ chat save అవుతుంది.",
+        welcomeTitle: "మీ ఇంటికి సరైన doors, windows కలిసి వెతుకుదాం.",
+        welcomeText: "మీ భాషలోనే సారాకు call చేసి మాట్లాడండి, లేదా కింద type చేయండి.",
+        callSara: "సారాకు call చేయండి",
+        callMeBack: "నాకు call చేయండి",
+        more: "మరిన్ని",
+        starters: ["బాల్కనీకి door కావాలి", "8×10 అడుగుల sliding door ధర ఎంత?", "uPVC vs aluminium"],
+        callTitle: "సారాతో call లో ఉన్నారు",
+        callHint: "మాట్లాడితే చాలు. మీరు మాట్లాడినప్పుడు సారా ఆగిపోతుంది.",
+      },
+      "kn-IN": {
+        tagline: "ನಿಮ್ಮ Alusea ಶೋರೂಮ್ ಸಲಹೆಗಾರ",
+        greeting: "ನಮಸ್ಕಾರ, ನಾನು ಸಾರಾ, Alusea AI ಸಲಹೆಗಾರ! ನಿಮ್ಮ ಮನೆ ಅಥವಾ ಪ್ರಾಜೆಕ್ಟ್ ಬಗ್ಗೆ ಹೇಳಿ, ಸರಿಯಾದ ಬಾಗಿಲುಗಳು ಮತ್ತು ಕಿಟಕಿಗಳನ್ನು ಹುಡುಕಲು ಸಹಾಯ ಮಾಡುತ್ತೇನೆ.",
+        placeholder: "ಸಾರಾ ಅವರನ್ನು ಕೇಳಿ",
+        typing: "ಸಾರಾ ಟೈಪ್ ಮಾಡುತ್ತಿದ್ದಾರೆ…",
+        newChat: "ಹೊಸ ಚಾಟ್",
+        send: "ಕಳುಹಿಸಿ",
+        listen: "ಆಲಿಸಿ",
+        stop: "ನಿಲ್ಲಿಸಿ",
+        speak: "ನಿಮ್ಮ ಸಂದೇಶವನ್ನು ಹೇಳಿ",
+        chooseLanguage: "ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+        error: "ಕ್ಷಮಿಸಿ, ಈಗ ಉತ್ತರಿಸಲು ತೊಂದರೆಯಾಗಿದೆ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ, ಅಥವಾ +91 96260 22722 ಗೆ ಕರೆ ಮಾಡಿ.",
+        historyError: "ನಿಮ್ಮ ಹಿಂದಿನ ಚಾಟ್ ಅನ್ನು ಲೋಡ್ ಮಾಡಲು ಆಗಲಿಲ್ಲ.",
+        noVoice: "ಸಾರಾ ಧ್ವನಿ ಈಗ load ಆಗಲಿಲ್ಲ. ಸ್ವಲ್ಪ ಹೊತ್ತಾದ ಮೇಲೆ ಮತ್ತೆ try ಮಾಡಿ.",
+        micDenied: "ಸಾರಾ ಜೊತೆ ಮಾತನಾಡಲು ಮೈಕ್ರೊಫೋನ್ ಅನುಮತಿ ನೀಡಿ.",
+        micNoSpeech: "ನನಗೆ ಕೇಳಿಸಲಿಲ್ಲ. ಮೈಕ್ ಒತ್ತಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+        micNetwork: "ವಾಯ್ಸ್ ಟೈಪಿಂಗ್ ಸಂಪರ್ಕವಾಗಲಿಲ್ಲ. ಇಂಟರ್ನೆಟ್ ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+        micMissing: "ಮೈಕ್ರೊಫೋನ್ ಸಿಗಲಿಲ್ಲ. ನಿಮ್ಮ ಮೈಕ್ ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+        micFallback: "ವಾಯ್ಸ್ ಟೈಪಿಂಗ್ ಈಗ ಕೆಲಸ ಮಾಡುತ್ತಿಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಸಂದೇಶವನ್ನು ಟೈಪ್ ಮಾಡಿ.",
+        startingFrom: "ಆರಂಭಿಕ ಬೆಲೆ",
+        perSqFt: "ಪ್ರತಿ ಚದರ ಅಡಿಗೆ",
+        viewDetails: "ವಿವರಗಳನ್ನು ನೋಡಿ →",
+        estimate: (rate) => `ಅಂದಾಜು ಆರಂಭಿಕ ಬೆಲೆ, ಪ್ರತಿ ಚದರ ಅಡಿಗೆ ${rate}`,
+        forArea: (area) => `${area} ಚದರ ಅಡಿಗೆ`,
+        budgetCovers: (amount, area) => `${amount}ಗೆ ಸುಮಾರು ${area} ಚದರ ಅಡಿ ವರೆಗೆ ಸಿಗಬಹುದು`,
+        cardIntro: "ನಿಮಗೆ ಹೊಂದುವ ಕೆಲವು ಆಯ್ಕೆಗಳು ಇಲ್ಲಿವೆ.",
+        priceNote: "ನಿಮ್ಮ ಅಂತಿಮ ಬೆಲೆ ಗಾತ್ರ, ಗಾಜು ಮತ್ತು ಹಾರ್ಡ್‌ವೇರ್ ಮೇಲೆ ಅವಲಂಬಿತವಾಗಿರುತ್ತದೆ. ಅಳತೆ ಮಾಡಿದ ನಂತರ ನಮ್ಮ ತಂಡ ಅದನ್ನು ದೃಢಪಡಿಸುತ್ತದೆ.",
+        callPrivacy: "ಸಾರಾ ನಿಮ್ಮನ್ನು ಅರ್ಥಮಾಡಿಕೊಳ್ಳಲು, ನಿಮ್ಮ ಧ್ವನಿ ನಮ್ಮ ಸ್ಪೀಚ್ ಸೇವಾದಾರರಿಗೆ ಕಳುಹಿಸಲಾಗುತ್ತದೆ.",
+        callStart: "ವಾಯ್ಸ್ ಕರೆ ಆರಂಭಿಸಿ",
+        endCall: "ಕರೆ ಮುಗಿಸಿ",
+        callConnecting: "ಸಂಪರ್ಕಿಸಲಾಗುತ್ತಿದೆ…",
+        callWaiting: "ನಿಮಗಾಗಿ ಕಾಯ್ತಿದ್ದೀನಿ…",
+        callHearing: "ನೀವು ಹೇಳೋದು ಕೇಳ್ತಿದೆ…",
+        callThinking: "ಯೋಚಿಸುತ್ತಿದ್ದೇನೆ…",
+        callFillers: ["ಒಂದು ನಿಮಿಷ, ನೋಡ್ತೀನಿ…", "ಸರಿ, ಒಂದು ಕ್ಷಣ…", "ಹ್ಮ್, ನೋಡ್ತಿದ್ದೀನಿ…"],
+        callSpeaking: "ಸಾರಾ ಮಾತನಾಡುತ್ತಿದ್ದಾರೆ…",
+        callLimit: "ಇಂದು ವಾಯ್ಸ್ ಕರೆಗಳು ಬ್ಯುಸಿಯಾಗಿವೆ. +91 96260 22722 ಗೆ ಕರೆ ಮಾಡಿ, ಅಥವಾ WhatsApp ನಲ್ಲಿ ಸಂದೇಶ ಕಳುಹಿಸಿ.",
+        callTimeUp: "ನಿಮ್ಮ 5 ನಿಮಿಷದ ಕರೆ ಮುಗಿದಿದೆ. ಮತ್ತೆ ಕರೆ ಮಾಡಬಹುದು, ಅಥವಾ +91 96260 22722 ಗೆ ಸಂಪರ್ಕಿಸಬಹುದು.",
+        privacyNote: "ಸಾರಾ ಒಂದು AI, ತಪ್ಪುಗಳು ಆಗಬಹುದು. ನಿಮ್ಮ chat save ಆಗುತ್ತೆ.",
+        welcomeTitle: "ನಿಮ್ಮ ಮನೆಗೆ ಸರಿಯಾದ doors, windows ಒಟ್ಟಿಗೆ ಹುಡುಕೋಣ.",
+        welcomeText: "ನಿಮ್ಮ ಭಾಷೆಯಲ್ಲೇ ಸಾರಾಗೆ call ಮಾಡಿ ಮಾತಾಡಿ, ಇಲ್ಲಾಂದ್ರೆ ಕೆಳಗೆ type ಮಾಡಿ.",
+        callSara: "ಸಾರಾಗೆ call ಮಾಡಿ",
+        callMeBack: "ನನಗೆ call ಮಾಡಿ",
+        more: "ಇನ್ನಷ್ಟು",
+        starters: ["ಬಾಲ್ಕನಿಗೆ door ಬೇಕು", "8×10 ಅಡಿ sliding door ಬೆಲೆ ಎಷ್ಟು?", "uPVC vs aluminium"],
+        callTitle: "ಸಾರಾ ಜೊತೆ call ನಲ್ಲಿದ್ದೀರಿ",
+        callHint: "ಮಾತಾಡಿದ್ರೆ ಸಾಕು. ನೀವು ಮಾತಾಡುವಾಗ ಸಾರಾ ನಿಲ್ಲಿಸ್ತಾರೆ.",
+      },
+    };
+    const LANGUAGE_STORAGE_KEY = "alusea_language";
+    const CALL_LIMIT_MS = 5 * 60 * 1000;
+    const SPEECH_SAMPLE_RATE = 16000;
+    const MAX_SPEECH_SECONDS = 120;
+    // A call's mic stays open and hears the whole room, so its voice detection is stricter than the mic button's.
+    const CALL_SPEECH_CONFIDENCE = 0.8;
+    const CALL_SILENCE_CONFIDENCE = 0.35;
+    // Coughs, horns and door bangs are shorter than this, so Sara keeps talking through them.
+    const CALL_MIN_SPEECH_MS = 600;
+    // A call waits this long in silence before sending, so a short pause doesn't split one sentence into two paid turns.
+    const CALL_PAUSE_MS = 1300;
+    // If a reply isn't back by then, the call screen shows a short "let me check" line. Nothing is spoken.
+    const FILLER_DELAY_MS = 1500;
+    // The server reads up to this much aloud.
+    const MAX_LISTEN_CHARACTERS = 1500;
+    const LINKABLE_HOSTS = ["www.alusea.in", "alusea.in", "wa.me"];
+    const SCRIPT_LANGUAGES = [
+      [/[஀-௿]/, "ta-IN"],
+      [/[ഀ-ൿ]/, "ml-IN"],
+      [/[ఀ-౿]/, "te-IN"],
+      [/[ಀ-೿]/, "kn-IN"],
+    ];
+    const MIC_PROBLEMS = { NotAllowedError: "micDenied", NotFoundError: "micMissing" };
+    // Removes fans, traffic and keyboard sounds in the browser before speech is sent. Set to false to turn it off.
+    const NOISE_REMOVAL = true;
+    const NOISE_LIBRARY = "https://cdn.jsdelivr.net/npm/@sapphi-red/web-noise-suppressor@0.4.1/dist/";
+    const NOISE_REMOVAL_SAMPLE_RATE = 48000;
+    const MIC_SETTINGS = { channelCount: 1, echoCancellation: true, autoGainControl: true, noiseSuppression: true };
+
+    const messages = document.getElementById("messages");
+    const chatScroll = document.getElementById("chat-scroll");
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
+    const send = document.getElementById("send");
+    const mic = document.getElementById("mic");
+    const languageSelect = document.getElementById("language");
+    const newChat = document.getElementById("new-chat");
+    const voiceStatus = document.getElementById("voice-status");
+    const call = document.getElementById("call");
+    const callBar = document.getElementById("call-bar");
+    const callStatus = document.getElementById("call-status");
+    const callTimer = document.getElementById("call-timer");
+    const endCallButton = document.getElementById("end-call");
+    const callBackButton = document.getElementById("call-back");
+    const starters = document.getElementById("starters");
+    const menuButton = document.getElementById("menu-button");
+    const headerMenu = document.getElementById("header-menu");
+    const SPEAKER_ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"></path><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"></path></svg>';
+    const STOP_ICON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg>';
+    const CALL_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"></path></svg>';
+    const CALL_STATE_LABELS = { connecting: "callConnecting", waiting: "callWaiting", hearing: "callHearing", thinking: "callThinking", speaking: "callSpeaking" };
+    let micListener = null;
+    let micActive = false;
+    let micRun = 0;
+    let speakingButton = null;
+    const listenAudio = new Audio();
+    let listenRun = 0;
+    let silentClipUrl = null;
+    let inCall = false;
+    let callListener = null;
+    let callAudio = null;
+    let callEndsAt = 0;
+    let callClock = null;
+    let callTurn = 0;
+    // Starts as the menu's language, then follows what the customer speaks.
+    let callLanguage = "en-IN";
+    let newestCallerMessage = null;
+    let saraSpeaking = false;
+    let lastFiller = -1;
+    let fillerTimer = null;
+    let waitingForReply = false;
+    let saraInterrupted = false;
+
+    function labels() {
+      return LABELS[languageSelect.value];
+    }
+
+    // During a call, the call screen follows the language Sara is speaking, which changes if the customer switches.
+    function callLabels() {
+      return (inCall && LABELS[callLanguage]) || labels();
+    }
+
+    function applyLabels() {
+      const text = labels();
+      document.documentElement.lang = languageSelect.value.slice(0, 2);
+      document.getElementById("tagline").textContent = text.tagline;
+      input.placeholder = text.placeholder;
+      document.getElementById("new-chat-label").textContent = text.newChat;
+      newChat.title = text.newChat;
+      document.getElementById("call-back-label").textContent = text.callMeBack;
+      callBackButton.title = text.callMeBack;
+      document.getElementById("send-label").textContent = text.send;
+      send.setAttribute("aria-label", text.send);
+      menuButton.setAttribute("aria-label", text.more);
+      menuButton.title = text.more;
+      mic.setAttribute("aria-label", text.speak);
+      call.setAttribute("aria-label", text.callStart);
+      call.title = text.callStart;
+      document.getElementById("end-call-label").textContent = text.endCall;
+      document.getElementById("call-title").textContent = text.callTitle;
+      document.getElementById("call-hint").textContent = text.callHint;
+      languageSelect.setAttribute("aria-label", text.chooseLanguage);
+      voiceStatus.textContent = text.callPrivacy;
+      document.getElementById("privacy-text").textContent = text.privacyNote;
+      starters.setAttribute("aria-label", text.welcomeText);
+      starters.replaceChildren(
+        ...text.starters.map((starter) => {
+          const button = createText("button", "starter", starter);
+          button.type = "button";
+          button.addEventListener("click", () => sendStarter(starter));
+          return button;
+        })
+      );
+      reportState();
+    }
+
+    // Inside the alusea.in panel, the panel's language chips and menu follow Sara's language and whether she's on a call.
+    // The panel's address isn't known here; only alusea.in may frame this page (frame-ancestors), and these two values aren't private.
+    function reportState() {
+      if (!document.documentElement.classList.contains("embedded")) return;
+      window.parent.postMessage({ source: "sara", type: "state", language: languageSelect.value, busy: inCall }, "*");
+    }
+
+    // The welcome and starters show only until the customer says something.
+    function showStarters(show) {
+      starters.hidden = !show;
+      document.querySelector(".welcome")?.toggleAttribute("hidden", !show);
+    }
+
+    function sendStarter(text) {
+      if (send.disabled || inCall) return;
+      input.value = text;
+      sendMessage();
+    }
+
+    function addWelcome() {
+      const text = labels();
+      const welcome = document.createElement("section");
+      welcome.className = "welcome";
+      welcome.append(createText("span", "eyebrow-line", text.tagline), createText("h2", "", text.welcomeTitle), createText("p", "", text.welcomeText));
+      if (navigator.mediaDevices) {
+        const button = document.createElement("button");
+        button.className = "call-cta";
+        button.type = "button";
+        button.innerHTML = `<span class="call-cta-icon">${CALL_ICON}</span>`;
+        button.append(document.createTextNode(text.callSara), createText("span", "call-cta-go", "→"));
+        button.lastChild.setAttribute("aria-hidden", "true");
+        button.addEventListener("click", startCall);
+        welcome.append(button);
+      }
+      messages.append(welcome);
+    }
+
+    function setCallState(state) {
+      callBar.dataset.state = state;
+      callStatus.textContent = callLabels()[CALL_STATE_LABELS[state]];
+    }
+
+    // Sara remembers a visitor by a cookie. Some browsers block it inside the alusea.in panel, so the same id is also
+    // kept here and sent with every request. If storage is blocked too, the page still works without memory.
+    const VISITOR_STORAGE_KEY = "alusea_visitor_id";
+
+    async function saraFetch(path, options = {}) {
+      const headers = new Headers(options.headers);
+      try {
+        const saved = localStorage.getItem(VISITOR_STORAGE_KEY);
+        if (saved) headers.set("X-Visitor-Id", saved);
+      } catch {}
+      const response = await fetch(path, { ...options, headers });
+      const visitor = response.headers.get("X-Visitor-Id");
+      if (visitor) {
+        try {
+          localStorage.setItem(VISITOR_STORAGE_KEY, visitor);
+        } catch {}
+      }
+      return response;
+    }
+
+    // Saved in this browser only, so the page still works if storage is blocked.
+    function loadSavedLanguage() {
+      try {
+        const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+        if (saved in LABELS) languageSelect.value = saved;
+      } catch {}
+    }
+
+    function saveLanguage() {
+      try {
+        localStorage.setItem(LANGUAGE_STORAGE_KEY, languageSelect.value);
+      } catch {}
+    }
+
+    // Only Alusea's own links become clickable, so a bad reply can't send someone elsewhere.
+    function isLinkable(url) {
+      try {
+        const parsed = new URL(url);
+        return parsed.protocol === "https:" && LINKABLE_HOSTS.includes(parsed.hostname);
+      } catch {
+        return false;
+      }
+    }
+
+    // Text is added with createTextNode, so anything in a message is shown as text and never run as code.
+    function fillText(element, text) {
+      let cursor = 0;
+      for (const match of text.matchAll(/https?:\/\/[^\s<>()]+/g)) {
+        const url = match[0].replace(/[.,;:!?'"]+$/, "");
+        if (!isLinkable(url)) continue;
+        element.append(document.createTextNode(text.slice(cursor, match.index)));
+        const link = document.createElement("a");
+        link.href = url;
+        link.textContent = url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        element.append(link);
+        cursor = match.index + url.length;
+      }
+      element.append(document.createTextNode(text.slice(cursor)));
+    }
+
+    function showListenState(button, playing) {
+      button.innerHTML = playing ? STOP_ICON : SPEAKER_ICON;
+      button.classList.toggle("playing", playing);
+      const label = playing ? labels().stop : labels().listen;
+      button.setAttribute("aria-label", label);
+      button.title = label;
+    }
+
+    function stopSpeaking() {
+      listenRun++;
+      listenAudio.pause();
+      if (speakingButton) showListenState(speakingButton, false);
+      speakingButton = null;
+    }
+
+    // Finds the language from the reply's own script, so it is read in the language it is written in.
+    function languageOf(text) {
+      const found = SCRIPT_LANGUAGES.find(([script]) => script.test(text));
+      return found ? found[1] : "en-IN";
+    }
+
+    function silentClip() {
+      silentClipUrl ||= URL.createObjectURL(new Blob([encodeWav(new Float32Array(SPEECH_SAMPLE_RATE / 10))], { type: "audio/wav" }));
+      return silentClipUrl;
+    }
+
+    // Read aloud in Sara's own voice, the same one as on calls, for every language.
+    async function speak(text, button) {
+      const wasSpeaking = speakingButton === button;
+      stopSpeaking();
+      if (wasSpeaking) return;
+
+      const run = listenRun;
+      showListenState(button, true);
+      speakingButton = button;
+      // iPhones only allow sound that a tap started, and Sara's voice arrives after a wait, so a silent clip unlocks it now.
+      listenAudio.onended = null;
+      listenAudio.onerror = null;
+      listenAudio.src = silentClip();
+      listenAudio.play().catch(() => {});
+      const finish = () => {
+        if (speakingButton !== button) return;
+        showListenState(button, false);
+        speakingButton = null;
+      };
+      // Links aren't read out.
+      const spoken = text.replace(/https?:\/\/\S+/g, "").trim().slice(0, MAX_LISTEN_CHARACTERS);
+      try {
+        const response = await saraFetch("/speak", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: spoken, language: languageOf(text) }),
+        });
+        if (run !== listenRun) return;
+        if (!response.ok) {
+          finish();
+          addMessage("error", response.status === 429 ? labels().callLimit : labels().noVoice);
+          return;
+        }
+        const { audio } = await response.json();
+        if (run !== listenRun) return;
+        listenAudio.onended = finish;
+        listenAudio.onerror = finish;
+        listenAudio.src = `data:audio/wav;base64,${audio}`;
+        await listenAudio.play();
+      } catch {
+        if (run !== listenRun) return;
+        finish();
+        addMessage("error", labels().noVoice);
+      }
+    }
+
+    function addListenButton(element, text) {
+      const button = document.createElement("button");
+      button.className = "listen";
+      button.type = "button";
+      showListenState(button, false);
+      button.addEventListener("click", () => speak(text, button));
+      element.append(button);
+    }
+
+    function joinWords(first, second) {
+      return [first, second.trim()].filter(Boolean).join(" ");
+    }
+
+    // The speech detector's mic options, with RNNoise between the mic and the detector. Null means use the plain mic.
+    async function noiseFreeMic() {
+      if (!NOISE_REMOVAL) return null;
+      let audioContext;
+      try {
+        audioContext = new AudioContext({ sampleRate: NOISE_REMOVAL_SAMPLE_RATE });
+        audioContext.resume().catch(() => {});
+        const { loadRnnoise, RnnoiseWorkletNode } = await import(`${NOISE_LIBRARY}index.js`);
+        const wasmBinary = await loadRnnoise({ url: `${NOISE_LIBRARY}rnnoise.wasm`, simdUrl: `${NOISE_LIBRARY}rnnoise_simd.wasm` });
+        await audioContext.audioWorklet.addModule(`${NOISE_LIBRARY}rnnoise/workletProcessor.js`);
+        let micStream;
+        let remover;
+        const openMic = async () => {
+          micStream = await navigator.mediaDevices.getUserMedia({ audio: MIC_SETTINGS });
+          remover = new RnnoiseWorkletNode(audioContext, { wasmBinary, maxChannels: 2 });
+          const output = audioContext.createMediaStreamDestination();
+          audioContext.createMediaStreamSource(micStream).connect(remover).connect(output);
+          return output.stream;
+        };
+        return {
+          audioContext,
+          getStream: openMic,
+          resumeStream: openMic,
+          pauseStream: async () => {
+            micStream.getTracks().forEach((track) => track.stop());
+            remover.destroy();
+          },
+        };
+      } catch (error) {
+        console.warn(`Noise removal is off: ${error.name}: ${error.message}`);
+        audioContext?.close();
+        return null;
+      }
+    }
+
+    async function createSpeechListener(callbacks) {
+      const options = {
+        model: "v5",
+        baseAssetPath: "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.31/dist/",
+        onnxWASMBasePath: "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/",
+        positiveSpeechThreshold: 0.6,
+        negativeSpeechThreshold: 0.4,
+        redemptionMs: 900,
+        preSpeechPadMs: 300,
+        minSpeechMs: 400,
+        ...callbacks,
+      };
+      const cleanMic = await noiseFreeMic();
+      if (!cleanMic) return vad.MicVAD.new(options);
+      try {
+        const listener = await vad.MicVAD.new({ ...options, ...cleanMic });
+        // The detector only closes audio it opened itself, and browsers allow only a few open at once.
+        listener.ownsAudioContext = true;
+        return listener;
+      } catch (error) {
+        cleanMic.audioContext.close();
+        if (error.name in MIC_PROBLEMS) throw error;
+        console.warn(`Noise removal is off: ${error.name}: ${error.message}`);
+        return vad.MicVAD.new(options);
+      }
+    }
+
+    function micProblem(error) {
+      console.warn(`Voice typing error: ${error.name}: ${error.message}`);
+      return labels()[MIC_PROBLEMS[error.name] || "micFallback"];
+    }
+
+    async function closeListener(listener) {
+      if (!listener) return;
+      await listener.pause();
+      listener.destroy?.();
+    }
+
+    // Finished speech can still be written out, because pausing sends what was being said.
+    function stopMic() {
+      const listener = micListener;
+      micListener = null;
+      micActive = false;
+      mic.classList.remove("listening");
+      mic.setAttribute("aria-pressed", "false");
+      voiceStatus.hidden = true;
+      closeListener(listener);
+    }
+
+    function cancelMic() {
+      micRun++;
+      stopMic();
+    }
+
+    async function writeSpeech(samples, run, language) {
+      try {
+        const response = await saraFetch(`/speech?language=${encodeURIComponent(language)}`, {
+          method: "POST",
+          headers: { "Content-Type": "audio/wav" },
+          body: encodeWav(samples.slice(-MAX_SPEECH_SECONDS * SPEECH_SAMPLE_RATE)),
+        });
+        if (run !== micRun) return;
+        if (response.status === 429) return addMessage("error", labels().callLimit);
+        if (!response.ok) throw new Error("The speech request failed.");
+        const { text } = await response.json();
+        if (run !== micRun) return;
+        if (!text) return addMessage("error", labels().micNoSpeech);
+        input.value = joinWords(input.value.trim(), text);
+        input.scrollTop = input.scrollHeight;
+        input.focus();
+      } catch {
+        if (run === micRun) addMessage("error", labels().micNetwork);
+      }
+    }
+
+    async function startListening() {
+      const run = ++micRun;
+      const language = languageSelect.value;
+      stopSpeaking();
+      micActive = true;
+      mic.classList.add("listening");
+      mic.setAttribute("aria-pressed", "true");
+      voiceStatus.hidden = false;
+      try {
+        const listener = await createSpeechListener({
+          submitUserSpeechOnPause: true,
+          onSpeechEnd: (samples) => writeSpeech(samples, run, language),
+        });
+        // The button may have been tapped again while the speech detector was loading.
+        if (run !== micRun || !micActive) return closeListener(listener);
+        micListener = listener;
+        await listener.start();
+      } catch (error) {
+        if (run !== micRun) return;
+        addMessage("error", micProblem(error));
+        cancelMic();
+      }
+    }
+
+    function updateCallClock() {
+      const secondsLeft = Math.max(0, Math.ceil((callEndsAt - Date.now()) / 1000));
+      callTimer.textContent = `${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, "0")}`;
+      // A reply that is already playing can finish before the call ends.
+      if (secondsLeft === 0 && !saraSpeaking) endCall(labels().callTimeUp);
+    }
+
+    function endCall(message) {
+      inCall = false;
+      callTurn++;
+      stopFiller();
+      saraSpeaking = false;
+      waitingForReply = false;
+      clearInterval(callClock);
+      callListener?.pause();
+      callListener?.destroy?.();
+      callListener = null;
+      if (callAudio) callAudio.pause();
+      callBar.hidden = true;
+      voiceStatus.hidden = true;
+      form.hidden = false;
+      languageSelect.disabled = false;
+      newChat.disabled = false;
+      callBackButton.disabled = false;
+      menuButton.disabled = false;
+      reportState();
+      if (message) addMessage("error", message);
+    }
+
+    function encodeWav(samples) {
+      const wav = new DataView(new ArrayBuffer(44 + samples.length * 2));
+      const writeText = (offset, text) => [...text].forEach((letter, index) => wav.setUint8(offset + index, letter.charCodeAt(0)));
+      writeText(0, "RIFF");
+      wav.setUint32(4, 36 + samples.length * 2, true);
+      writeText(8, "WAVEfmt ");
+      wav.setUint32(16, 16, true);
+      wav.setUint16(20, 1, true);
+      wav.setUint16(22, 1, true);
+      wav.setUint32(24, SPEECH_SAMPLE_RATE, true);
+      wav.setUint32(28, SPEECH_SAMPLE_RATE * 2, true);
+      wav.setUint16(32, 2, true);
+      wav.setUint16(34, 16, true);
+      writeText(36, "data");
+      wav.setUint32(40, samples.length * 2, true);
+      samples.forEach((sample, index) => {
+        const limited = Math.max(-1, Math.min(1, sample));
+        wav.setInt16(44 + index * 2, limited * 32767, true);
+      });
+      return wav.buffer;
+    }
+
+    // What the call is doing when the customer isn't being heard.
+    function showCallState() {
+      if (saraSpeaking && !saraInterrupted) setCallState("speaking");
+      else setCallState(waitingForReply ? "thinking" : "waiting");
+    }
+
+    // If this turn's reply is slow, the call screen shows a short "let me check" line in the call's language, never the
+    // same one twice in a row. It's only shown, not spoken, so it never talks over the customer or the reply.
+    function planFiller(turn) {
+      stopFiller();
+      fillerTimer = setTimeout(() => {
+        if (!inCall || turn !== callTurn || !waitingForReply || saraSpeaking) return;
+        const phrases = callLabels().callFillers;
+        let choice = Math.floor(Math.random() * phrases.length);
+        if (phrases.length > 1 && choice === lastFiller) choice = (choice + 1) % phrases.length;
+        lastFiller = choice;
+        callStatus.textContent = phrases[choice];
+      }, FILLER_DELAY_MS);
+    }
+
+    function stopFiller() {
+      clearTimeout(fillerTimer);
+      fillerTimer = null;
+    }
+
+    function showCallReply(data) {
+      clearTimeout(fillerTimer);
+      addMessage("assistant", data.content || labels().cardIntro);
+      addCards(data.products);
+      saraInterrupted = false;
+      if (!data.audio) {
+        saraSpeaking = false;
+        showCallState();
+        return;
+      }
+      const finishSpeaking = () => {
+        saraSpeaking = false;
+        if (!inCall) return;
+        if (Date.now() >= callEndsAt) return endCall(labels().callTimeUp);
+        showCallState();
+      };
+      saraSpeaking = true;
+      setCallState("speaking");
+      callAudio.onended = finishSpeaking;
+      callAudio.onerror = finishSpeaking;
+      callAudio.src = `data:audio/wav;base64,${data.audio}`;
+      if (inCall && saraSpeaking && !saraInterrupted) callAudio.play().catch(finishSpeaking);
+    }
+
+    // If the customer starts talking, Sara pauses straight away so it feels like a real call.
+    function pauseSaraForCaller() {
+      stopFiller();
+      if (!saraSpeaking) return;
+      saraInterrupted = true;
+      callAudio.pause();
+    }
+
+    function resumeSara() {
+      if (!saraInterrupted) return;
+      saraInterrupted = false;
+      callAudio.play().catch(() => {});
+      showCallState();
+    }
+
+    // The sound was too short to be speech, such as a cough or a door closing.
+    function ignoreShortSound() {
+      resumeSara();
+      showCallState();
+    }
+
+    // An answer overtaken by newer speech comes back marked late, so its words and cards can still be shown.
+    async function sendCallRequest(path, options, keepLate = false) {
+      const turn = ++callTurn;
+      try {
+        const response = await saraFetch(path, { method: "POST", ...options });
+        const current = turn === callTurn;
+        if (!inCall || (!current && !keepLate)) return null;
+        if (response.status === 429) {
+          if (current) endCall(labels().callLimit);
+          return null;
+        }
+        if (!response.ok) throw new Error("The call request failed.");
+        const data = await response.json();
+        if (!inCall) return null;
+        return turn === callTurn ? data : { ...data, late: true };
+      } catch {
+        if (inCall && turn === callTurn) endCall(labels().error);
+        return null;
+      }
+    }
+
+    // An overtaken answer goes before the newer sentence that overtook it, so the call reads in the order it was said.
+    function showLateReply(data) {
+      const before = messages.children.length;
+      addMessage("user", data.heard);
+      addMessage("assistant", data.content || labels().cardIntro);
+      addCards(data.products);
+      const added = [...messages.children].slice(before);
+      if (newestCallerMessage?.isConnected) added.forEach((element) => messages.insertBefore(element, newestCallerMessage));
+    }
+
+    // A newer sentence replaces any answer still on its way, like talking over someone on a call.
+    async function sendCallerSpeech(samples) {
+      waitingForReply = true;
+      showCallState();
+      planFiller(callTurn + 1);
+      const data = await sendCallRequest(`/call/speech?language=${encodeURIComponent(callLanguage)}`, {
+        headers: { "Content-Type": "audio/wav" },
+        body: encodeWav(samples.slice(-MAX_SPEECH_SECONDS * SPEECH_SAMPLE_RATE)),
+      }, true);
+      if (!data) return;
+      // The customer has said something newer, so this answer is shown without being spoken, keeping its estimate card.
+      if (data.late) {
+        if (data.heard) showLateReply(data);
+        return;
+      }
+      waitingForReply = false;
+      if (!data.heard && !data.content) {
+        resumeSara();
+        showCallState();
+        return;
+      }
+      if (data.language) callLanguage = data.language;
+      if (data.heard) {
+        newestCallerMessage = addMessage("user", data.heard);
+        showStarters(false);
+      }
+      showCallReply(data);
+      if (data.retry_after) retryCallTurn(data.retry_message, data.retry_understood, data.retry_after);
+    }
+
+    // Sara has said "one moment" because of the AI's rate limit. If the customer speaks again first, that replaces this.
+    async function retryCallTurn(message, understood, seconds) {
+      const turn = callTurn;
+      waitingForReply = true;
+      showCallState();
+      await new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+      if (!inCall || turn !== callTurn) return;
+      const data = await sendCallRequest("/call/retry", {
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, understood, language: callLanguage }),
+      });
+      if (!data) return;
+      waitingForReply = false;
+      showCallReply(data);
+    }
+
+    async function startCallListener() {
+      callListener = await createSpeechListener({
+        // Stricter than the mic button, because a call's mic stays open and hears the whole room.
+        positiveSpeechThreshold: CALL_SPEECH_CONFIDENCE,
+        negativeSpeechThreshold: CALL_SILENCE_CONFIDENCE,
+        minSpeechMs: CALL_MIN_SPEECH_MS,
+        redemptionMs: CALL_PAUSE_MS,
+        onSpeechStart: () => setCallState("hearing"),
+        onSpeechRealStart: pauseSaraForCaller,
+        onVADMisfire: ignoreShortSound,
+        onSpeechEnd: sendCallerSpeech,
+      });
+      await callListener.start();
+    }
+
+    async function startCall() {
+      cancelMic();
+      stopSpeaking();
+      inCall = true;
+      callLanguage = languageSelect.value;
+      form.hidden = true;
+      callBar.hidden = false;
+      languageSelect.disabled = true;
+      newChat.disabled = true;
+      callBackButton.disabled = true;
+      menuButton.disabled = true;
+      reportState();
+      closeMenu();
+      // Made during the tap, and a silent clip played now, because iPhones only play sound that a tap started.
+      callAudio = new Audio();
+      callAudio.src = silentClip();
+      callAudio.play().catch(() => {});
+      setCallState("connecting");
+      voiceStatus.hidden = false;
+      callTimer.textContent = "";
+
+      try {
+        await startCallListener();
+      } catch (error) {
+        return endCall(micProblem(error));
+      }
+      if (!inCall) {
+        callListener?.pause();
+        callListener?.destroy?.();
+        callListener = null;
+        return;
+      }
+
+      callEndsAt = Date.now() + CALL_LIMIT_MS;
+      updateCallClock();
+      callClock = setInterval(updateCallClock, 1000);
+      const data = await sendCallRequest("/call/start", {
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ language: languageSelect.value }),
+      });
+      if (data) showCallReply(data);
+    }
+
+    function addMessage(type, text) {
+      const element = document.createElement("div");
+      element.className = `message ${type}`;
+      fillText(element, text);
+      if (type === "assistant") addListenButton(element, text);
+      messages.append(element);
+      chatScroll.scrollTop = chatScroll.scrollHeight;
+      return element;
+    }
+
+    // Builds an element whose text is set safely, so catalogue data is never run as code.
+    function createText(tag, className, text) {
+      const element = document.createElement(tag);
+      element.className = className;
+      element.textContent = text;
+      return element;
+    }
+
+    function createCard(product) {
+      const card = document.createElement("a");
+      card.className = "card";
+      card.href = product.url;
+      card.target = "_blank";
+      card.rel = "noopener noreferrer";
+
+      const photo = document.createElement("div");
+      photo.className = "photo";
+      const image = document.createElement("img");
+      image.src = product.image_url;
+      image.alt = "";
+      image.loading = "lazy";
+      photo.append(image);
+
+      const body = document.createElement("div");
+      body.className = "card-body";
+
+      const text = labels();
+      const rate = `₹${product.price_per_sqft.toLocaleString("en-IN")}`;
+      const estimate = product.estimate;
+      const price = createText("div", "price", estimate ? `₹${estimate.amount.toLocaleString("en-IN")} ` : `${rate} `);
+      price.append(createText("span", "price-unit", estimate ? text.forArea(estimate.area_sq_ft.toLocaleString("en-IN")) : text.perSqFt));
+      const priceBlock = document.createElement("div");
+      const covered = product.budget;
+      const label = estimate
+        ? text.estimate(rate)
+        : covered
+          ? text.budgetCovers(`₹${covered.amount.toLocaleString("en-IN")}`, covered.area_sq_ft.toLocaleString("en-IN"))
+          : text.startingFrom;
+      priceBlock.append(createText("span", "price-label", label), price);
+
+      const foot = document.createElement("div");
+      foot.className = "card-foot";
+      foot.append(priceBlock, createText("span", "view", text.viewDetails));
+
+      body.append(
+        createText("span", "eyebrow", product.category),
+        createText("h2", "", product.name),
+        createText("p", "", product.description || ""),
+        foot
+      );
+
+      card.append(photo, body);
+      return card;
+    }
+
+    function addCards(products) {
+      const safeProducts = (products || []).filter((product) => isLinkable(product.url));
+      if (safeProducts.length === 0) return;
+
+      const cards = document.createElement("section");
+      cards.className = "cards";
+      cards.setAttribute("aria-label", "Matching products");
+      cards.append(...safeProducts.map(createCard));
+      messages.append(cards, createText("p", "price-note", labels().priceNote));
+      chatScroll.scrollTop = chatScroll.scrollHeight;
+    }
+
+    function showGreeting() {
+      messages.replaceChildren();
+      addWelcome();
+      addMessage("assistant", labels().greeting);
+      showStarters(true);
+    }
+
+    async function loadHistory() {
+      showGreeting();
+      try {
+        const response = await saraFetch("/chat");
+        const data = await response.json();
+        if (data.messages.length) showStarters(false);
+        for (const message of data.messages) {
+          addMessage(message.role, message.content || labels().cardIntro);
+          addCards(message.products);
+        }
+      } catch {
+        addMessage("error", labels().historyError);
+      }
+    }
+
+    async function sendMessage() {
+      const text = input.value.trim();
+      if (!text || send.disabled) return;
+
+      cancelMic();
+      stopSpeaking();
+      input.value = "";
+      send.disabled = true;
+      languageSelect.disabled = true;
+      const userMessage = addMessage("user", text);
+      showStarters(false);
+      const typing = document.createElement("div");
+      typing.className = "typing";
+      typing.setAttribute("role", "status");
+      typing.setAttribute("aria-label", labels().typing);
+      typing.append(...[0, 1, 2].map(() => document.createElement("span")));
+      messages.append(typing);
+      chatScroll.scrollTop = chatScroll.scrollHeight;
+
+      try {
+        const response = await saraFetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text, language: languageSelect.value }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : labels().error);
+        addMessage("assistant", data.content || labels().cardIntro);
+        addCards(data.products);
+      } catch (error) {
+        // The message wasn't saved, so put it back in the box to try again.
+        userMessage.remove();
+        input.value = text;
+        addMessage("error", error instanceof SyntaxError || error instanceof TypeError ? labels().error : error.message);
+      } finally {
+        typing.remove();
+        send.disabled = false;
+        languageSelect.disabled = false;
+        input.focus();
+      }
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      sendMessage();
+    });
+
+    // Enter sends, and Shift+Enter starts a new line.
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Browsers that can't use the microphone keep the text box only.
+    mic.hidden = !navigator.mediaDevices;
+    mic.addEventListener("click", () => (micActive ? stopMic() : startListening()));
+    call.hidden = !navigator.mediaDevices;
+    call.addEventListener("click", startCall);
+    endCallButton.addEventListener("click", () => endCall());
+    callBackButton.addEventListener("click", () => sendStarter(labels().callMeBack));
+
+    // The phone menu closes after a choice, a tap elsewhere or Escape.
+    function closeMenu() {
+      headerMenu.classList.remove("open");
+      menuButton.setAttribute("aria-expanded", "false");
+    }
+    menuButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      menuButton.setAttribute("aria-expanded", String(headerMenu.classList.toggle("open")));
+    });
+    headerMenu.addEventListener("click", closeMenu);
+    document.addEventListener("click", (event) => {
+      if (!headerMenu.contains(event.target)) closeMenu();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeMenu();
+    });
+
+    // Earlier messages stay as written. The page's own text and later replies use the new language.
+    languageSelect.addEventListener("change", () => {
+      cancelMic();
+      stopSpeaking();
+      saveLanguage();
+      applyLabels();
+      loadHistory();
+    });
+
+    newChat.addEventListener("click", async () => {
+      cancelMic();
+      stopSpeaking();
+      await saraFetch("/chat", { method: "DELETE" }).catch(() => {});
+      showGreeting();
+      input.value = "";
+      input.focus();
+    });
+
+    // Requests from the alusea.in panel: its language chips and its menu's "Call me back" and "New chat".
+    // Each acts like the matching control on this page, so nothing works there that doesn't work here.
+    window.addEventListener("message", (event) => {
+      if (event.source !== window.parent || !document.documentElement.classList.contains("embedded")) return;
+      const { source, type, value } = event.data || {};
+      if (source !== "alusea-site" || inCall) return;
+      if (type === "language" && value in LABELS && value !== languageSelect.value) {
+        languageSelect.value = value;
+        languageSelect.dispatchEvent(new Event("change"));
+      } else if (type === "call-back") {
+        callBackButton.click();
+      } else if (type === "new-chat") {
+        newChat.click();
+      } else if (type === "hello") {
+        reportState();
+      }
+    });
+
+    loadSavedLanguage();
+    applyLabels();
+    loadHistory();
+  </script>
+</body>
+</html>

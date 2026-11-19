@@ -1,0 +1,10 @@
+.env
+.venv
+*.db
+*.secret
+voice_cache/
+voice_samples/
+__pycache__/
+.pytest_cache/
+tests/
+check_bot.py

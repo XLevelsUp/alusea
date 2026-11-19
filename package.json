@@ -7,6 +7,7 @@
   "scripts": {
     "dev:marketing": "npm run dev --workspace=apps/marketing",
     "dev:admin": "npm run dev --workspace=apps/admin",
+    "dev:ai": "cd services/ai && uv run uvicorn alusea_ai_service.main:app --reload",
     "build:marketing": "npm run build --workspace=apps/marketing",
     "build:admin": "npm run build --workspace=apps/admin",
     "lint:marketing": "npm run lint --workspace=apps/marketing",
@@ -20,7 +21,8 @@
     "types:sync": "cp apps/admin/src/lib/supabase/types.ts apps/marketing/src/lib/supabase/types.ts",
     "types:check": "node scripts/check-db-types-sync.mjs",
     "test:admin": "node --test --experimental-strip-types \"apps/admin/src/**/*.test.ts\"",
-    "test": "npm run test:admin"
+    "test": "npm run test:admin",
+    "test:ai": "cd services/ai && uv run pytest"
   },
   "devDependencies": {
     "supabase": "^2.117.0"
