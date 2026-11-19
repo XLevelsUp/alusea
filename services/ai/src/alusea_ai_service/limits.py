@@ -7,7 +7,7 @@ import secrets
 import threading
 from datetime import datetime, timedelta, timezone
 
-from alusea_ai_service.store import DATA_DIR, limit_reached, return_allowance, take_allowance
+from alusea_ai_service.store import DATA_DIR, DATABASE_URL, limit_reached, return_allowance, take_allowance
 
 INDIA = timezone(timedelta(hours=5, minutes=30))
 SCOPES = ("visitor", "ip", "site")
@@ -55,6 +55,9 @@ def hash_key() -> bytes:
     """The secret for hashing. Without it, an IP address could be found again by trying every address."""
     if os.getenv("LIMIT_HASH_SECRET"):
         return os.environ["LIMIT_HASH_SECRET"].encode()
+    # With a shared database, every copy of Sara must use the same key, and a file on one copy's disk can't give that.
+    if DATABASE_URL:
+        raise RuntimeError("Set LIMIT_HASH_SECRET when DATABASE_URL is set, so every copy of Sara counts limits the same way.")
     with hash_key_lock:
         if SECRET_FILE not in hash_keys:
             if not SECRET_FILE.exists():

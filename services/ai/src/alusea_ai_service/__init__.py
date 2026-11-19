@@ -8,6 +8,11 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 load_dotenv()
 
+# Every call to an outside service (Groq, Sarvam, Supabase, the Google Sheet) is printed in Sara's terminal.
+from alusea_ai_service.api_log import install as log_api_calls  # noqa: E402
+
+log_api_calls()
+
 
 def serve() -> None:
     """Start Sara for the live site. Behind a web server on the same machine, visitors' real addresses come through."""

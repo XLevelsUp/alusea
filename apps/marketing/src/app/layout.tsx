@@ -7,6 +7,7 @@ import Footer from "@/components/layout/Footer";
 import InstagramFeed from "@/components/sections/InstagramFeed";
 import BackButton from "@/components/ui/BackButton";
 import WhatsAppFloat from "@/components/ui/WhatsAppFloat";
+import SaraChat from "@/components/ui/SaraChat";
 import RevealObserver from "@/components/ui/RevealObserver";
 import MetaPixel from "@/components/layout/MetaPixel";
 import DelayedScript from "@/components/layout/DelayedScript";
@@ -296,6 +297,7 @@ export default function RootLayout({
         <Footer />
         <BackButton />
         <WhatsAppFloat />
+        <SaraChat />
         <RevealObserver />
       </body>
     </html>

@@ -219,3 +219,105 @@ def wait_message(language: str) -> str:
 
 def not_heard_message(language: str) -> str:
     return random.choice(REPLIES[language]["not_heard"])
+
+
+# The "uPVC vs aluminium" suggestion gets the same structured answer every time, with no AI call.
+COMPARISON_PATTERN = re.compile(
+    r"^\W*(u?pvc\s+(vs\.?|versus|or|and)\s+alumini?um|alumini?um\s+(vs\.?|versus|or|and)\s+u?pvc)\W*(which\s+is\s+better\W*)?$",
+    re.IGNORECASE,
+)
+
+COMPARISON = {
+    "en-IN": """uPVC vs aluminium, side by side:
+
+Strength and frame size
+• uPVC: needs thick frames, so wide openings get less glass.
+• Aluminium: stays strong in slim frames, so you get more glass and more view.
+
+Sun and heat
+• uPVC: can fade or yellow in strong sun, and can bend in heat.
+• Aluminium: keeps its shape and colour.
+
+How long it lasts
+• uPVC: doesn't last as long.
+• Aluminium: lasts longer, and Alusea gives you lifetime service.
+
+Our pick: for Coimbatore's sun and heat, and especially for wide balcony or sliding doors, aluminium is the better long-term choice.
+
+Which space are you planning: a balcony, a bedroom window, or the main door? Or share your name and number and our team will call you.""",
+    "ta-IN": """uPVC vs aluminium, ஒப்பிட்டுப் பாக்கலாம்:
+
+Strength, frame அளவு
+• uPVC: frame தடிமனா இருக்கணும், அதனால பெரிய opening-ல glass குறைவா வரும்.
+• Aluminium: மெல்லிய frame-லயே strong-ஆ இருக்கும், அதனால glass அதிகம், view அதிகம்.
+
+வெயில், சூடு
+• uPVC: கடுமையான வெயில்ல நிறம் மங்கலாம் அல்லது மஞ்சளாகலாம், சூட்டுல வளையலாம்.
+• Aluminium: shape-உம் நிறமும் மாறாம இருக்கும்.
+
+எவ்வளவு நாள் உழைக்கும்
+• uPVC: அவ்வளவு நாள் உழைக்காது.
+• Aluminium: நீண்ட நாள் உழைக்கும், Alusea lifetime service தர்றோம்.
+
+எங்க பரிந்துரை: கோயம்புத்தூர் வெயிலுக்கும் சூட்டுக்கும், முக்கியமா பெரிய balcony அல்லது sliding door-க்கு, aluminium தான் நீண்ட காலத்துக்கு நல்ல தேர்வு.
+
+எந்த இடத்துக்கு plan பண்றீங்க: balcony, bedroom ஜன்னல், இல்ல main door? இல்லன்னா உங்க பேரும் நம்பரும் சொல்லுங்க, எங்க team உங்கள கூப்பிடுவாங்க.""",
+    "ml-IN": """uPVC vs aluminium, ഒന്ന് താരതമ്യം ചെയ്യാം:
+
+Strength, frame വലിപ്പം
+• uPVC: frame കട്ടിയുള്ളതായിരിക്കണം, അതുകൊണ്ട് വലിയ opening-ൽ glass കുറവായിരിക്കും.
+• Aluminium: നേർത്ത frame-ലും strong ആണ്, അതുകൊണ്ട് കൂടുതൽ glass, കൂടുതൽ view.
+
+വെയിലും ചൂടും
+• uPVC: കടുത്ത വെയിലിൽ നിറം മങ്ങുകയോ മഞ്ഞയാവുകയോ ചെയ്യാം, ചൂടിൽ വളയാം.
+• Aluminium: shape-ഉം നിറവും മാറില്ല.
+
+എത്ര കാലം നിൽക്കും
+• uPVC: അത്ര കാലം നിൽക്കില്ല.
+• Aluminium: കൂടുതൽ കാലം നിൽക്കും, Alusea lifetime service തരുന്നു.
+
+ഞങ്ങളുടെ നിർദ്ദേശം: കോയമ്പത്തൂരിലെ വെയിലിനും ചൂടിനും, പ്രത്യേകിച്ച് വലിയ balcony അല്ലെങ്കിൽ sliding door-ന്, aluminium ആണ് ദീർഘകാലത്തേക്ക് നല്ലത്.
+
+ഏത് സ്ഥലത്തേക്കാണ് plan: balcony, bedroom ജനൽ, അതോ main door? അല്ലെങ്കിൽ നിങ്ങളുടെ പേരും നമ്പറും തരൂ, ഞങ്ങളുടെ team വിളിക്കും.""",
+    "te-IN": """uPVC vs aluminium, పక్కపక్కన చూద్దాం:
+
+Strength, frame సైజు
+• uPVC: frame మందంగా ఉండాలి, అందుకే పెద్ద opening-లో glass తక్కువగా వస్తుంది.
+• Aluminium: సన్నని frame-లో కూడా strong-గా ఉంటుంది, అందుకే ఎక్కువ glass, ఎక్కువ view.
+
+ఎండ, వేడి
+• uPVC: గట్టి ఎండలో రంగు మసకబారవచ్చు లేదా పసుపు రంగుకు మారవచ్చు, వేడికి వంగవచ్చు.
+• Aluminium: shape, రంగు మారకుండా ఉంటుంది.
+
+ఎంత కాలం నిలుస్తుంది
+• uPVC: అంత కాలం నిలవదు.
+• Aluminium: ఎక్కువ కాలం నిలుస్తుంది, Alusea lifetime service ఇస్తుంది.
+
+మా సలహా: కోయంబత్తూరు ఎండకి, వేడికి, ముఖ్యంగా పెద్ద balcony లేదా sliding door-కి, aluminium-ే దీర్ఘకాలానికి మంచి ఎంపిక.
+
+మీరు ఏ చోటు కోసం plan చేస్తున్నారు: balcony, bedroom కిటికీ, లేక main door? లేదా మీ పేరు, నంబర్ ఇవ్వండి, మా team మీకు call చేస్తుంది.""",
+    "kn-IN": """uPVC vs aluminium, ಹೋಲಿಸಿ ನೋಡೋಣ:
+
+Strength, frame ಗಾತ್ರ
+• uPVC: frame ದಪ್ಪ ಇರಬೇಕು, ಅದಕ್ಕೆ ದೊಡ್ಡ opening-ನಲ್ಲಿ glass ಕಡಿಮೆ ಬರುತ್ತೆ.
+• Aluminium: ತೆಳುವಾದ frame-ನಲ್ಲೂ strong ಆಗಿರುತ್ತೆ, ಅದಕ್ಕೆ ಹೆಚ್ಚು glass, ಹೆಚ್ಚು view.
+
+ಬಿಸಿಲು, ಶಾಖ
+• uPVC: ಜೋರು ಬಿಸಿಲಿಗೆ ಬಣ್ಣ ಮಾಸಬಹುದು ಅಥವಾ ಹಳದಿ ಆಗಬಹುದು, ಶಾಖಕ್ಕೆ ಬಾಗಬಹುದು.
+• Aluminium: shape, ಬಣ್ಣ ಬದಲಾಗದೆ ಇರುತ್ತೆ.
+
+ಎಷ್ಟು ಕಾಲ ಬಾಳುತ್ತೆ
+• uPVC: ಅಷ್ಟು ಕಾಲ ಬಾಳೋದಿಲ್ಲ.
+• Aluminium: ಹೆಚ್ಚು ಕಾಲ ಬಾಳುತ್ತೆ, Alusea lifetime service ಕೊಡುತ್ತೆ.
+
+ನಮ್ಮ ಸಲಹೆ: ಕೊಯಮತ್ತೂರಿನ ಬಿಸಿಲು, ಶಾಖಕ್ಕೆ, ಮುಖ್ಯವಾಗಿ ದೊಡ್ಡ balcony ಅಥವಾ sliding door-ಗೆ, aluminium-ಏ ದೀರ್ಘಕಾಲಕ್ಕೆ ಒಳ್ಳೆಯ ಆಯ್ಕೆ.
+
+ಯಾವ ಜಾಗಕ್ಕೆ plan ಮಾಡ್ತಿದ್ದೀರಿ: balcony, bedroom ಕಿಟಕಿ, ಅಥವಾ main door? ಇಲ್ಲಾಂದ್ರೆ ನಿಮ್ಮ ಹೆಸರು, ನಂಬರ್ ಕೊಡಿ, ನಮ್ಮ team call ಮಾಡುತ್ತೆ.""",
+}
+
+
+def comparison(message: str, language: str) -> str | None:
+    """The fixed uPVC vs aluminium answer, in the language chosen in the menu. Typed chat only: it's too long to speak."""
+    if COMPARISON_PATTERN.search(message):
+        return COMPARISON.get(language, COMPARISON["en-IN"])
+    return None

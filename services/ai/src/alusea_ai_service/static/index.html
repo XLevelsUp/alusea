@@ -9,6 +9,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@300;400;500&family=Noto+Sans+Kannada:wght@400;500;600&family=Noto+Sans+Malayalam:wght@400;500;600&family=Noto+Sans+Tamil:wght@400;500;600&family=Noto+Sans+Telugu:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.wasm.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.31/dist/bundle.min.js" defer></script>
+  <script>
+    // Inside the chat panel on alusea.in (?embed), the panel shows Sara's name, language and menu, so her own header hides.
+    // Set before the page draws, so the header never flashes.
+    if (window.parent !== window && new URLSearchParams(location.search).has("embed")) document.documentElement.classList.add("embedded");
+  </script>
   <style>
     /* The Alusea website's own palette, fonts and finishes, so Sara looks like part of alusea.in. */
     :root {
@@ -20,6 +25,7 @@
       --stem-line: rgb(141 146 149 / 0.4);
       --surface: #ffffff;
       --stop: #b3261e;
+      --champagne: #f2c14e;
       --radius-card: 1.5rem;
       --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
       --indian-fonts: "Noto Sans Tamil", "Noto Sans Malayalam", "Noto Sans Telugu", "Noto Sans Kannada";
@@ -90,10 +96,18 @@
     /* On a computer the menu's buttons sit in the header. On a phone they fold into the ⋯ menu. */
     .menu-toggle { display: none; }
     .header-menu { display: contents; }
+    .embedded header { display: none; }
 
-    #messages {
+    /* The conversation and the suggestions below it scroll together, so a short panel never squeezes the chat. */
+    .chat-scroll {
       flex: 1;
+      min-height: 0;
       overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    #messages {
+      flex: 1 0 auto;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -114,7 +128,7 @@
     .eyebrow-line::before { content: ""; width: 40px; height: 1px; background: currentColor; }
     /* Wide letter spacing breaks up Indian scripts, so it's only for English. */
     :root:not(:lang(en)) .eyebrow-line { letter-spacing: 0.02em; }
-    .dock:has(#call-bar:not([hidden])) #starters { display: none; }
+    .chat:has(#call-bar:not([hidden])) #starters { display: none; }
 
     .welcome { padding: 16px 0 12px; }
     .welcome h2 {
@@ -126,23 +140,48 @@
     }
     .welcome p { max-width: 46ch; margin: 0 0 22px; color: var(--berry-bloom); font-size: 16px; line-height: 1.7; }
 
-    /* The website's primary pill button, with the same sweep of light on hover. */
+    /* A card to start a call: Blueberry phone, Sara's words, and a gold arrow, with the website's sweep of light on hover. */
     .call-cta {
       position: relative;
       overflow: hidden;
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 10px;
-      min-height: 48px;
-      padding: 12px 28px;
-      border: 0;
+      gap: 14px;
+      width: 100%;
+      max-width: 380px;
+      padding: 10px 12px 10px 10px;
+      border: 1px solid rgb(47 58 85 / 0.1);
+      border-radius: 20px;
+      background: var(--surface);
+      color: var(--blueberry);
+      font: 500 16px var(--heading-font);
+      letter-spacing: -0.01em;
+      text-align: left;
+      box-shadow: 0 1px 2px rgb(47 58 85 / 0.06), 0 12px 28px -18px rgb(47 58 85 / 0.55);
+      transition: border-color 0.25s, transform 0.1s ease-out;
+    }
+    .call-cta-icon {
+      position: relative;
+      flex: none;
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
       border-radius: 9999px;
       background: var(--blueberry);
-      color: var(--surface);
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: 0.01em;
-      transition: background-color 0.25s, transform 0.1s ease-out;
+      color: var(--champagne);
+    }
+    .call-cta-icon::after { content: ""; position: absolute; inset: -5px; border: 1.5px solid rgb(47 58 85 / 0.16); border-radius: 9999px; }
+    .call-cta-go {
+      flex: none;
+      margin-left: auto;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 9999px;
+      background: rgb(242 193 78 / 0.22);
+      font: 600 16px var(--body-font);
     }
     .call-cta::after {
       content: "";
@@ -153,7 +192,7 @@
       transition: transform 0.8s var(--ease-out);
       pointer-events: none;
     }
-    .call-cta:hover { background: var(--berry-bloom); }
+    .call-cta:hover { border-color: var(--blueberry); }
     .call-cta:hover::after { transform: translateX(120%); }
     .call-cta:active { transform: scale(0.97); }
 
@@ -248,15 +287,17 @@
     .price-note { flex: none; margin: 0; color: var(--berry-bloom); font-size: 12px; }
 
     .dock { flex: none; background: var(--surface); border-top: 1px solid var(--stem-line); }
-    #starters { display: flex; gap: 8px; overflow-x: auto; padding: 12px var(--gutter) 0; scrollbar-width: none; }
+    /* Suggestions sit on the chat background, one under another on the right, like messages the customer could send. */
+    #starters { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; padding: 4px var(--gutter) 12px; }
     .starter {
-      flex: none;
+      max-width: 100%;
+      box-shadow: 0 1px 2px rgb(47 58 85 / 0.08);
       padding: 7px 16px;
       border: 1px solid var(--stem-line);
       border-radius: 9999px;
-      background: var(--plate-white);
+      background: var(--surface);
       font-size: 13px;
-      white-space: nowrap;
+      text-align: right;
       transition: border-color 0.3s;
     }
     .starter:hover { border-color: var(--blueberry); }
@@ -353,6 +394,7 @@
       color: var(--blueberry);
       font: 500 21px var(--heading-font);
     }
+    .call-orb img { width: 100%; height: 100%; display: block; border-radius: 9999px; }
     .call-orb::after {
       content: "";
       position: absolute;
@@ -428,11 +470,8 @@
       /* One call button at a time: the big one on the start screen, then the one by the message box. */
       .chat:has(.welcome:not([hidden])) #call { display: none; }
 
-      /* Suggestions wrap onto two rows instead of running off the screen. */
-      #starters { flex-wrap: wrap; overflow: visible; padding-top: 10px; }
-      .starter { flex: 0 1 auto; padding: 6px 13px; white-space: normal; text-align: left; }
-      /* The two short ones share a row, and the longer price question takes the next. */
-      .starter:nth-child(2) { order: 1; }
+      #starters { gap: 6px; padding-bottom: 10px; }
+      .starter { padding: 6px 13px; }
 
       /* Product cards: a small photo beside the name and price, so two or three fit on screen. */
       .cards { grid-template-columns: 1fr; gap: 10px; }
@@ -478,6 +517,14 @@
       #end-call { width: 100%; min-height: 52px; justify-content: center; font-size: 15px; }
       .dock:has(#call-bar:not([hidden])) #voice-status { order: 2; padding: 0 var(--gutter) 14px; background: var(--blueberry); color: rgb(245 246 243 / 0.7); text-align: center; font-size: 11px; }
     }
+    /* In the alusea.in panel, the panel's header already names Sara, so the welcome is kept short. */
+    .embedded .welcome { padding: 2px 0 0; }
+    .embedded .welcome .eyebrow-line { display: none; }
+    .embedded .welcome h2 { max-width: none; margin: 0 0 6px; font-size: 21px; line-height: 1.25; }
+    .embedded .welcome p { margin-bottom: 12px; font-size: 13.5px; line-height: 1.5; }
+    /* The message box sits on the chat background, so the panel reads as one surface at any width. */
+    .embedded .dock:not(:has(#call-bar:not([hidden]))) { background: transparent; border-top-color: transparent; }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation: none !important; transition: none !important; }
       #call-bar::after { display: none; }
@@ -528,9 +575,11 @@
         </div>
       </div>
     </header>
-    <div id="messages" role="log" aria-live="polite"></div>
-    <div class="dock">
+    <div class="chat-scroll" id="chat-scroll">
+      <div id="messages" role="log" aria-live="polite"></div>
       <div id="starters" role="group"></div>
+    </div>
+    <div class="dock">
       <p id="voice-status" role="status" hidden>Listening… Your browser may send your speech to its provider to turn it into text.</p>
       <form id="form">
         <button id="call" class="round-button" type="button" aria-label="Start a voice call">
@@ -555,7 +604,7 @@
       </form>
       <p id="privacy-note"><span id="privacy-text"></span> <a href="https://www.alusea.in/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy policy</a></p>
       <div id="call-bar" data-state="connecting" hidden>
-        <div class="call-orb" aria-hidden="true">S</div>
+        <div class="call-orb" aria-hidden="true"><img src="/sara.webp" alt="" width="54" height="54"></div>
         <div class="call-text">
           <span class="call-title eyebrow-line" id="call-title">On a call with Sara</span>
           <span id="call-status" role="status"></span>
@@ -618,7 +667,7 @@
         callSara: "Call Sara",
         callMeBack: "Call me back",
         more: "More options",
-        starters: ["Doors for my balcony", "Price for an 8×10 ft sliding door", "uPVC or aluminium?"],
+        starters: ["Doors for my balcony", "Price for an 8×10 ft sliding door", "uPVC vs aluminium"],
         callTitle: "On a call with Sara",
         callHint: "Just speak. Sara stops when you talk.",
       },
@@ -665,7 +714,7 @@
         callSara: "சாராகிட்ட பேசுங்க",
         callMeBack: "எனக்கு call பண்ணுங்க",
         more: "மேலும்",
-        starters: ["பால்கனிக்கு door வேணும்", "8×10 அடி sliding door விலை என்ன?", "uPVC-ஆ aluminium-ஆ, எது நல்லது?"],
+        starters: ["பால்கனிக்கு door வேணும்", "8×10 அடி sliding door விலை என்ன?", "uPVC vs aluminium"],
         callTitle: "சாராகிட்ட call-ல இருக்கீங்க",
         callHint: "பேசுங்க போதும். நீங்க பேசும்போது சாரா நிறுத்திடுவாங்க.",
       },
@@ -712,7 +761,7 @@
         callSara: "സാറായെ വിളിക്കൂ",
         callMeBack: "എന്നെ തിരിച്ചു വിളിക്കൂ",
         more: "കൂടുതൽ",
-        starters: ["ബാൽക്കണിക്ക് ഒരു door വേണം", "8×10 അടി sliding door-ന് എന്താണ് വില?", "uPVC-യോ aluminium-മോ, ഏതാണ് നല്ലത്?"],
+        starters: ["ബാൽക്കണിക്ക് ഒരു door വേണം", "8×10 അടി sliding door-ന് എന്താണ് വില?", "uPVC vs aluminium"],
         callTitle: "സാറായുമായി call-ൽ ആണ്",
         callHint: "സംസാരിച്ചാൽ മതി. നിങ്ങൾ സംസാരിക്കുമ്പോൾ സാറാ നിർത്തും.",
       },
@@ -759,7 +808,7 @@
         callSara: "సారాకు call చేయండి",
         callMeBack: "నాకు call చేయండి",
         more: "మరిన్ని",
-        starters: ["బాల్కనీకి door కావాలి", "8×10 అడుగుల sliding door ధర ఎంత?", "uPVC నా aluminium నా, ఏది మంచిది?"],
+        starters: ["బాల్కనీకి door కావాలి", "8×10 అడుగుల sliding door ధర ఎంత?", "uPVC vs aluminium"],
         callTitle: "సారాతో call లో ఉన్నారు",
         callHint: "మాట్లాడితే చాలు. మీరు మాట్లాడినప్పుడు సారా ఆగిపోతుంది.",
       },
@@ -806,7 +855,7 @@
         callSara: "ಸಾರಾಗೆ call ಮಾಡಿ",
         callMeBack: "ನನಗೆ call ಮಾಡಿ",
         more: "ಇನ್ನಷ್ಟು",
-        starters: ["ಬಾಲ್ಕನಿಗೆ door ಬೇಕು", "8×10 ಅಡಿ sliding door ಬೆಲೆ ಎಷ್ಟು?", "uPVC ನಾ aluminium ನಾ, ಯಾವುದು ಒಳ್ಳೆಯದು?"],
+        starters: ["ಬಾಲ್ಕನಿಗೆ door ಬೇಕು", "8×10 ಅಡಿ sliding door ಬೆಲೆ ಎಷ್ಟು?", "uPVC vs aluminium"],
         callTitle: "ಸಾರಾ ಜೊತೆ call ನಲ್ಲಿದ್ದೀರಿ",
         callHint: "ಮಾತಾಡಿದ್ರೆ ಸಾಕು. ನೀವು ಮಾತಾಡುವಾಗ ಸಾರಾ ನಿಲ್ಲಿಸ್ತಾರೆ.",
       },
@@ -814,7 +863,7 @@
     const LANGUAGE_STORAGE_KEY = "alusea_language";
     const CALL_LIMIT_MS = 5 * 60 * 1000;
     const SPEECH_SAMPLE_RATE = 16000;
-    const MAX_SPEECH_SECONDS = 180;
+    const MAX_SPEECH_SECONDS = 120;
     const CALL_SPEECH_CONFIDENCE = 0.75;
     // A call waits this long in silence before sending, so a short pause doesn't split one sentence into two paid turns.
     const CALL_PAUSE_MS = 1300;
@@ -837,6 +886,7 @@
     const MIC_SETTINGS = { channelCount: 1, echoCancellation: true, autoGainControl: true, noiseSuppression: true };
 
     const messages = document.getElementById("messages");
+    const chatScroll = document.getElementById("chat-scroll");
     const form = document.getElementById("form");
     const input = document.getElementById("input");
     const send = document.getElementById("send");
@@ -917,6 +967,14 @@
           return button;
         })
       );
+      reportState();
+    }
+
+    // Inside the alusea.in panel, the panel's language chips and menu follow Sara's language and whether she's on a call.
+    // The panel's address isn't known here; only alusea.in may frame this page (frame-ancestors), and these two values aren't private.
+    function reportState() {
+      if (!document.documentElement.classList.contains("embedded")) return;
+      window.parent.postMessage({ source: "sara", type: "state", language: languageSelect.value, busy: inCall }, "*");
     }
 
     // The welcome and starters show only until the customer says something.
@@ -940,8 +998,9 @@
         const button = document.createElement("button");
         button.className = "call-cta";
         button.type = "button";
-        button.innerHTML = CALL_ICON;
-        button.append(document.createTextNode(text.callSara));
+        button.innerHTML = `<span class="call-cta-icon">${CALL_ICON}</span>`;
+        button.append(document.createTextNode(text.callSara), createText("span", "call-cta-go", "→"));
+        button.lastChild.setAttribute("aria-hidden", "true");
         button.addEventListener("click", startCall);
         welcome.append(button);
       }
@@ -951,6 +1010,26 @@
     function setCallState(state) {
       callBar.dataset.state = state;
       callStatus.textContent = labels()[CALL_STATE_LABELS[state]];
+    }
+
+    // Sara remembers a visitor by a cookie. Some browsers block it inside the alusea.in panel, so the same id is also
+    // kept here and sent with every request. If storage is blocked too, the page still works without memory.
+    const VISITOR_STORAGE_KEY = "alusea_visitor_id";
+
+    async function saraFetch(path, options = {}) {
+      const headers = new Headers(options.headers);
+      try {
+        const saved = localStorage.getItem(VISITOR_STORAGE_KEY);
+        if (saved) headers.set("X-Visitor-Id", saved);
+      } catch {}
+      const response = await fetch(path, { ...options, headers });
+      const visitor = response.headers.get("X-Visitor-Id");
+      if (visitor) {
+        try {
+          localStorage.setItem(VISITOR_STORAGE_KEY, visitor);
+        } catch {}
+      }
+      return response;
     }
 
     // Saved in this browser only, so the page still works if storage is blocked.
@@ -1043,7 +1122,7 @@
       // Links aren't read out.
       const spoken = text.replace(/https?:\/\/\S+/g, "").trim().slice(0, MAX_LISTEN_CHARACTERS);
       try {
-        const response = await fetch("/speak", {
+        const response = await saraFetch("/speak", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: spoken, language: languageOf(text) }),
@@ -1171,7 +1250,7 @@
 
     async function writeSpeech(samples, run, language) {
       try {
-        const response = await fetch(`/speech?language=${encodeURIComponent(language)}`, {
+        const response = await saraFetch(`/speech?language=${encodeURIComponent(language)}`, {
           method: "POST",
           headers: { "Content-Type": "audio/wav" },
           body: encodeWav(samples.slice(-MAX_SPEECH_SECONDS * SPEECH_SAMPLE_RATE)),
@@ -1239,6 +1318,7 @@
       newChat.disabled = false;
       callBackButton.disabled = false;
       menuButton.disabled = false;
+      reportState();
       if (message) addMessage("error", message);
     }
 
@@ -1275,7 +1355,7 @@
       if (fillerLanguage === language) return;
       fillerLanguage = language;
       try {
-        const response = await fetch(`/call/fillers?language=${encodeURIComponent(language)}`);
+        const response = await saraFetch(`/call/fillers?language=${encodeURIComponent(language)}`);
         if (response.ok && fillerLanguage === language) callFillers = (await response.json()).audio;
       } catch {
         callFillers = [];
@@ -1363,7 +1443,7 @@
     async function sendCallRequest(path, options, keepLate = false) {
       const turn = ++callTurn;
       try {
-        const response = await fetch(path, { method: "POST", ...options });
+        const response = await saraFetch(path, { method: "POST", ...options });
         const current = turn === callTurn;
         if (!inCall || (!current && !keepLate)) return null;
         if (response.status === 429) {
@@ -1463,6 +1543,7 @@
       newChat.disabled = true;
       callBackButton.disabled = true;
       menuButton.disabled = true;
+      reportState();
       closeMenu();
       // Made during the tap, so browsers allow it to play later replies.
       callAudio = new Audio();
@@ -1502,7 +1583,7 @@
       fillText(element, text);
       if (type === "assistant") addListenButton(element, text);
       messages.append(element);
-      messages.scrollTop = messages.scrollHeight;
+      chatScroll.scrollTop = chatScroll.scrollHeight;
       return element;
     }
 
@@ -1570,7 +1651,7 @@
       cards.setAttribute("aria-label", "Matching products");
       cards.append(...safeProducts.map(createCard));
       messages.append(cards, createText("p", "price-note", labels().priceNote));
-      messages.scrollTop = messages.scrollHeight;
+      chatScroll.scrollTop = chatScroll.scrollHeight;
     }
 
     function showGreeting() {
@@ -1583,7 +1664,7 @@
     async function loadHistory() {
       showGreeting();
       try {
-        const response = await fetch("/chat");
+        const response = await saraFetch("/chat");
         const data = await response.json();
         if (data.messages.length) showStarters(false);
         for (const message of data.messages) {
@@ -1612,10 +1693,10 @@
       typing.setAttribute("aria-label", labels().typing);
       typing.append(...[0, 1, 2].map(() => document.createElement("span")));
       messages.append(typing);
-      messages.scrollTop = messages.scrollHeight;
+      chatScroll.scrollTop = chatScroll.scrollHeight;
 
       try {
-        const response = await fetch("/chat", {
+        const response = await saraFetch("/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: text, language: languageSelect.value }),
@@ -1687,10 +1768,28 @@
     newChat.addEventListener("click", async () => {
       cancelMic();
       stopSpeaking();
-      await fetch("/chat", { method: "DELETE" }).catch(() => {});
+      await saraFetch("/chat", { method: "DELETE" }).catch(() => {});
       showGreeting();
       input.value = "";
       input.focus();
+    });
+
+    // Requests from the alusea.in panel: its language chips and its menu's "Call me back" and "New chat".
+    // Each acts like the matching control on this page, so nothing works there that doesn't work here.
+    window.addEventListener("message", (event) => {
+      if (event.source !== window.parent || !document.documentElement.classList.contains("embedded")) return;
+      const { source, type, value } = event.data || {};
+      if (source !== "alusea-site" || inCall) return;
+      if (type === "language" && value in LABELS && value !== languageSelect.value) {
+        languageSelect.value = value;
+        languageSelect.dispatchEvent(new Event("change"));
+      } else if (type === "call-back") {
+        callBackButton.click();
+      } else if (type === "new-chat") {
+        newChat.click();
+      } else if (type === "hello") {
+        reportState();
+      }
     });
 
     loadSavedLanguage();

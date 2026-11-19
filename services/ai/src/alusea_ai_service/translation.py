@@ -22,6 +22,8 @@ SARVAM_CHECK_URL = "https://api.sarvam.ai/text-lid"
 CHECK_TIMEOUT_SECONDS = 5
 MAX_CHECK_CHARACTERS = 1000
 MIN_WORDS_TO_CHANGE_LANGUAGE = 4
+# Sizes like "8ft" or "6 x 10 ft" belong to no language, and they make the check read English as Telugu.
+MEASUREMENT = re.compile(r"\d+(\.\d+)?\s*(sq\.?\s*(ft|feet)|sqft|ft|feet|foot|inch(es)?|in|mm|cm|m|x|×|by)?\b|\b(ft|feet|sq|sqft|x|×)\b", re.IGNORECASE)
 # Common Tanglish words that the other languages don't use the same way.
 TAMIL_WORDS = {
     "ku", "la", "venum", "venu", "venuu", "enna", "evlo", "evvlo", "iruku", "irukku", "irukum", "irukkum", "erukanu",
@@ -124,15 +126,18 @@ def checked_language(message: str, menu: str) -> str:
     """Tamil words decide straight away, because Sarvam's check reads Tanglish like "kitchen ku paakanu" as Malayalam. If unsure, it's English."""
     if set(re.findall(r"[a-z]+", message.lower())) & TAMIL_WORDS:
         return menu if menu != "en-IN" else "ta-IN"
+    words = " ".join(MEASUREMENT.sub(" ", message).split())
+    if not re.search(r"[^\W\d_]", words):
+        return "en-IN"
     try:
         response = httpx.post(
             SARVAM_CHECK_URL,
             headers={"api-subscription-key": os.environ["SARVAM_API_KEY"]},
-            json={"input": message[:MAX_CHECK_CHARACTERS]},
+            json={"input": words[:MAX_CHECK_CHARACTERS]},
             timeout=CHECK_TIMEOUT_SECONDS,
         )
         response.raise_for_status()
-        count(check_characters=len(message[:MAX_CHECK_CHARACTERS]))
+        count(check_characters=len(words[:MAX_CHECK_CHARACTERS]))
         found = response.json().get("language_code")
     except (httpx.HTTPError, ValueError) as error:
         print(f"Language check failed: {error}")

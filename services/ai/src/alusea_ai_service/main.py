@@ -1,4 +1,5 @@
 import asyncio
+import hmac
 import csv
 import io
 import itertools
@@ -12,7 +13,7 @@ from html import escape
 from pathlib import Path
 from typing import Literal
 from alusea_ai_service.cards import present, present_many
-from fastapi import Cookie, Depends, FastAPI, HTTPException, Request, Response
+from fastapi import Cookie, Depends, FastAPI, Header, HTTPException, Request, Response
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -22,10 +23,10 @@ from alusea_ai_service.agent import generate_reply, reply_language
 from alusea_ai_service.call import call_turn, fillers, not_heard, start_call
 from alusea_ai_service.limits import allow, give_back, is_callback_message, reached
 from alusea_ai_service.safe_log import clean_error
-from alusea_ai_service.small_talk import limit_message, small_talk, sorry_message
+from alusea_ai_service.small_talk import comparison, limit_message, small_talk, sorry_message
 from alusea_ai_service.meter import Meter, call_meter, metering, summary
 from alusea_ai_service.prompt import LANGUAGES as LANGUAGE_NAMES
-from alusea_ai_service.store import database_ok, delete_messages, delete_old_messages, init_db, last_language, load_for_model, load_leads, load_messages, save_exchange
+from alusea_ai_service.store import ON_VERCEL, database_ok, delete_messages, delete_old_messages, init_db, last_language, load_for_model, load_leads, load_messages, save_exchange
 from alusea_ai_service.sheet import as_text, resend_unsent_leads
 from alusea_ai_service.translation import ENGLISH_LETTERS, language_in_letters, translate_reply
 from alusea_ai_service.voice import MAX_SPOKEN_CHARACTERS, listen, speak
@@ -47,13 +48,16 @@ SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "microphone=(self), camera=(), geolocation=()",
-    "Content-Security-Policy": "frame-ancestors 'self' https://www.alusea.in https://alusea.in; object-src 'none'; base-uri 'self'",
+    "Content-Security-Policy": " ".join(
+        ["frame-ancestors 'self' https://www.alusea.in https://alusea.in", *os.getenv("EXTRA_FRAME_ORIGINS", "").split()]
+    )
+    + "; object-src 'none'; base-uri 'self'",
 }
 # Set COOKIE_SECURE=true on the live site, which uses HTTPS. Local testing on http:// needs it off.
 COOKIE_SECURE = os.getenv("COOKIE_SECURE", "").lower() == "true"
 Language = Literal["en-IN", "ta-IN", "ml-IN", "te-IN", "kn-IN"]
-# About 3 minutes of speech, which voice.py splits into parts for Sarvam.
-MAX_SPEECH_BYTES = 6_000_000
+# About 2 minutes of speech, which voice.py splits into parts for Sarvam. Vercel refuses requests over 4.5 MB.
+MAX_SPEECH_BYTES = 4_000_000
 
 
 async def delete_old_chats_daily() -> None:
@@ -73,7 +77,8 @@ async def resend_leads_regularly() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
-    tasks = [asyncio.create_task(delete_old_chats_daily()), asyncio.create_task(resend_leads_regularly())]
+    # On Vercel, Sara only runs while answering, so these jobs run from Vercel's daily schedule instead (/cron/daily).
+    tasks = [] if ON_VERCEL else [asyncio.create_task(delete_old_chats_daily()), asyncio.create_task(resend_leads_regularly())]
     yield
     for task in tasks:
         task.cancel()
@@ -91,6 +96,30 @@ async def add_security_headers(request: Request, call_next):
     # Only over HTTPS, so local testing on http:// isn't affected.
     if COOKIE_SECURE:
         response.headers["Strict-Transport-Security"] = "max-age=31536000"
+    return response
+
+
+# Some browsers block the cookie inside the alusea.in panel. Sara's page then keeps the visitor's id in its own
+# storage and sends it in this header, so the chat is still remembered.
+VISITOR_HEADER = "x-visitor-id"
+
+
+@app.middleware("http")
+async def remember_visitor_without_cookie(request: Request, call_next):
+    cookies = request.cookies
+    given = valid_visitor_id(request.headers.get(VISITOR_HEADER))
+    if given and not valid_visitor_id(cookies.get(COOKIE_NAME)):
+        # Read as if the cookie had arrived, so every endpoint works the same way.
+        headers = [(name, value) for name, value in request.scope["headers"] if name != b"cookie"]
+        other = "; ".join(f"{name}={value}" for name, value in cookies.items() if name != COOKIE_NAME)
+        headers.append((b"cookie", f"{other + '; ' if other else ''}{COOKIE_NAME}={given}".encode()))
+        request.scope["headers"] = headers
+    response = await call_next(request)
+    # The page saves this, in case the cookie doesn't come back next time.
+    issued = next((cookie.split("=", 1)[1].split(";", 1)[0] for cookie in response.headers.getlist("set-cookie") if cookie.startswith(f"{COOKIE_NAME}=")), None)
+    visitor = valid_visitor_id(issued) or given or valid_visitor_id(cookies.get(COOKIE_NAME))
+    if visitor:
+        response.headers["X-Visitor-Id"] = visitor
     return response
 
 
@@ -136,7 +165,10 @@ def remember_visitor(response: Response, visitor_id: str) -> None:
 
 
 def client_ip(request: Request) -> str:
-    """The visitor's address. On the live site, uvicorn must run with --proxy-headers so this isn't the proxy's."""
+    """The visitor's address. On Vercel it comes in a header Vercel sets itself. Elsewhere, uvicorn must run with
+    --proxy-headers so this isn't the proxy's."""
+    if ON_VERCEL and request.headers.get("x-real-ip"):
+        return request.headers["x-real-ip"]
     return request.client.host if request.client else "unknown"
 
 
@@ -157,9 +189,26 @@ def health() -> dict:
     return {"ok": True}
 
 
+@app.get("/cron/daily")
+def daily_jobs(authorization: str | None = Header(default=None)) -> dict:
+    """Vercel calls this once a day with CRON_SECRET: old chats are deleted and leads the sheet missed are sent again."""
+    secret = os.getenv("CRON_SECRET", "")
+    if not secret or not hmac.compare_digest((authorization or "").encode(), f"Bearer {secret}".encode()):
+        raise HTTPException(status_code=404)
+    deleted = delete_old_messages(CHAT_RETENTION_DAYS)
+    resend_unsent_leads()
+    return {"deleted_messages": deleted}
+
+
 @app.get("/alusea-logo.svg")
 def logo() -> FileResponse:
     return FileResponse(STATIC_DIR / "alusea-logo-dark.svg", media_type="image/svg+xml", headers={"Cache-Control": "public, max-age=86400"})
+
+
+@app.get("/sara.webp")
+def sara_picture() -> FileResponse:
+    """Sara's picture for the call screen. The same file is in apps/marketing/public/sara.webp; keep the two the same."""
+    return FileResponse(STATIC_DIR / "sara.webp", media_type="image/webp", headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.get("/")
@@ -205,9 +254,13 @@ def post_chat(
         language = language_in_letters(message, request.language, last_language(visitor_id))
         script = None if language == "en-IN" else ENGLISH_LETTERS
 
+    ready = comparison(message, request.language)
+    if ready:
+        # The "uPVC vs aluminium" suggestion: the same answer every time, in the menu's language.
+        language, script = request.language, None
     try:
         # The ready-made small talk is in each language's script, so Tanglish starts from the English and gets translated.
-        reply = small_talk(message, "en-IN" if script else language)
+        reply = ready or small_talk(message, "en-IN" if script else language)
         english = None
         if reply is None:
             history = load_for_model(visitor_id, limit=HISTORY_SENT_TO_MODEL)

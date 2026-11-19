@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Development only: lets a phone on the same Wi-Fi open the dev site by this computer's address.
+  allowedDevOrigins: ["192.168.*.*"],
   experimental: {
     optimizeCss: true,
     serverActions: {

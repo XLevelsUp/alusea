@@ -17,9 +17,12 @@ os.environ.update(
     LEADS_PASSWORD="",
     LEADS_SHEET_URL="",
     LEADS_SHEET_SECRET="",
+    VERCEL="",
     COOKIE_SECURE="",
     LIMIT_HASH_SECRET="",
     DATA_DIR=tempfile.mkdtemp(),
+    DATABASE_URL="",
+    CRON_SECRET="",
 )
 
 import alusea_ai_service.agent as agent  # noqa: E402
