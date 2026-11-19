@@ -27,7 +27,7 @@ from alusea_ai_service.small_talk import comparison, limit_message, small_talk, 
 from alusea_ai_service.meter import Meter, call_meter, metering, summary
 from alusea_ai_service.prompt import LANGUAGES as LANGUAGE_NAMES
 from alusea_ai_service.store import ON_VERCEL, database_ok, delete_messages, delete_old_messages, init_db, last_language, load_for_model, load_leads, load_messages, save_exchange
-from alusea_ai_service.sheet import as_text, resend_unsent_leads
+from alusea_ai_service.sheet import as_text, in_india, resend_unsent_leads
 from alusea_ai_service.translation import ENGLISH_LETTERS, language_in_letters, translate_reply
 from alusea_ai_service.voice import MAX_SPOKEN_CHARACTERS, listen, speak
 
@@ -441,7 +441,7 @@ def require_team(request: Request, credentials: HTTPBasicCredentials = Depends(t
 @app.get("/leads", response_class=HTMLResponse)
 def get_leads(_: None = Depends(require_team)) -> str:
     rows = "".join(
-        f"<tr><td>{escape(lead['created_at'])} UTC</td><td>{escape(lead['name'])}</td>"
+        f"<tr><td>{escape(in_india(lead['created_at']))} IST</td><td>{escape(lead['name'])}</td>"
         f"<td><a href=\"tel:{escape(lead['phone'])}\">{escape(lead['phone'])}</a></td>"
         f"<td>{escape(lead['note'])}</td><td>{escape(LANGUAGE_NAMES.get(lead['language'], lead['language'] or ''))}</td></tr>"
         for lead in load_leads()
@@ -459,10 +459,10 @@ th,td{{border-bottom:1px solid #d9dee3;padding:8px;text-align:left;vertical-alig
 def get_leads_spreadsheet(_: None = Depends(require_team)) -> Response:
     sheet = io.StringIO()
     writer = csv.writer(sheet)
-    writer.writerow(["When (UTC)", "Name", "Phone", "What they want", "Language"])
+    writer.writerow(["When (IST)", "Name", "Phone", "What they want", "Language"])
     for lead in load_leads():
         language = LANGUAGE_NAMES.get(lead["language"], lead["language"] or "")
-        writer.writerow([as_text(value) for value in (lead["created_at"], lead["name"], lead["phone"], lead["note"], language)])
+        writer.writerow([as_text(value) for value in (in_india(lead["created_at"]), lead["name"], lead["phone"], lead["note"], language)])
     # The mark at the start lets Excel read Tamil and other scripts correctly.
     return Response(
         "﻿" + sheet.getvalue(),

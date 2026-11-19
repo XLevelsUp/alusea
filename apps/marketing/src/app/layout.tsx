@@ -200,7 +200,9 @@ export default function RootLayout({
   const clarityEnabled = !!clarityProjectId && clarityProjectId !== "your_clarity_project_id";
 
   return (
-    <html lang="en">
+    // Browser extensions (such as rtrvr.ai) add their own attributes to <html> before React loads. This ignores
+    // differences on this one tag only; mismatches anywhere else on the page are still reported.
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Structured data */}
         <script

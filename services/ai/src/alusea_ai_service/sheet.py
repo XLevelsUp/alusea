@@ -1,7 +1,7 @@
 import os
 import re
 import threading
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import httpx
 from dotenv import load_dotenv
@@ -14,6 +14,8 @@ load_dotenv()
 # Google Apps Script answers through a redirect and can be slow to start, so this runs in the background.
 SHEET_TIMEOUT_SECONDS = 20
 # A cell starting with one of these, even after spaces or control characters, could run as a formula in a spreadsheet.
+# Leads are shown in Indian time, which the sales team works in. The database keeps UTC.
+INDIA = timezone(timedelta(hours=5, minutes=30))
 RISKY_START = re.compile(r"^[\s\x00-\x1f]*[=+\-@]|^[\t\r]")
 
 
@@ -21,6 +23,15 @@ def as_text(value: object) -> str:
     """Keep a value as plain text in a spreadsheet, so it can never run as a formula."""
     text = str(value)
     return f"'{text}" if RISKY_START.match(text) else text
+
+
+def in_india(utc_text: str) -> str:
+    """Turn a saved UTC time such as "2026-11-19 10:42:00" into Indian time, "2026-11-19 16:12"."""
+    try:
+        moment = datetime.strptime(utc_text[:19], "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+    except ValueError:
+        return utc_text
+    return moment.astimezone(INDIA).strftime("%Y-%m-%d %H:%M")
 
 
 def sheet_settings() -> tuple[str, str] | None:
@@ -33,7 +44,7 @@ def send_lead(lead_id: int, uid: str, name: str, phone: str, note: str, language
     """Copy a new lead to the team's Google Sheet, if one is set up. The lead is already saved, so a failure loses nothing."""
     if not sheet_settings():
         return
-    when = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    when = datetime.now(INDIA).strftime("%Y-%m-%d %H:%M")
     threading.Thread(target=post_lead, args=(lead_id, uid, when, name, phone, note, language), daemon=True).start()
 
 
@@ -42,7 +53,7 @@ def resend_unsent_leads() -> None:
     if not sheet_settings():
         return
     for lead in unsent_leads():
-        post_lead(lead["id"], lead["uid"] or f"lead-{lead['id']}", lead["created_at"], lead["name"], lead["phone"], lead["note"], lead["language"])
+        post_lead(lead["id"], lead["uid"] or f"lead-{lead['id']}", in_india(lead["created_at"]), lead["name"], lead["phone"], lead["note"], lead["language"])
 
 
 def post_lead(lead_id: int, uid: str, when: str, name: str, phone: str, note: str, language: str) -> None:

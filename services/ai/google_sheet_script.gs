@@ -2,7 +2,7 @@
 // It adds each new Sara lead as a row on the first sheet. Requests without the secret code are ignored.
 // Set the code under Project Settings -> Script properties, with the property name SECRET.
 
-const HEADERS = ["When (UTC)", "Name", "Phone", "What they want", "Language", "Lead ID"];
+const HEADERS = ["When (IST)", "Name", "Phone", "What they want", "Language", "Lead ID"];
 // The column with each lead's unique id, used to update a lead the sheet already has.
 const ID_COLUMN = 6;
 

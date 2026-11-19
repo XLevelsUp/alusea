@@ -156,3 +156,10 @@ console.log(JSON.stringify({ results, rows }));
     assert len(outcome["rows"]) == 3
     assert outcome["rows"][1][1] == "Kokki Kumar"
     assert outcome["rows"][2][1] == "'=Ravi"
+
+
+def test_lead_times_are_shown_in_indian_time():
+    from alusea_ai_service.sheet import in_india
+    assert in_india("2026-11-19 10:42:00") == "2026-11-19 16:12"
+    assert in_india("2026-11-19 20:00:00") == "2026-11-20 01:30"  # The date moves on after 6:30 pm UTC.
+    assert in_india("not a time") == "not a time"

@@ -103,7 +103,10 @@ def init_db() -> None:
 def create_postgres_tables(db: Database) -> None:
     # Several copies of Sara can start at once, so one makes the tables while the others wait.
     db.run("SELECT pg_advisory_xact_lock(hashtext('sara-tables'))")
-    db.run(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}")
+    # On the live site the schema is made once by hand and owned by Sara's limited login, which may not create
+    # schemas. Postgres checks that permission even with IF NOT EXISTS, so the schema is only created when missing.
+    if not db.run("SELECT 1 FROM pg_namespace WHERE nspname = ?", (SCHEMA,)).fetchone():
+        db.run(f"CREATE SCHEMA {SCHEMA}")
     db.run(
         """
         CREATE TABLE IF NOT EXISTS {s}messages (

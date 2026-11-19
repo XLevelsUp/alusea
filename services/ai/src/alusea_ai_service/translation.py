@@ -24,12 +24,57 @@ MAX_CHECK_CHARACTERS = 1000
 MIN_WORDS_TO_CHANGE_LANGUAGE = 4
 # Sizes like "8ft" or "6 x 10 ft" belong to no language, and they make the check read English as Telugu.
 MEASUREMENT = re.compile(r"\d+(\.\d+)?\s*(sq\.?\s*(ft|feet)|sqft|ft|feet|foot|inch(es)?|in|mm|cm|m|x|×|by)?\b|\b(ft|feet|sq|sqft|x|×)\b", re.IGNORECASE)
-# Common Tanglish words that the other languages don't use the same way.
-TAMIL_WORDS = {
-    "ku", "la", "venum", "venu", "venuu", "enna", "evlo", "evvlo", "iruku", "irukku", "irukum", "irukkum", "erukanu",
-    "paakanu", "paakka", "paaka", "panna", "pannu", "pannunga", "pannuviyaa", "enga", "unga", "enaku", "enakku", "seri",
-    "aagum", "vaanga", "eppadi", "epdi", "kammi",
+# Place and brand names belong to no language either: Sarvam read "RS Puram showroom address" as Tamil.
+NAMES = re.compile(
+    r"\b(alusea|sara|coimbatore|kovai|rs\s*puram|sundarapuram|gandhipuram|peelamedu|saibaba\s*colony|singanallur|"
+    r"vadavalli|ganapathy|ramanathapuram|saravanampatti|pollachi|tiruppur|erode|salem|madurai|trichy|chennai|"
+    r"bangalore|bengaluru|mysore|mysuru|hyderabad|kochi|cochin|palakkad|thrissur|kerala|tamil\s*nadu|karnataka)\b",
+    re.IGNORECASE,
+)
+# Common words each language uses when typed in English letters (Tanglish, Manglish, Tenglish, Kanglish). A word on
+# one list is never on another, and words the languages share, such as "peru", "illa", "ithu" and "eppo", are left
+# out, so one word can't pull a chat into the wrong language. The test checks the lists never overlap.
+ROMAN_WORDS = {
+    "ta-IN": {
+        "ku", "la", "venum", "venu", "venuu", "enna", "evlo", "evvlo", "iruku", "irukku", "irukum", "irukkum", "erukanu",
+        "paakanu", "paakka", "paaka", "panna", "pannu", "pannunga", "pannuviyaa", "enga", "unga", "enaku", "enakku",
+        "seri", "aagum", "vaanga", "eppadi", "epdi", "kammi", "naan", "naanga", "ennoda", "enoda", "ungaluku",
+        "ungalukku", "ungaloda", "romba", "rombha", "konjam", "sollunga", "sollu", "solla", "sollreenga", "pesunga",
+        "pesu", "pesraa", "pesringa", "pesureenga", "theriyum", "theriyala", "puriyala", "puriyalai", "vendam",
+        "vendaam", "nandri", "vanakkam", "aama", "aamaa", "idhu", "adhu", "inga", "anga", "apram", "appuram",
+        "kudunga", "kodunga", "paarunga", "vilai", "kathavu", "jannal", "neenga", "nenga", "innaikku", "naalaikku",
+        "veetuku", "veettukku", "veettula", "panreenga", "panringa", "irukkanga", "irukkeenga", "mattum", "thaan",
+    },
+    "ml-IN": {
+        "njan", "njaan", "ente", "enikku", "enikk", "ningal", "ningalude", "ningalkku", "venam", "venda", "undo",
+        "alle", "aano", "aanu", "evide", "enthu", "enthanu", "engane", "ippol", "kollam", "nokkam", "parayu",
+        "paranju", "cheyyam", "cheyyan", "sheri", "illallo", "kittum", "vila", "vathil", "vaathil", "janala",
+        "veettil", "tharumo", "kurachu", "valare", "nannayi", "thaangal", "thaangalude", "kodukkam",
+        "ariyilla", "manassilayilla", "vilikkam", "vilikku",
+    },
+    "te-IN": {
+        "nenu", "naaku", "naku", "meeru", "meeku", "kavali", "kaavali", "kavalanu", "undi", "ledu", "ledhu", "enti",
+        "emiti", "cheppandi", "cheyandi", "chesthara", "ivvandi", "dhara", "ekkada", "ippudu", "bagundi", "manchidi",
+        "thalupu", "thalupulu", "kitiki", "kitikilu", "intlo", "intiki", "memu", "andi", "garu", "avunu", "kaadu",
+        "chudandi", "telusu", "teliyadu", "cheyyandi", "mee",
+    },
+    "kn-IN": {
+        "naanu", "nanage", "nange", "neevu", "nimma", "nimage", "beku", "bekagide", "beda", "ide", "yenu", "hege",
+        "hegide", "yaavdu", "yavudu", "bagilu", "kitaki", "mane", "maneya", "manege", "maadi", "heli", "helri", "ondu",
+        "eshtu", "estu", "chennagide", "banni", "houdu", "illri", "swalpa", "svalpa", "gottilla", "artha",
+    },
 }
+
+
+def language_from_words(message: str) -> str | None:
+    """The language whose everyday words the message uses most, or None if there are none or it's a tie."""
+    words = re.findall(r"[a-z]+", message.lower())
+    hits = {language: sum(word in listed for word in words) for language, listed in ROMAN_WORDS.items()}
+    best = max(hits.values())
+    winners = [language for language, count in hits.items() if count == best]
+    return winners[0] if best and len(winners) == 1 else None
+
+
 # The whole reply in English letters, for customers who type that way.
 ENGLISH_LETTERS = "roman"
 # Sarvam accepts up to 1,000 characters per request.
@@ -115,18 +160,31 @@ def translate_reply(reply: str, language: str, script: str | None = None) -> str
 
 
 def language_in_letters(message: str, menu: str, earlier: str | None = None) -> str:
-    """Find the language of a message typed in English letters, so Tanglish gets Tanglish back. A short message stays in the chat's language."""
-    found = checked_language(message, menu)
-    if earlier and earlier != "en-IN" and len(message.split()) < MIN_WORDS_TO_CHANGE_LANGUAGE:
-        return earlier
-    return found
+    """Find the language of a message typed in English letters, so Tanglish gets Tanglish back.
+
+    A short message, such as a name, a phone number or "ok", stays in the chat's language, or the menu's at the start.
+    Sarvam guesses wildly on one or two words: it once read the name "Logesh" as Malayalam and switched the chat."""
+    found = language_from_words(message)
+    if found:
+        return menu if menu != "en-IN" else found
+    # Sizes and names don't count: "8 x 10 ft sliding door price" leaves three words, too few for Sarvam to judge.
+    if len(re.findall(r"[^\W\d_]+", language_words(message))) < MIN_WORDS_TO_CHANGE_LANGUAGE:
+        return earlier or menu
+    return checked_language(message, menu)
+
+
+def language_words(message: str) -> str:
+    """The message without sizes and place or brand names, which belong to no language."""
+    return " ".join(NAMES.sub(" ", MEASUREMENT.sub(" ", message)).split())
 
 
 def checked_language(message: str, menu: str) -> str:
-    """Tamil words decide straight away, because Sarvam's check reads Tanglish like "kitchen ku paakanu" as Malayalam. If unsure, it's English."""
-    if set(re.findall(r"[a-z]+", message.lower())) & TAMIL_WORDS:
-        return menu if menu != "en-IN" else "ta-IN"
-    words = " ".join(MEASUREMENT.sub(" ", message).split())
+    """Everyday words decide straight away, because Sarvam's check reads Tanglish like "kitchen ku paakanu" as Malayalam.
+    A chosen menu language still wins over another Indian language. If unsure, it's English."""
+    found = language_from_words(message)
+    if found:
+        return menu if menu != "en-IN" else found
+    words = language_words(message)
     if not re.search(r"[^\W\d_]", words):
         return "en-IN"
     try:

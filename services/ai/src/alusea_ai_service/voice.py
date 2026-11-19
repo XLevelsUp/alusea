@@ -48,7 +48,7 @@ MAX_VOICE_CACHE_BYTES = int(os.getenv("MAX_VOICE_CACHE_MB", "500")) * 1_000_000
 
 # The only file that knows the voice provider. Sara sounds the same in every language.
 VOICE_MODEL = "bulbul:v3"
-VOICE_SPEAKER = "kavitha"
+VOICE_SPEAKER = "ritu"
 
 
 def quietest_point(samples: array, start: int, end: int, window: int) -> int:

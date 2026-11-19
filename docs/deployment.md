@@ -56,11 +56,34 @@ Create a **third Vercel project** from this repo:
   - `GROQ_API_KEY`, `GROQ_MODEL`, `ALUSEA_SUPABASE_URL`, `ALUSEA_ANON_KEY`,
     `SARVAM_API_KEY`, `LEADS_PASSWORD`, `LEADS_SHEET_URL`, `LEADS_SHEET_SECRET`
   - `DATABASE_URL`: Supabase → **Connect** → **Transaction pooler** (port
-    6543) connection string, with the database password filled in.
+    6543) connection string, logging in as Sara's own limited user (below),
+    not `postgres`.
   - `LIMIT_HASH_SECRET`: a long random value. Required with `DATABASE_URL`.
   - `CRON_SECRET`: a long random value. Vercel sends it to `/cron/daily`.
   - `COOKIE_SECURE=true`
   - Don't set `OPENROUTER_API_KEY` or `EXTRA_FRAME_ORIGINS` in production.
+
+**Sara's own database login (do this once, before the first deploy).** The
+`postgres` login from the Connect page can read and change every table,
+including employees' Aadhaar numbers, payroll and invoices. Sara only needs her
+own `sara` schema, so give her a login that can reach nothing else. In
+Supabase → **SQL Editor**, run once, with a long random password:
+
+```sql
+CREATE ROLE sara_service LOGIN PASSWORD 'a-long-random-password';
+CREATE SCHEMA IF NOT EXISTS sara AUTHORIZATION sara_service;
+```
+
+Sara then creates her three tables (`sara.messages`, `sara.limit_counts`,
+`sara.leads`) in that schema on her first start; there's no migration file for
+them. Build `DATABASE_URL` from the Transaction pooler string, replacing the
+user with `sara_service.<project-ref>` and the password with the one above.
+She still reads products through the public API with `ALUSEA_ANON_KEY`.
+
+To read Sara's data as a developer: Supabase → **Table Editor**, schema
+dropdown → `sara`, or query `sara.messages` in the SQL Editor. Chats are kept
+for 90 days; leads are kept until deleted. The `sara` schema isn't exposed to
+the public API, so the website's anon key can't read it.
 
 What's different on Vercel:
 

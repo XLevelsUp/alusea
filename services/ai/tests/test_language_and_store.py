@@ -52,7 +52,7 @@ def test_a_failed_check_means_english(monkeypatch):
         raise httpx.ConnectError("down")
 
     monkeypatch.setattr(httpx, "post", down)
-    assert translation.language_in_letters("nanage ondu bagilu beku", "en-IN") == "en-IN"
+    assert translation.language_in_letters("sundara baagilu bekaagittu nodi", "en-IN") == "en-IN"  # No listed words, so Sarvam would decide.
 
 
 def test_the_name_is_written_in_each_script():
@@ -143,3 +143,65 @@ def test_env_example_has_no_secrets():
             name, value = line.split("=", 1)
             if name.endswith(("KEY", "SECRET", "PASSWORD", "URL")):
                 assert not value.strip(), name
+
+
+def test_a_name_or_number_never_switches_the_language(monkeypatch):
+    """Sarvam once read the name "Logesh" as Malayalam, and the chat switched mid-callback."""
+    calls = []
+    monkeypatch.setattr(translation.httpx, "post", lambda *args, **kwargs: calls.append(1))
+    assert translation.language_in_letters("Logesh", "en-IN", "en-IN") == "en-IN"
+    assert translation.language_in_letters("7397224343", "en-IN", "en-IN") == "en-IN"
+    assert translation.language_in_letters("Logesh Kumar", "en-IN") == "en-IN"  # The first message follows the menu.
+    assert translation.language_in_letters("Logesh", "ta-IN", "ta-IN") == "ta-IN"
+    assert calls == []  # Short messages aren't sent to the language check at all.
+
+
+def test_a_short_tanglish_message_is_still_tamil(monkeypatch):
+    monkeypatch.setattr(translation.httpx, "post", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("no check")))
+    assert translation.language_in_letters("door venum", "en-IN", "en-IN") == "ta-IN"
+
+
+def test_short_tanglish_about_a_name_is_tamil(monkeypatch):
+    """"naan logesh" was answered in English, because its words weren't on the Tanglish list."""
+    monkeypatch.setattr(translation.httpx, "post", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("no check")))
+    assert translation.language_in_letters("naan logesh", "en-IN", "en-IN") == "ta-IN"
+    assert translation.language_in_letters("ennoda peru logesh", "en-IN", "en-IN") == "ta-IN"
+    assert translation.language_in_letters("Logesh", "en-IN", "en-IN") == "en-IN"
+
+
+def test_the_ai_knows_which_language_the_customer_reads():
+    from alusea_ai_service.prompt import language_rule
+    assert "every reply reaches them in Tamil" in language_rule("ta-IN")
+    assert "reaches them" not in language_rule("en-IN")
+
+
+def test_the_word_lists_never_share_a_word():
+    lists = list(translation.ROMAN_WORDS.values())
+    for index, words in enumerate(lists):
+        for other in lists[index + 1:]:
+            assert not words & other, words & other
+
+
+def no_language_check(monkeypatch):
+    monkeypatch.setattr(translation.httpx, "post", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("no check")))
+
+
+def test_everyday_words_in_english_letters_find_each_language(monkeypatch):
+    no_language_check(monkeypatch)
+    assert translation.language_in_letters("enikku oru vathil venam", "en-IN") == "ml-IN"
+    assert translation.language_in_letters("njan logesh", "en-IN", "en-IN") == "ml-IN"
+    assert translation.language_in_letters("naaku thalupu kavali", "en-IN") == "te-IN"
+    assert translation.language_in_letters("nenu logesh", "en-IN", "en-IN") == "te-IN"
+    assert translation.language_in_letters("nanage bagilu beku", "en-IN") == "kn-IN"
+    assert translation.language_in_letters("naanu logesh", "en-IN", "en-IN") == "kn-IN"
+    assert translation.language_in_letters("enakku kathavu venum", "en-IN") == "ta-IN"
+
+
+def test_the_chosen_menu_language_still_wins(monkeypatch):
+    no_language_check(monkeypatch)
+    assert translation.language_in_letters("nanage bagilu beku", "te-IN") == "te-IN"
+
+
+def test_a_tie_between_languages_is_left_to_the_chat_language(monkeypatch):
+    no_language_check(monkeypatch)
+    assert translation.language_in_letters("naan nenu", "en-IN", "en-IN") == "en-IN"
