@@ -1,7 +1,9 @@
 import os
 import sqlite3
 import threading
+import time
 import uuid
+import weakref
 from collections.abc import Iterator
 from contextlib import closing, contextmanager
 from datetime import datetime, timedelta, timezone
@@ -21,9 +23,13 @@ SCHEMA = "ai"
 # A copy to the Google Sheet is tried again for this long, then left to the leads page.
 SHEET_RETRY_DAYS = 7
 SHEET_RETRY_AFTER_MINUTES = 2
+# Supabase can be far away (Sydney), so every trip to it counts. A connection used this recently is trusted without
+# the extra trip that checks it's still alive.
+RECHECK_AFTER_SECONDS = 20
 
 pool = None
 pool_lock = threading.Lock()
+last_used = weakref.WeakKeyDictionary()
 
 
 class Database:
@@ -46,31 +52,47 @@ class Database:
 
 
 def postgres_pool():
-    """Connections are kept open between requests. Prepared statements are off, as the transaction pooler can't keep them."""
+    """Connections are kept open between requests. Prepared statements are off, as the transaction pooler can't keep them.
+
+    Each statement is saved on its own (autocommit), so a single query is one trip to the database instead of three
+    (BEGIN, the query, COMMIT). Work that must happen all together asks for a transaction."""
     global pool
     with pool_lock:
         if pool is None:
             from psycopg.rows import dict_row
             from psycopg_pool import ConnectionPool
 
+            def check_if_idle(connection) -> None:
+                if time.monotonic() - last_used.get(connection, 0) > RECHECK_AFTER_SECONDS:
+                    ConnectionPool.check_connection(connection)
+
+            def remember_use(connection) -> None:
+                last_used[connection] = time.monotonic()
+
             pool = ConnectionPool(
                 DATABASE_URL,
                 min_size=1,
                 max_size=5,
                 max_idle=60,
-                kwargs={"prepare_threshold": None, "row_factory": dict_row, "connect_timeout": 10},
-                check=ConnectionPool.check_connection,
+                kwargs={"prepare_threshold": None, "row_factory": dict_row, "connect_timeout": 10, "autocommit": True},
+                check=check_if_idle,
+                reset=remember_use,
                 open=True,
             )
     return pool
 
 
 @contextmanager
-def database() -> Iterator[Database]:
-    """Changes are saved together at the end, or all undone if anything fails."""
+def database(transaction: bool = False) -> Iterator[Database]:
+    """A connection to Sara's database. With transaction=True, its changes are saved together at the end, or all
+    undone if anything fails. SQLite always works that way."""
     if DATABASE_URL:
         with postgres_pool().connection() as connection:
-            yield Database(connection, postgres=True)
+            if transaction:
+                with connection.transaction():
+                    yield Database(connection, postgres=True)
+            else:
+                yield Database(connection, postgres=True)
     else:
         with closing(sqlite3.connect(DB_PATH)) as connection, connection:
             connection.row_factory = sqlite3.Row
@@ -93,7 +115,7 @@ def database_ok() -> None:
 
 def init_db() -> None:
     """Create the tables the first time the service runs."""
-    with database() as db:
+    with database(transaction=True) as db:
         if db.postgres:
             create_postgres_tables(db)
         else:
@@ -219,6 +241,8 @@ def limit_reached(counters: list[tuple[str, str, str, str, int]]) -> bool:
 
 def take_allowance(counters: list[tuple[str, str, str, str, int]], today: str) -> bool:
     """Add one to every counter, or to none of them if any has reached its limit. Earlier days are cleared."""
+    if DATABASE_URL:
+        return take_postgres_allowance(counters, today)
     with database() as db:
         # Only one check at a time, so two requests can't both take the last use.
         if db.postgres:
@@ -239,9 +263,41 @@ def take_allowance(counters: list[tuple[str, str, str, str, int]], today: str) -
     return True
 
 
+def take_postgres_allowance(counters: list[tuple[str, str, str, str, int]], today: str) -> bool:
+    """The same as take_allowance, sent as one request, so it's a single trip to the database instead of one per step.
+
+    The values are filled in by psycopg (ClientCursor), which quotes them safely, so several statements can go together.
+    The lock lets only one check run at a time, so two requests can't both take the last use."""
+    from psycopg import ClientCursor
+
+    rows = ", ".join(["(%s, %s, %s, %s, %s::integer)"] * len(counters))
+    query = f"""
+        BEGIN;
+        SELECT pg_advisory_xact_lock(hashtext('sara-limits'));
+        DELETE FROM {SCHEMA}.limit_counts WHERE period < %s;
+        WITH wanted (period, kind, scope, key, most) AS (VALUES {rows})
+        INSERT INTO {SCHEMA}.limit_counts AS counter (period, kind, scope, key, count)
+        SELECT period, kind, scope, key, 1 FROM wanted
+        WHERE NOT EXISTS (
+            SELECT 1 FROM {SCHEMA}.limit_counts saved JOIN wanted USING (period, kind, scope, key)
+            WHERE saved.count >= wanted.most
+        )
+        ON CONFLICT (period, kind, scope, key) DO UPDATE SET count = counter.count + 1
+        RETURNING 1;
+        COMMIT;
+    """
+    values = [today, *(value for counter in counters for value in counter)]
+    with postgres_pool().connection() as connection, ClientCursor(connection) as cursor:
+        cursor.execute(query, values)
+        # The results come back in order: BEGIN, the lock, the clean-up, then the counters that went up.
+        for _ in range(3):
+            cursor.nextset()
+        return cursor.rowcount > 0
+
+
 def return_allowance(counters: list[tuple[str, str, str, str, int]]) -> None:
     """Take one back from every counter, after a request that failed."""
-    with database() as db:
+    with database(transaction=True) as db:
         for counter in counters:
             db.run(
                 """
@@ -349,10 +405,12 @@ def save_exchange(
     question_english: str | None = None,
     language: str | None = None,
 ) -> None:
-    """Save a question and its answer together, so one is never saved without the other."""
+    """Save a question and its answer in one statement, so one is never saved without the other."""
     with database() as db:
-        for row in [(visitor_id, "user", question, question_english, language), (visitor_id, "assistant", answer, english, None)]:
-            db.run("INSERT INTO {s}messages (visitor_id, role, content, english, language) VALUES (?, ?, ?, ?, ?)", row)
+        db.run(
+            "INSERT INTO {s}messages (visitor_id, role, content, english, language) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)",
+            (visitor_id, "user", question, question_english, language, visitor_id, "assistant", answer, english, None),
+        )
 
 
 def delete_messages(visitor_id: str) -> None:

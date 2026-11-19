@@ -21,11 +21,21 @@ BEGIN
 END
 $$;
 
+-- On Supabase, "postgres" isn't a superuser, so it may only create things for ai_service while it's allowed to act
+-- as ai_service. It keeps that permission, so the team can still manage Sara's tables from the dashboard (delete a
+-- test lead, add a column in a later migration). This gives "postgres" nothing new: it could already grant itself
+-- this, and ai_service still can't reach anything outside the "ai" schema.
+GRANT ai_service TO CURRENT_USER WITH INHERIT TRUE, SET TRUE;
+
 -- ============================================================
 -- SCHEMA
 -- ============================================================
 CREATE SCHEMA IF NOT EXISTS ai AUTHORIZATION ai_service;
-ALTER SCHEMA ai OWNER TO ai_service;
+
+-- Everything below is created as ai_service itself, so Sara owns her schema and tables from the start and nothing
+-- has to change owner afterwards.
+SET ROLE ai_service;
+
 REVOKE ALL ON SCHEMA ai FROM PUBLIC, anon, authenticated;
 
 -- ============================================================
@@ -69,7 +79,5 @@ CREATE TABLE IF NOT EXISTS ai.leads (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Sara owns her tables, so her startup check and the daily cleanup work under her own login.
-ALTER TABLE ai.messages OWNER TO ai_service;
-ALTER TABLE ai.limit_counts OWNER TO ai_service;
-ALTER TABLE ai.leads OWNER TO ai_service;
+-- Back to the login running this file.
+RESET ROLE;
