@@ -20,7 +20,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel, Field
 
 from alusea_ai_service.agent import generate_reply, reply_language
-from alusea_ai_service.call import call_turn, fillers, not_heard, start_call
+from alusea_ai_service.call import call_turn, is_noise, not_heard, start_call
 from alusea_ai_service.limits import allow, give_back, is_callback_message, reached
 from alusea_ai_service.safe_log import clean_error
 from alusea_ai_service.small_talk import comparison, limit_message, small_talk, sorry_message
@@ -386,6 +386,11 @@ async def answer_speech(
     message, spoken_language = heard
     if not message:
         return {"heard": "", "content": "", "products": [], "audio": None}
+    # Noise written down as dots or a lone letter gets no answer, so Sara doesn't talk over the customer.
+    if is_noise(message):
+        meter.add(noise_turns=1)
+        print("A call turn was only noise, so Sara kept listening.")
+        return {"heard": "", "content": "", "products": [], "audio": None}
     meter.add(turns=1)
     reply = await run_in_threadpool(call_turn, visitor_id, message, spoken_language, True, None, still_wanted)
     return {"heard": message, "language": spoken_language, **reply}
@@ -398,12 +403,6 @@ def newest_turn_check(visitor_id: str) -> Callable[[], bool]:
     while len(newest_turns) > MAX_TRACKED_VISITORS:
         newest_turns.pop(next(iter(newest_turns)))
     return lambda: newest_turns.get(visitor_id) == number
-
-
-@app.get("/call/fillers")
-def get_call_fillers(language: Language) -> dict:
-    """Short "one moment" phrases in Sara's voice, for the page to play while a slow reply is on its way."""
-    return {"audio": fillers(language)}
 
 
 @app.post("/call/retry")

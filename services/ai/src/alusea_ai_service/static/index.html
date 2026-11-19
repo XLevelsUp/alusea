@@ -658,6 +658,7 @@
         callWaiting: "Waiting for you…",
         callHearing: "Hearing you…",
         callThinking: "Thinking…",
+        callFillers: ["Hmm, let me check…", "One moment, please…", "Sure, just a second…"],
         callSpeaking: "Sara is speaking…",
         callLimit: "Voice calls are busy today. Please call us on +91 96260 22722 or message us on WhatsApp.",
         callTimeUp: "Your 5-minute call has ended. You can call again, or reach us on +91 96260 22722.",
@@ -705,6 +706,7 @@
         callWaiting: "உங்களுக்காகக் காத்திருக்கேன்…",
         callHearing: "நீங்க பேசறது கேக்குது…",
         callThinking: "யோசிக்கிறேன்…",
+        callFillers: ["ம்ம், ஒரு நிமிஷம் பாக்கறேன்…", "கொஞ்சம் இருங்க…", "சரி, இதோ பாக்கறேன்…"],
         callSpeaking: "சாரா பேசுகிறார்…",
         callLimit: "இன்று குரல் அழைப்புகள் நிரம்பிவிட்டன. +91 96260 22722 என்ற எண்ணில் அழைக்கவும் அல்லது WhatsApp-ல் செய்தி அனுப்பவும்.",
         callTimeUp: "உங்கள் 5 நிமிட அழைப்பு முடிந்தது. மீண்டும் அழைக்கலாம், அல்லது +91 96260 22722 என்ற எண்ணில் தொடர்பு கொள்ளலாம்.",
@@ -752,6 +754,7 @@
         callWaiting: "നിങ്ങൾക്കായി കാത്തിരിക്കുന്നു…",
         callHearing: "നിങ്ങൾ പറയുന്നത് കേൾക്കുന്നു…",
         callThinking: "ആലോചിക്കുന്നു…",
+        callFillers: ["ഒരു നിമിഷം, ഞാൻ നോക്കട്ടെ…", "ശരി, ഒന്ന് നോക്കട്ടെ…", "ഒരു സെക്കൻഡ്…"],
         callSpeaking: "സാറാ സംസാരിക്കുന്നു…",
         callLimit: "ഇന്ന് വോയ്സ് കോളുകൾ തിരക്കിലാണ്. +91 96260 22722 എന്ന നമ്പറിൽ വിളിക്കുക, അല്ലെങ്കിൽ WhatsApp-ൽ സന്ദേശം അയയ്ക്കുക.",
         callTimeUp: "നിങ്ങളുടെ 5 മിനിറ്റ് കോൾ അവസാനിച്ചു. വീണ്ടും വിളിക്കാം, അല്ലെങ്കിൽ +91 96260 22722 എന്ന നമ്പറിൽ ബന്ധപ്പെടാം.",
@@ -799,6 +802,7 @@
         callWaiting: "మీ కోసం ఎదురుచూస్తున్నాను…",
         callHearing: "మీరు చెప్పేది వింటున్నాను…",
         callThinking: "ఆలోచిస్తున్నాను…",
+        callFillers: ["ఒక్క నిమిషం, చూస్తాను…", "సరే, ఒక్క క్షణం…", "హ్మ్, చూస్తున్నాను…"],
         callSpeaking: "సారా మాట్లాడుతున్నారు…",
         callLimit: "ఈ రోజు వాయిస్ కాల్స్ బిజీగా ఉన్నాయి. +91 96260 22722 నంబర్‌కు కాల్ చేయండి, లేదా WhatsApp‌లో సందేశం పంపండి.",
         callTimeUp: "మీ 5 నిమిషాల కాల్ ముగిసింది. మళ్లీ కాల్ చేయవచ్చు, లేదా +91 96260 22722 నంబర్‌లో సంప్రదించవచ్చు.",
@@ -846,6 +850,7 @@
         callWaiting: "ನಿಮಗಾಗಿ ಕಾಯ್ತಿದ್ದೀನಿ…",
         callHearing: "ನೀವು ಹೇಳೋದು ಕೇಳ್ತಿದೆ…",
         callThinking: "ಯೋಚಿಸುತ್ತಿದ್ದೇನೆ…",
+        callFillers: ["ಒಂದು ನಿಮಿಷ, ನೋಡ್ತೀನಿ…", "ಸರಿ, ಒಂದು ಕ್ಷಣ…", "ಹ್ಮ್, ನೋಡ್ತಿದ್ದೀನಿ…"],
         callSpeaking: "ಸಾರಾ ಮಾತನಾಡುತ್ತಿದ್ದಾರೆ…",
         callLimit: "ಇಂದು ವಾಯ್ಸ್ ಕರೆಗಳು ಬ್ಯುಸಿಯಾಗಿವೆ. +91 96260 22722 ಗೆ ಕರೆ ಮಾಡಿ, ಅಥವಾ WhatsApp ನಲ್ಲಿ ಸಂದೇಶ ಕಳುಹಿಸಿ.",
         callTimeUp: "ನಿಮ್ಮ 5 ನಿಮಿಷದ ಕರೆ ಮುಗಿದಿದೆ. ಮತ್ತೆ ಕರೆ ಮಾಡಬಹುದು, ಅಥವಾ +91 96260 22722 ಗೆ ಸಂಪರ್ಕಿಸಬಹುದು.",
@@ -864,10 +869,14 @@
     const CALL_LIMIT_MS = 5 * 60 * 1000;
     const SPEECH_SAMPLE_RATE = 16000;
     const MAX_SPEECH_SECONDS = 120;
-    const CALL_SPEECH_CONFIDENCE = 0.75;
+    // A call's mic stays open and hears the whole room, so its voice detection is stricter than the mic button's.
+    const CALL_SPEECH_CONFIDENCE = 0.8;
+    const CALL_SILENCE_CONFIDENCE = 0.35;
+    // Coughs, horns and door bangs are shorter than this, so Sara keeps talking through them.
+    const CALL_MIN_SPEECH_MS = 600;
     // A call waits this long in silence before sending, so a short pause doesn't split one sentence into two paid turns.
     const CALL_PAUSE_MS = 1300;
-    // If a reply isn't back by then, Sara says a short "one moment" phrase.
+    // If a reply isn't back by then, the call screen shows a short "let me check" line. Nothing is spoken.
     const FILLER_DELAY_MS = 1500;
     // The server reads up to this much aloud.
     const MAX_LISTEN_CHARACTERS = 1500;
@@ -924,16 +933,18 @@
     let callLanguage = "en-IN";
     let newestCallerMessage = null;
     let saraSpeaking = false;
-    let callFillers = [];
-    let fillerLanguage = null;
     let lastFiller = -1;
     let fillerTimer = null;
-    const fillerAudio = new Audio();
     let waitingForReply = false;
     let saraInterrupted = false;
 
     function labels() {
       return LABELS[languageSelect.value];
+    }
+
+    // During a call, the call screen follows the language Sara is speaking, which changes if the customer switches.
+    function callLabels() {
+      return (inCall && LABELS[callLanguage]) || labels();
     }
 
     function applyLabels() {
@@ -1009,7 +1020,7 @@
 
     function setCallState(state) {
       callBar.dataset.state = state;
-      callStatus.textContent = labels()[CALL_STATE_LABELS[state]];
+      callStatus.textContent = callLabels()[CALL_STATE_LABELS[state]];
     }
 
     // Sara remembers a visitor by a cookie. Some browsers block it inside the alusea.in panel, so the same id is also
@@ -1350,39 +1361,23 @@
       else setCallState(waitingForReply ? "thinking" : "waiting");
     }
 
-    // The phrases for the call's language, loaded again if the customer switches language.
-    async function loadFillers(language) {
-      if (fillerLanguage === language) return;
-      fillerLanguage = language;
-      try {
-        const response = await saraFetch(`/call/fillers?language=${encodeURIComponent(language)}`);
-        if (response.ok && fillerLanguage === language) callFillers = (await response.json()).audio;
-      } catch {
-        callFillers = [];
-      }
-    }
-
-    // Starts a timer: if this turn's reply is still on its way, Sara says one filler phrase, never the same one twice in a row.
+    // If this turn's reply is slow, the call screen shows a short "let me check" line in the call's language, never the
+    // same one twice in a row. It's only shown, not spoken, so it never talks over the customer or the reply.
     function planFiller(turn) {
       stopFiller();
       fillerTimer = setTimeout(() => {
-        if (!inCall || turn !== callTurn || !waitingForReply || saraSpeaking || callFillers.length === 0) return;
-        let choice = Math.floor(Math.random() * callFillers.length);
-        if (callFillers.length > 1 && choice === lastFiller) choice = (choice + 1) % callFillers.length;
+        if (!inCall || turn !== callTurn || !waitingForReply || saraSpeaking) return;
+        const phrases = callLabels().callFillers;
+        let choice = Math.floor(Math.random() * phrases.length);
+        if (phrases.length > 1 && choice === lastFiller) choice = (choice + 1) % phrases.length;
         lastFiller = choice;
-        fillerAudio.src = `data:audio/wav;base64,${callFillers[choice]}`;
-        fillerAudio.play().catch(() => {});
+        callStatus.textContent = phrases[choice];
       }, FILLER_DELAY_MS);
     }
 
     function stopFiller() {
       clearTimeout(fillerTimer);
       fillerTimer = null;
-      fillerAudio.pause();
-    }
-
-    function fillerPlaying() {
-      return !fillerAudio.paused && !fillerAudio.ended;
     }
 
     function showCallReply(data) {
@@ -1406,16 +1401,7 @@
       callAudio.onended = finishSpeaking;
       callAudio.onerror = finishSpeaking;
       callAudio.src = `data:audio/wav;base64,${data.audio}`;
-      // A filler that's still playing finishes first, so the two never talk over each other.
-      const playReply = () => {
-        if (inCall && saraSpeaking && !saraInterrupted) callAudio.play().catch(finishSpeaking);
-      };
-      // "pause" fires both when the filler ends and when it is stopped.
-      if (fillerPlaying()) {
-        fillerAudio.addEventListener("pause", playReply, { once: true });
-      } else {
-        playReply();
-      }
+      if (inCall && saraSpeaking && !saraInterrupted) callAudio.play().catch(finishSpeaking);
     }
 
     // If the customer starts talking, Sara pauses straight away so it feels like a real call.
@@ -1491,10 +1477,7 @@
         showCallState();
         return;
       }
-      if (data.language) {
-        callLanguage = data.language;
-        loadFillers(callLanguage);
-      }
+      if (data.language) callLanguage = data.language;
       if (data.heard) {
         newestCallerMessage = addMessage("user", data.heard);
         showStarters(false);
@@ -1523,6 +1506,8 @@
       callListener = await createSpeechListener({
         // Stricter than the mic button, because a call's mic stays open and hears the whole room.
         positiveSpeechThreshold: CALL_SPEECH_CONFIDENCE,
+        negativeSpeechThreshold: CALL_SILENCE_CONFIDENCE,
+        minSpeechMs: CALL_MIN_SPEECH_MS,
         redemptionMs: CALL_PAUSE_MS,
         onSpeechStart: () => setCallState("hearing"),
         onSpeechRealStart: pauseSaraForCaller,
@@ -1545,11 +1530,10 @@
       menuButton.disabled = true;
       reportState();
       closeMenu();
-      // Made during the tap, so browsers allow it to play later replies.
+      // Made during the tap, and a silent clip played now, because iPhones only play sound that a tap started.
       callAudio = new Audio();
-      // iPhones only play sound that a tap started, so a silent clip unlocks the filler phrases now.
-      fillerAudio.src = silentClip();
-      fillerAudio.play().catch(() => {});
+      callAudio.src = silentClip();
+      callAudio.play().catch(() => {});
       setCallState("connecting");
       voiceStatus.hidden = false;
       callTimer.textContent = "";
@@ -1569,7 +1553,6 @@
       callEndsAt = Date.now() + CALL_LIMIT_MS;
       updateCallClock();
       callClock = setInterval(updateCallClock, 1000);
-      loadFillers(callLanguage);
       const data = await sendCallRequest("/call/start", {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ language: languageSelect.value }),

@@ -17,6 +17,7 @@ COUNTS = (
     "listen_seconds",
     "listen_requests",
     "empty_listens",
+    "noise_turns",
     "failed_listens",
     "translate_characters",
     "translate_requests",
@@ -65,7 +66,7 @@ def summary(before: dict, after: dict) -> str:
     return (
         f"Call meter: this turn ₹{turn:.2f} | call so far ₹{sum(total.values()):.2f} over {after['turns']} turns"
         f" | listening {after['listen_seconds']:.0f}s in {after['listen_requests']} requests ₹{total['listening']:.2f}"
-        f" ({after['empty_listens']} heard no words, {after['failed_listens']} failed)"
+        f" ({after['empty_listens']} heard no words, {after['noise_turns']} only noise, {after['failed_listens']} failed)"
         f" | translating {after['translate_characters']:,} characters in {after['translate_requests']} requests ₹{total['translating']:.2f}"
         f" | voice {after['voice_characters']:,} characters ₹{total['voice']:.2f} (+{after['cached_voice_characters']:,} from saved audio, free)"
         f" | AI {after['ai_requests']} requests, {after['ai_tokens']:,} tokens"
