@@ -26,6 +26,13 @@ const GLOW_STYLES = `
 }
 `;
 
+// While Sara's page loads, a navy ring turns around her picture and the dots after "Sara is loading" count up.
+const LOADER_STYLES = `
+@keyframes sara-loading-dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+.sara-loading-dots::after { content: ""; animation: sara-loading-dots 1.4s steps(1) infinite; }
+@media (prefers-reduced-motion: reduce) { .sara-loading-dots::after { content: "..."; animation: none; } }
+`;
+
 const LANGUAGES = [
   { code: "en-IN", label: "EN", name: "English" },
   { code: "ta-IN", label: "தமிழ்", name: "Tamil" },
@@ -57,6 +64,8 @@ export default function SaraChat() {
   // Sara reports her language and whether she's on a call; the chips and menu follow her.
   const [language, setLanguage] = useState("en-IN");
   const [onCall, setOnCall] = useState(false);
+  // Sara's page can take a few seconds to start, so a loader covers the panel until it has loaded.
+  const [loaded, setLoaded] = useState(false);
   const frame = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -85,6 +94,7 @@ export default function SaraChat() {
     setExpanded(false);
     setMenuOpen(false);
     setOnCall(false);
+    setLoaded(false);
   }, []);
 
   useEffect(() => {
@@ -262,15 +272,43 @@ export default function SaraChat() {
             />
           </div>
 
-          <iframe
-            ref={frame}
-            src={`${SARA_URL}/?embed=1`}
-            title="Sara, Alusea's AI assistant"
-            allow="microphone; autoplay; clipboard-write"
-            onLoad={() => tellSara("hello")}
-            onFocus={() => setMenuOpen(false)}
-            className="w-full flex-1 border-0 bg-plate-white"
-          />
+          <div className="relative flex flex-1 flex-col">
+            <iframe
+              ref={frame}
+              src={`${SARA_URL}/?embed=1`}
+              title="Sara, Alusea's AI assistant"
+              allow="microphone; autoplay; clipboard-write"
+              onLoad={() => {
+                setLoaded(true);
+                tellSara("hello");
+              }}
+              onFocus={() => setMenuOpen(false)}
+              className="w-full flex-1 border-0 bg-plate-white"
+            />
+            {/* Covers Sara's page until it has loaded, then fades out. It stays in place while fading, so nothing flickers. */}
+            <div
+              role="status"
+              aria-hidden={loaded || undefined}
+              className={`absolute inset-0 flex flex-col items-center justify-center gap-4 bg-plate-white transition-opacity duration-300 ${
+                loaded ? "pointer-events-none opacity-0" : "opacity-100"
+              }`}
+            >
+              <style>{LOADER_STYLES}</style>
+              {/* Bigger in full screen on larger screens, where the small panel's size looks lost. */}
+              <div className={`relative grid size-[84px] place-items-center ${expanded ? "md:size-[132px]" : ""}`}>
+                <span
+                  aria-hidden="true"
+                  className={`absolute inset-0 animate-spin rounded-full border-[3px] border-blueberry/[0.12] border-t-blueberry [animation-duration:0.9s] motion-reduce:animate-none ${
+                    expanded ? "md:border-4" : ""
+                  }`}
+                />
+                <SaraPicture size={64} className={expanded ? "md:size-[104px]" : ""} />
+              </div>
+              <p className={`font-[family-name:var(--font-outfit)] text-sm font-medium text-blueberry ${expanded ? "md:text-lg" : ""}`}>
+                Sara is loading<span aria-hidden="true" className="sara-loading-dots inline-block w-[1.2em] text-left" />
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </>
