@@ -13,6 +13,8 @@ os.environ.update(
     ALUSEA_SUPABASE_URL="https://example.supabase.co",
     ALUSEA_ANON_KEY="test-key",
     SARVAM_API_KEY="test-key",
+    GEMINI_API_KEY="",
+    GEMINI_AI_API_KEY="",
     OPENROUTER_API_KEY="",
     LEADS_PASSWORD="",
     LEADS_SHEET_URL="",

@@ -310,6 +310,26 @@ def ask_model(messages: list[dict], can_use_tools: bool = True):
     )
 
 
+# Sara speaks to the customer as "you". A sentence about "the customer", or "once they give the size, we should
+# continue", is the model planning out loud, which the backup model sometimes writes into its reply.
+PLANNING_NOTE = re.compile(
+    r"\b(?:the (?:customer|user|caller|visitor)\b|(?:once|after|when|until) (?:they|the customer) (?:give|gives|provide|provides|"
+    r"share|shares|tell|tells|confirm|confirms|answer|answers|reply|replies)\b|we (?:should|need to|must) (?:continue|proceed|wait|ask)\b)",
+    re.IGNORECASE,
+)
+SENTENCE = re.compile(r"[^.!?]+(?:[.!?]+|$)\s*")
+
+
+def drop_planning_notes(reply: str) -> str:
+    """Remove sentences the model wrote to itself, keeping the rest. A reply that is all notes is kept as it is."""
+    sentences = SENTENCE.findall(reply)
+    kept = [sentence for sentence in sentences if not PLANNING_NOTE.search(sentence)]
+    if len(kept) == len(sentences) or not kept:
+        return reply
+    print("The model wrote a note to itself, so it was taken out of the reply.")
+    return "".join(kept).strip()
+
+
 def stop_repeating(reply: str) -> str:
     """Cut a reply where the model got stuck repeating itself, back to the last full sentence."""
     stuck = REPEATING_WORDS.search(reply)
@@ -368,7 +388,7 @@ def generate_reply(
 
         if not answer.tool_calls:
             reply = EMOJIS.sub("", (answer.content or "").replace("**", "")).strip()
-            reply = fix_links(stop_repeating(reply))
+            reply = fix_links(drop_planning_notes(stop_repeating(reply)))
             if not reply:
                 if empty_retried:
                     raise RuntimeError("The model returned no text.")

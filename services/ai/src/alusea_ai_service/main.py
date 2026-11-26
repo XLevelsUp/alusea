@@ -2,12 +2,10 @@ import asyncio
 import hmac
 import csv
 import io
-import itertools
 import os
 import secrets
 import time
 import uuid
-from collections.abc import Callable
 from contextlib import asynccontextmanager
 from html import escape
 from pathlib import Path
@@ -20,7 +18,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel, Field
 
 from alusea_ai_service.agent import generate_reply, reply_language
-from alusea_ai_service.call import call_turn, is_noise, not_heard, start_call
+from alusea_ai_service.call import SpokenTurn, call_turn, is_noise, not_heard, start_call
 from alusea_ai_service.limits import allow, give_back, is_callback_message, reached
 from alusea_ai_service.safe_log import clean_error
 from alusea_ai_service.small_talk import comparison, limit_message, small_talk, sorry_message
@@ -33,16 +31,13 @@ from alusea_ai_service.voice import MAX_SPOKEN_CHARACTERS, listen, speak
 
 COOKIE_NAME = "alusea_chat_id"
 COOKIE_MAX_AGE_SECONDS = 90 * 24 * 60 * 60
-HISTORY_SENT_TO_MODEL = 12
+# Enough that sizes, rooms and products given early in a chat are still seen by the AI later on.
+HISTORY_SENT_TO_MODEL = 24
 STATIC_DIR = Path(__file__).parent / "static"
 # The same as the cookie, so nothing is kept after a visitor's chat would have been forgotten anyway.
 CHAT_RETENTION_DAYS = int(os.getenv("CHAT_RETENTION_DAYS", "90"))
 SECONDS_PER_DAY = 24 * 60 * 60
 SHEET_RETRY_SECONDS = 15 * 60
-# The newest spoken turn for each visitor, so an older reply that's overtaken isn't paid to voice.
-MAX_TRACKED_VISITORS = 1000
-newest_turns: dict[str, int] = {}
-turn_numbers = itertools.count(1)
 # Browser protections. The page may only be framed by Alusea's own sites, and only it may use the microphone.
 SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
@@ -359,8 +354,10 @@ async def post_call_speech(
     request: Request,
     response: Response,
     language: Language,
+    continues: bool = False,
     alusea_chat_id: str | None = Cookie(default=None),
 ) -> dict:
+    """continues means this speech starts with the customer's previous, unanswered turn, because they paused and carried on."""
     check_speech_size(request)
     visitor_id = valid_visitor_id(alusea_chat_id) or str(uuid.uuid4())
     require_allowance("call_turn", request, visitor_id)
@@ -371,14 +368,14 @@ async def post_call_speech(
     before = meter.snapshot()
     started = time.perf_counter()
     with metering(meter):
-        reply = await answer_speech(visitor_id, speech, content_type, language, meter, newest_turn_check(visitor_id))
+        reply = await answer_speech(visitor_id, speech, content_type, language, meter, SpokenTurn(visitor_id, continues))
     meter.add(turn_wait=time.perf_counter() - started)
     print(summary(before, meter.snapshot()))
     return reply
 
 
 async def answer_speech(
-    visitor_id: str, speech: bytes, content_type: str, language: str, meter: Meter, still_wanted: Callable[[], bool]
+    visitor_id: str, speech: bytes, content_type: str, language: str, meter: Meter, turn: SpokenTurn
 ) -> dict:
     heard = await run_in_threadpool(listen, speech, content_type, language)
     if heard is None:
@@ -392,17 +389,8 @@ async def answer_speech(
         print("A call turn was only noise, so Sara kept listening.")
         return {"heard": "", "content": "", "products": [], "audio": None}
     meter.add(turns=1)
-    reply = await run_in_threadpool(call_turn, visitor_id, message, spoken_language, True, None, still_wanted)
+    reply = await run_in_threadpool(call_turn, visitor_id, message, spoken_language, True, None, turn=turn)
     return {"heard": message, "language": spoken_language, **reply}
-
-
-def newest_turn_check(visitor_id: str) -> Callable[[], bool]:
-    """Number this spoken turn, and return a check that says whether it's still the visitor's newest one."""
-    number = next(turn_numbers)
-    newest_turns[visitor_id] = number
-    while len(newest_turns) > MAX_TRACKED_VISITORS:
-        newest_turns.pop(next(iter(newest_turns)))
-    return lambda: newest_turns.get(visitor_id) == number
 
 
 @app.post("/call/retry")

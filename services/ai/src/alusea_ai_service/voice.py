@@ -46,9 +46,20 @@ MAX_SPOKEN_CHARACTERS = 1500
 # When the saved audio passes this size, the clips not played for longest are deleted.
 MAX_VOICE_CACHE_BYTES = int(os.getenv("MAX_VOICE_CACHE_MB", "500")) * 1_000_000
 
-# The only file that knows the voice provider. Sara sounds the same in every language.
+# The only file that knows the voice providers. Sara speaks with Gemini, and Sarvam's ritu takes over when Gemini has
+# no key, fails or hits its limit, so a call never goes silent. Each sounds the same in every language.
 VOICE_MODEL = "bulbul:v3"
 VOICE_SPEAKER = "ritu"
+GEMINI_VOICE_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+GEMINI_VOICE_MODEL = os.getenv("GEMINI_TTS_MODEL", "gemini-3.1-flash-tts-preview")
+GEMINI_VOICE = os.getenv("GEMINI_TTS_VOICE", "Kore")
+# Gemini reads this as how to speak, not as words to say.
+GEMINI_VOICE_STYLE = "Say this warmly and clearly, like a friendly showroom advisor in India:"
+GEMINI_TIMEOUT_SECONDS = 15
+GEMINI_SAMPLE_RATE = 24000
+# After Gemini's limit is hit, Sarvam speaks for a while, so each turn doesn't first wait for another refusal.
+GEMINI_PAUSE_SECONDS = 60
+gemini_paused_until = 0.0
 
 
 def quietest_point(samples: array, start: int, end: int, window: int) -> int:
@@ -175,16 +186,83 @@ def write_part(audio: bytes, content_type: str, language_code: str, terms_langua
     return None
 
 
+def gemini_key() -> str:
+    # GEMINI_AI_API_KEY is the name used in earlier local .env files.
+    return os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_AI_API_KEY") or ""
+
+
+def as_wav(pcm: bytes, rate: int) -> bytes:
+    out = io.BytesIO()
+    with wave.open(out, "wb") as writer:
+        writer.setnchannels(1)
+        writer.setsampwidth(2)
+        writer.setframerate(rate)
+        writer.writeframes(pcm)
+    return out.getvalue()
+
+
 def speak(text: str, language: str) -> str | None:
     """Return the spoken text as base64 WAV audio, or None so the call can carry on as text."""
     text = text[:MAX_SPOKEN_CHARACTERS]
-    name = hashlib.sha256(f"{VOICE_MODEL}|{VOICE_SPEAKER}|{language}|{text}".encode()).hexdigest()
+    audio = None
+    if gemini_key() and time.time() >= gemini_paused_until:
+        audio = saved_or_new(f"gemini|{GEMINI_VOICE_MODEL}|{GEMINI_VOICE}", language, text, speak_with_gemini)
+    return audio or saved_or_new(f"{VOICE_MODEL}|{VOICE_SPEAKER}", language, text, speak_with_sarvam)
+
+
+def saved_or_new(voice: str, language: str, text: str, make) -> str | None:
+    """Saved audio means a repeated sentence is only paid for once. Each voice keeps its own copies."""
+    name = hashlib.sha256(f"{voice}|{language}|{text}".encode()).hexdigest()
     saved = CACHE_DIR / f"{name}.txt"
     if saved.exists():
         count(cached_voice_characters=len(text))
         saved.touch()
         return saved.read_text(encoding="ascii")
+    audio = make(text, language)
+    if audio is None:
+        return None
+    CACHE_DIR.mkdir(exist_ok=True)
+    saved.write_text(audio, encoding="ascii")
+    trim_voice_cache()
+    return audio
 
+
+def speak_with_gemini(text: str, language: str) -> str | None:
+    """Gemini finds the language from the text, so it needs no language code."""
+    global gemini_paused_until
+    started = time.perf_counter()
+    try:
+        response = httpx.post(
+            GEMINI_VOICE_URL.format(model=GEMINI_VOICE_MODEL),
+            headers={"x-goog-api-key": gemini_key()},
+            json={
+                "contents": [{"parts": [{"text": f"{GEMINI_VOICE_STYLE}\n{text}"}]}],
+                "generationConfig": {
+                    "responseModalities": ["AUDIO"],
+                    "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": GEMINI_VOICE}}},
+                },
+            },
+            timeout=GEMINI_TIMEOUT_SECONDS,
+        )
+        count(voice_wait=time.perf_counter() - started)
+        if response.status_code == 429:
+            gemini_paused_until = time.time() + GEMINI_PAUSE_SECONDS
+            print(f"Gemini's voice limit was reached, so Sarvam speaks for the next {GEMINI_PAUSE_SECONDS} seconds.")
+            return None
+        response.raise_for_status()
+        part = response.json()["candidates"][0]["content"]["parts"][0]["inlineData"]
+        rate = int((re.search(r"rate=(\d+)", part.get("mimeType", "")) or [0, GEMINI_SAMPLE_RATE])[1])
+        audio = base64.b64encode(as_wav(base64.b64decode(part["data"]), rate)).decode("ascii")
+    except (httpx.HTTPError, KeyError, IndexError, ValueError) as error:
+        # Only the status, as the error text can include the request.
+        status = getattr(getattr(error, "response", None), "status_code", type(error).__name__)
+        print(f"Gemini's voice failed ({status}), so Sarvam speaks instead.")
+        return None
+    count(gemini_voice_characters=len(text))
+    return audio
+
+
+def speak_with_sarvam(text: str, language: str) -> str | None:
     started = time.perf_counter()
     try:
         response = httpx.post(
@@ -200,11 +278,7 @@ def speak(text: str, language: str) -> str | None:
     except (httpx.HTTPError, KeyError, ValueError) as error:
         print(f"Voice failed: {error}")
         return None
-
     count(voice_characters=len(text))
-    CACHE_DIR.mkdir(exist_ok=True)
-    saved.write_text(audio, encoding="ascii")
-    trim_voice_cache()
     return audio
 
 

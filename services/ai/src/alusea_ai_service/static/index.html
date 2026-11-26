@@ -303,6 +303,29 @@
     .starter:hover { border-color: var(--blueberry); }
     #voice-status { margin: 0; padding: 8px var(--gutter) 0; color: var(--berry-bloom); font-size: 12px; }
     form { display: flex; align-items: flex-end; gap: 8px; padding: 12px var(--gutter) 6px; }
+    /* The voice message bar: same size and place as the message box, with a sound wave that follows the voice. */
+    #voice-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      height: 46px;
+      margin: 12px var(--gutter) 6px;
+      padding: 0 4px;
+      border: 1px solid rgb(141 146 149 / 0.7);
+      border-radius: 9999px;
+      background: var(--surface);
+      animation: voice-bar-in 0.2s ease-out;
+    }
+    @keyframes voice-bar-in { from { opacity: 0; transform: scaleX(0.94); } }
+    #voice-wave { flex: 1; min-width: 0; height: 28px; display: flex; align-items: center; justify-content: flex-end; gap: 3px; overflow: hidden; }
+    #voice-wave i { flex: none; width: 3px; height: 4px; border-radius: 3px; background: var(--blueberry); }
+    #voice-time { flex: none; min-width: 32px; color: var(--berry-bloom); font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; text-align: right; }
+    .voice-button { flex: none; width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 9999px; background: #edeff2; color: var(--blueberry); transition: transform 0.15s; }
+    .voice-button:active { transform: scale(0.92); }
+    #voice-send { background: var(--blueberry); color: var(--surface); }
+    /* While what was said is written out, the bar waits. */
+    #voice-bar.writing #voice-wave i { opacity: 0.35; }
+    #voice-bar.writing .voice-button { opacity: 0.5; pointer-events: none; }
     #privacy-note { margin: 0; padding: 0 var(--gutter) 10px; color: var(--berry-bloom); font-size: 11px; }
     #privacy-note a { color: inherit; text-underline-offset: 2px; }
     .dock:has(#call-bar:not([hidden])) #privacy-note { display: none; }
@@ -310,6 +333,9 @@
       flex: 1;
       min-width: 0;
       height: 46px;
+      min-height: 46px;
+      /* fitInput() grows the box with the text, like ChatGPT's, and it scrolls only past this height (about 5 lines). */
+      max-height: 136px;
       padding: 10px 14px;
       overflow-x: hidden;
       border: 1px solid rgb(141 146 149 / 0.7);
@@ -318,6 +344,17 @@
       resize: none;
       font: 16px/1.4 var(--body-font);
     }
+    /* Windows draws square ▲▼ buttons at the scrollbar's ends, which poke into the box's rounded corners.
+       A thin bar with no buttons, kept clear of the corners, closes them cleanly. */
+    textarea::-webkit-scrollbar { width: 6px; }
+    textarea::-webkit-scrollbar-button { display: none; }
+    textarea::-webkit-scrollbar-track { margin: 10px 0; background: transparent; }
+    textarea::-webkit-scrollbar-thumb { border-radius: 3px; background: rgb(141 146 149 / 0.55); }
+    @supports not selector(::-webkit-scrollbar) {
+      textarea { scrollbar-width: thin; scrollbar-color: rgb(141 146 149 / 0.55) transparent; }
+    }
+    /* A wide panel (the expanded view on a laptop) has room for about 8 lines. */
+    @media (min-width: 700px) and (min-height: 600px) { textarea { max-height: 204px; } }
     textarea:focus-visible { outline: 0; border-color: var(--blueberry); }
     textarea::placeholder { color: var(--berry-bloom); white-space: nowrap; text-overflow: ellipsis; }
     .round-button {
@@ -332,12 +369,12 @@
       color: var(--blueberry);
       transition: background-color 0.3s, color 0.3s;
     }
-    .round-button:hover, #mic.listening { background: var(--blueberry); color: var(--surface); }
+    .round-button:hover { background: var(--blueberry); color: var(--surface); }
     #call { background: var(--blueberry); color: var(--surface); }
     #call:hover { background: var(--berry-bloom); border-color: var(--berry-bloom); }
     #send {
       flex: none;
-      min-height: 46px;
+      height: 46px;
       padding: 0 22px;
       border: 0;
       border-radius: 9999px;
@@ -419,7 +456,6 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      min-height: 46px;
       padding: 0 22px;
       border: 0;
       border-radius: 9999px;
@@ -488,6 +524,7 @@
 
       /* Message box: Send is an arrow, so the box gets the room. */
       form { gap: 6px; padding-top: 10px; }
+      #voice-bar { margin-top: 10px; }
       #send { width: 46px; padding: 0; display: grid; place-items: center; }
       #send svg { display: block; }
       #send .send-label { display: none; }
@@ -587,8 +624,8 @@
             <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"></path>
           </svg>
         </button>
-        <textarea id="input" maxlength="4000" placeholder="Message Sara" aria-label="Your message"></textarea>
-        <button id="mic" class="round-button" type="button" aria-label="Speak your message" aria-pressed="false">
+        <textarea id="input" rows="1" maxlength="4000" placeholder="Message Sara" aria-label="Your message"></textarea>
+        <button id="mic" class="round-button" type="button" aria-label="Speak your message">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <rect x="9" y="3" width="6" height="11" rx="3"></rect>
             <path d="M5 11a7 7 0 0 0 14 0"></path>
@@ -602,6 +639,20 @@
           <span class="send-label" id="send-label">Send</span>
         </button>
       </form>
+      <!-- Voice messages: while recording, this bar takes the message box's place. -->
+      <div id="voice-bar" hidden>
+        <button id="voice-cancel" class="voice-button" type="button" aria-label="Cancel recording">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </button>
+        <div id="voice-wave" aria-hidden="true"></div>
+        <span id="voice-time" aria-hidden="true">0:00</span>
+        <button id="voice-check" class="voice-button" type="button" aria-label="Stop and check the text">
+          <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="3" fill="currentColor"></rect></svg>
+        </button>
+        <button id="voice-send" class="voice-button" type="button" aria-label="Stop and send">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+        </button>
+      </div>
       <p id="privacy-note"><span id="privacy-text"></span> <a href="https://www.alusea.in/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy policy</a></p>
       <div id="call-bar" data-state="connecting" hidden>
         <div class="call-orb" aria-hidden="true"><img src="/sara.webp" alt="" width="54" height="54"></div>
@@ -643,6 +694,9 @@
         micNetwork: "Voice typing couldn't connect. Please check your internet and try again.",
         micMissing: "I couldn't find a microphone. Please check yours and try again.",
         micFallback: "Voice typing isn't working right now. Please type your message instead.",
+        micCancel: "Cancel recording",
+        micCheck: "Stop and check the text",
+        micSend: "Stop and send",
         startingFrom: "Starting from",
         perSqFt: "per sq ft",
         viewDetails: "View details →",
@@ -691,6 +745,9 @@
         micNetwork: "குரல் தட்டச்சு இணைக்கப்படவில்லை. இணையத்தைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.",
         micMissing: "மைக்ரோஃபோன் கிடைக்கவில்லை. உங்கள் மைக்கைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.",
         micFallback: "குரல் தட்டச்சு இப்போது வேலை செய்யவில்லை. உங்கள் செய்தியைத் தட்டச்சு செய்யுங்கள்.",
+        micCancel: "பதிவை ரத்து செய்",
+        micCheck: "நிறுத்தி உரையைச் சரிபார்க்கவும்",
+        micSend: "நிறுத்தி அனுப்பு",
         startingFrom: "தொடக்க விலை",
         perSqFt: "ஒரு சதுர அடிக்கு",
         viewDetails: "விவரங்களைப் பார்க்க →",
@@ -739,6 +796,9 @@
         micNetwork: "വോയ്സ് ടൈപ്പിംഗ് കണക്റ്റ് ചെയ്യാനായില്ല. ഇന്റർനെറ്റ് പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.",
         micMissing: "മൈക്രോഫോൺ കണ്ടെത്താനായില്ല. നിങ്ങളുടെ മൈക്ക് പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.",
         micFallback: "വോയ്സ് ടൈപ്പിംഗ് ഇപ്പോൾ പ്രവർത്തിക്കുന്നില്ല. സന്ദേശം ടൈപ്പ് ചെയ്യുക.",
+        micCancel: "റെക്കോർഡിംഗ് റദ്ദാക്കുക",
+        micCheck: "നിർത്തി എഴുത്ത് പരിശോധിക്കുക",
+        micSend: "നിർത്തി അയക്കുക",
         startingFrom: "തുടക്ക വില",
         perSqFt: "ഒരു ചതുരശ്ര അടിക്ക്",
         viewDetails: "വിശദാംശങ്ങൾ കാണുക →",
@@ -787,6 +847,9 @@
         micNetwork: "వాయిస్ టైపింగ్ కనెక్ట్ కాలేదు. ఇంటర్నెట్ చూసుకుని మళ్లీ ప్రయత్నించండి.",
         micMissing: "మైక్రోఫోన్ కనిపించలేదు. మీ మైక్‌ను చూసుకుని మళ్లీ ప్రయత్నించండి.",
         micFallback: "వాయిస్ టైపింగ్ ఇప్పుడు పని చేయడం లేదు. దయచేసి మీ సందేశాన్ని టైప్ చేయండి.",
+        micCancel: "రికార్డింగ్ రద్దు చేయండి",
+        micCheck: "ఆపి వచనాన్ని చూడండి",
+        micSend: "ఆపి పంపండి",
         startingFrom: "ప్రారంభ ధర",
         perSqFt: "చదరపు అడుగుకు",
         viewDetails: "వివరాలు చూడండి →",
@@ -835,6 +898,9 @@
         micNetwork: "ವಾಯ್ಸ್ ಟೈಪಿಂಗ್ ಸಂಪರ್ಕವಾಗಲಿಲ್ಲ. ಇಂಟರ್ನೆಟ್ ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
         micMissing: "ಮೈಕ್ರೊಫೋನ್ ಸಿಗಲಿಲ್ಲ. ನಿಮ್ಮ ಮೈಕ್ ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
         micFallback: "ವಾಯ್ಸ್ ಟೈಪಿಂಗ್ ಈಗ ಕೆಲಸ ಮಾಡುತ್ತಿಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಸಂದೇಶವನ್ನು ಟೈಪ್ ಮಾಡಿ.",
+        micCancel: "ರೆಕಾರ್ಡಿಂಗ್ ರದ್ದುಮಾಡಿ",
+        micCheck: "ನಿಲ್ಲಿಸಿ ಪಠ್ಯ ಪರಿಶೀಲಿಸಿ",
+        micSend: "ನಿಲ್ಲಿಸಿ ಕಳುಹಿಸಿ",
         startingFrom: "ಆರಂಭಿಕ ಬೆಲೆ",
         perSqFt: "ಪ್ರತಿ ಚದರ ಅಡಿಗೆ",
         viewDetails: "ವಿವರಗಳನ್ನು ನೋಡಿ →",
@@ -869,6 +935,8 @@
     const CALL_LIMIT_MS = 5 * 60 * 1000;
     const SPEECH_SAMPLE_RATE = 16000;
     const MAX_SPEECH_SECONDS = 120;
+    const SPEECH_GAP_SAMPLES = SPEECH_SAMPLE_RATE / 4;
+    const VOICE_BAR_STEP = 6; // each bar is 3px wide with a 3px gap
     // A call's mic stays open and hears the whole room, so its voice detection is stricter than the mic button's.
     const CALL_SPEECH_CONFIDENCE = 0.8;
     const CALL_SILENCE_CONFIDENCE = 0.35;
@@ -903,6 +971,12 @@
     const languageSelect = document.getElementById("language");
     const newChat = document.getElementById("new-chat");
     const voiceStatus = document.getElementById("voice-status");
+    const voiceBar = document.getElementById("voice-bar");
+    const voiceWave = document.getElementById("voice-wave");
+    const voiceTime = document.getElementById("voice-time");
+    const voiceCancel = document.getElementById("voice-cancel");
+    const voiceCheck = document.getElementById("voice-check");
+    const voiceSend = document.getElementById("voice-send");
     const call = document.getElementById("call");
     const callBar = document.getElementById("call-bar");
     const callStatus = document.getElementById("call-status");
@@ -919,6 +993,13 @@
     let micListener = null;
     let micActive = false;
     let micRun = 0;
+    // A voice message: the speech heard so far, its language, and the sound wave and clock on the bar.
+    let micSpeech = [];
+    let micLanguage = "en-IN";
+    let micStarted = 0;
+    let micClock = null;
+    let waveFrames = 0;
+    let waveLoudest = 0;
     let speakingButton = null;
     const listenAudio = new Audio();
     let listenRun = 0;
@@ -931,7 +1012,11 @@
     let callTurn = 0;
     // Starts as the menu's language, then follows what the customer speaks.
     let callLanguage = "en-IN";
-    let newestCallerMessage = null;
+    // Speech not answered yet. A customer who pauses mid-sentence and carries on is sent all of it again, as one question.
+    let unansweredSpeech = [];
+    // Between real speech starting and ending. An answer arriving then is held, as the customer may be carrying on.
+    let callerTalking = false;
+    let heldReply = null;
     let saraSpeaking = false;
     let lastFiller = -1;
     let fillerTimer = null;
@@ -961,6 +1046,10 @@
       menuButton.setAttribute("aria-label", text.more);
       menuButton.title = text.more;
       mic.setAttribute("aria-label", text.speak);
+      for (const [button, label] of [[voiceCancel, text.micCancel], [voiceCheck, text.micCheck], [voiceSend, text.micSend]]) {
+        button.setAttribute("aria-label", label);
+        button.title = label;
+      }
       call.setAttribute("aria-label", text.callStart);
       call.title = text.callStart;
       document.getElementById("end-call-label").textContent = text.endCall;
@@ -996,7 +1085,7 @@
 
     function sendStarter(text) {
       if (send.disabled || inCall) return;
-      input.value = text;
+      setInput(text);
       sendMessage();
     }
 
@@ -1243,57 +1332,135 @@
       listener.destroy?.();
     }
 
-    // Finished speech can still be written out, because pausing sends what was being said.
-    function stopMic() {
+    function showVoiceBar(recording) {
+      form.hidden = recording;
+      voiceBar.hidden = !recording;
+      voiceBar.classList.remove("writing");
+    }
+
+    // The newest bar on the right shows how loud the last moment was. Three detector frames make one bar, about 0.1 s.
+    function addWaveLevel(frame) {
+      let total = 0;
+      for (const sample of frame) total += sample * sample;
+      waveLoudest = Math.max(waveLoudest, Math.sqrt(total / frame.length));
+      if (++waveFrames < 3) return;
+      const bar = voiceWave.firstElementChild;
+      bar.style.height = `${Math.round(4 + Math.min(1, Math.sqrt(waveLoudest) * 2.2) * 24)}px`;
+      voiceWave.append(bar);
+      waveFrames = 0;
+      waveLoudest = 0;
+    }
+
+    function updateVoiceClock() {
+      const seconds = Math.floor((Date.now() - micStarted) / 1000);
+      voiceTime.textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+      if (seconds >= MAX_SPEECH_SECONDS) finishRecording(false);
+    }
+
+    // Closing the detector hands over any speech still in progress, so nothing said before ■ or ↑ is lost.
+    async function stopMic() {
       const listener = micListener;
       micListener = null;
       micActive = false;
-      mic.classList.remove("listening");
-      mic.setAttribute("aria-pressed", "false");
+      clearInterval(micClock);
       voiceStatus.hidden = true;
-      closeListener(listener);
+      await closeListener(listener);
     }
 
     function cancelMic() {
       micRun++;
+      micSpeech = [];
       stopMic();
+      if (!voiceBar.hidden) showVoiceBar(false);
     }
 
+    // The detector keeps only the parts with speech in them. They're joined with short gaps so words don't run together.
+    function joinSpeech(pieces) {
+      if (!pieces.length) return null;
+      const length = pieces.reduce((sum, piece) => sum + piece.length + SPEECH_GAP_SAMPLES, 0);
+      const joined = new Float32Array(length);
+      let offset = 0;
+      for (const piece of pieces) {
+        joined.set(piece, offset);
+        offset += piece.length + SPEECH_GAP_SAMPLES;
+      }
+      return joined.slice(-MAX_SPEECH_SECONDS * SPEECH_SAMPLE_RATE);
+    }
+
+    // Returns what was said, or null after showing why there's nothing.
     async function writeSpeech(samples, run, language) {
       try {
         const response = await saraFetch(`/speech?language=${encodeURIComponent(language)}`, {
           method: "POST",
           headers: { "Content-Type": "audio/wav" },
-          body: encodeWav(samples.slice(-MAX_SPEECH_SECONDS * SPEECH_SAMPLE_RATE)),
+          body: encodeWav(samples),
         });
-        if (run !== micRun) return;
-        if (response.status === 429) return addMessage("error", labels().callLimit);
+        if (run !== micRun) return null;
+        if (response.status === 429) {
+          addMessage("error", labels().callLimit);
+          return null;
+        }
         if (!response.ok) throw new Error("The speech request failed.");
         const { text } = await response.json();
-        if (run !== micRun) return;
-        if (!text) return addMessage("error", labels().micNoSpeech);
-        input.value = joinWords(input.value.trim(), text);
-        input.scrollTop = input.scrollHeight;
-        input.focus();
+        if (run !== micRun) return null;
+        if (!text) addMessage("error", labels().micNoSpeech);
+        return text || null;
       } catch {
         if (run === micRun) addMessage("error", labels().micNetwork);
+        return null;
       }
+    }
+
+    // ■ puts what was said in the message box to check first. ↑ sends it straight away.
+    async function finishRecording(andSend) {
+      if (!micActive) return;
+      const run = micRun;
+      voiceBar.classList.add("writing");
+      await stopMic();
+      if (run !== micRun) return;
+      const speech = joinSpeech(micSpeech);
+      micSpeech = [];
+      if (!speech) {
+        showVoiceBar(false);
+        addMessage("error", labels().micNoSpeech);
+        return input.focus();
+      }
+      // One request for the whole message, sent only now, so a cancelled recording costs nothing.
+      const text = await writeSpeech(speech, run, micLanguage);
+      if (run !== micRun) return;
+      showVoiceBar(false);
+      if (text) {
+        setInput(joinWords(input.value.trim(), text));
+        input.scrollTop = input.scrollHeight;
+      }
+      if (text && andSend) sendMessage();
+      else input.focus();
     }
 
     async function startListening() {
       const run = ++micRun;
-      const language = languageSelect.value;
+      micLanguage = languageSelect.value;
+      micSpeech = [];
       stopSpeaking();
       micActive = true;
-      mic.classList.add("listening");
-      mic.setAttribute("aria-pressed", "true");
+      waveFrames = 0;
+      waveLoudest = 0;
+      voiceTime.textContent = "0:00";
+      micStarted = Date.now();
+      micClock = setInterval(updateVoiceClock, 250);
+      showVoiceBar(true);
+      // Enough bars to fill the space the bar has, so the wide laptop view isn't half empty.
+      const bars = Math.max(12, Math.floor((voiceWave.clientWidth + 3) / VOICE_BAR_STEP));
+      voiceWave.replaceChildren(...Array.from({ length: bars }, () => document.createElement("i")));
       voiceStatus.hidden = false;
+      voiceCancel.focus();
       try {
         const listener = await createSpeechListener({
           submitUserSpeechOnPause: true,
-          onSpeechEnd: (samples) => writeSpeech(samples, run, language),
+          onFrameProcessed: (probabilities, frame) => run === micRun && addWaveLevel(frame),
+          onSpeechEnd: (samples) => run === micRun && micSpeech.push(samples),
         });
-        // The button may have been tapped again while the speech detector was loading.
+        // ✕, ■ or ↑ may have been tapped while the speech detector was loading.
         if (run !== micRun || !micActive) return closeListener(listener);
         micListener = listener;
         await listener.start();
@@ -1314,6 +1481,9 @@
     function endCall(message) {
       inCall = false;
       callTurn++;
+      unansweredSpeech = [];
+      callerTalking = false;
+      heldReply = null;
       stopFiller();
       saraSpeaking = false;
       waitingForReply = false;
@@ -1385,14 +1555,17 @@
       addMessage("assistant", data.content || labels().cardIntro);
       addCards(data.products);
       saraInterrupted = false;
+      // The customer said goodbye, so Sara hangs up once hers has been said, instead of waiting for more speech.
       if (!data.audio) {
         saraSpeaking = false;
+        if (data.end_call) return endCall();
         showCallState();
         return;
       }
       const finishSpeaking = () => {
         saraSpeaking = false;
         if (!inCall) return;
+        if (data.end_call) return endCall();
         if (Date.now() >= callEndsAt) return endCall(labels().callTimeUp);
         showCallState();
       };
@@ -1406,6 +1579,7 @@
 
     // If the customer starts talking, Sara pauses straight away so it feels like a real call.
     function pauseSaraForCaller() {
+      callerTalking = true;
       stopFiller();
       if (!saraSpeaking) return;
       saraInterrupted = true;
@@ -1420,57 +1594,63 @@
     }
 
     // The sound was too short to be speech, such as a cough or a door closing.
+    // An answer held while it happened is used after all.
     function ignoreShortSound() {
+      callerTalking = false;
+      if (heldReply) {
+        const data = heldReply;
+        heldReply = null;
+        useCallReply(data);
+        return;
+      }
       resumeSara();
       showCallState();
     }
 
-    // An answer overtaken by newer speech comes back marked late, so its words and cards can still be shown.
-    async function sendCallRequest(path, options, keepLate = false) {
+    // An answer overtaken by a newer request is dropped: the newer one carries the same speech, so nothing is lost.
+    async function sendCallRequest(path, options) {
       const turn = ++callTurn;
       try {
         const response = await saraFetch(path, { method: "POST", ...options });
-        const current = turn === callTurn;
-        if (!inCall || (!current && !keepLate)) return null;
+        if (!inCall || turn !== callTurn) return null;
         if (response.status === 429) {
-          if (current) endCall(labels().callLimit);
+          endCall(labels().callLimit);
           return null;
         }
         if (!response.ok) throw new Error("The call request failed.");
         const data = await response.json();
-        if (!inCall) return null;
-        return turn === callTurn ? data : { ...data, late: true };
+        return inCall && turn === callTurn ? data : null;
       } catch {
         if (inCall && turn === callTurn) endCall(labels().error);
         return null;
       }
     }
 
-    // An overtaken answer goes before the newer sentence that overtook it, so the call reads in the order it was said.
-    function showLateReply(data) {
-      const before = messages.children.length;
-      addMessage("user", data.heard);
-      addMessage("assistant", data.content || labels().cardIntro);
-      addCards(data.products);
-      const added = [...messages.children].slice(before);
-      if (newestCallerMessage?.isConnected) added.forEach((element) => messages.insertBefore(element, newestCallerMessage));
-    }
-
-    // A newer sentence replaces any answer still on its way, like talking over someone on a call.
+    // A pause ends a turn, but a customer who carries on before the answer comes back hasn't finished. Their new words
+    // are added to the unanswered ones and all of it is sent as one question, so a long sentence gets one answer.
+    // continues=1 tells Sara the earlier, partial question is asked again, so she doesn't keep its answer.
     async function sendCallerSpeech(samples) {
+      callerTalking = false;
+      heldReply = null;
+      const continues = unansweredSpeech.length > 0;
+      unansweredSpeech.push(samples);
       waitingForReply = true;
       showCallState();
       planFiller(callTurn + 1);
-      const data = await sendCallRequest(`/call/speech?language=${encodeURIComponent(callLanguage)}`, {
+      const data = await sendCallRequest(`/call/speech?language=${encodeURIComponent(callLanguage)}${continues ? "&continues=1" : ""}`, {
         headers: { "Content-Type": "audio/wav" },
-        body: encodeWav(samples.slice(-MAX_SPEECH_SECONDS * SPEECH_SAMPLE_RATE)),
-      }, true);
+        body: encodeWav(joinSpeech(unansweredSpeech)),
+      });
       if (!data) return;
-      // The customer has said something newer, so this answer is shown without being spoken, keeping its estimate card.
-      if (data.late) {
-        if (data.heard) showLateReply(data);
+      if (callerTalking) {
+        heldReply = data;
         return;
       }
+      useCallReply(data);
+    }
+
+    function useCallReply(data) {
+      unansweredSpeech = [];
       waitingForReply = false;
       if (!data.heard && !data.content) {
         resumeSara();
@@ -1479,7 +1659,7 @@
       }
       if (data.language) callLanguage = data.language;
       if (data.heard) {
-        newestCallerMessage = addMessage("user", data.heard);
+        addMessage("user", data.heard);
         showStarters(false);
       }
       showCallReply(data);
@@ -1665,7 +1845,7 @@
 
       cancelMic();
       stopSpeaking();
-      input.value = "";
+      setInput("");
       send.disabled = true;
       languageSelect.disabled = true;
       const userMessage = addMessage("user", text);
@@ -1691,7 +1871,7 @@
       } catch (error) {
         // The message wasn't saved, so put it back in the box to try again.
         userMessage.remove();
-        input.value = text;
+        setInput(text);
         addMessage("error", error instanceof SyntaxError || error instanceof TypeError ? labels().error : error.message);
       } finally {
         typing.remove();
@@ -1706,6 +1886,20 @@
       sendMessage();
     });
 
+    // The box grows with its text up to its CSS max-height, then scrolls. The 2px is its top and bottom border.
+    function fitInput() {
+      input.style.height = "auto";
+      input.style.height = `${input.scrollHeight + 2}px`;
+    }
+
+    function setInput(text) {
+      input.value = text;
+      fitInput();
+    }
+
+    input.addEventListener("input", fitInput);
+    window.addEventListener("resize", fitInput);
+
     // Enter sends, and Shift+Enter starts a new line.
     input.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && !event.shiftKey) {
@@ -1716,7 +1910,13 @@
 
     // Browsers that can't use the microphone keep the text box only.
     mic.hidden = !navigator.mediaDevices;
-    mic.addEventListener("click", () => (micActive ? stopMic() : startListening()));
+    mic.addEventListener("click", startListening);
+    voiceCancel.addEventListener("click", () => {
+      cancelMic();
+      input.focus();
+    });
+    voiceCheck.addEventListener("click", () => finishRecording(false));
+    voiceSend.addEventListener("click", () => finishRecording(true));
     call.hidden = !navigator.mediaDevices;
     call.addEventListener("click", startCall);
     endCallButton.addEventListener("click", () => endCall());
@@ -1739,13 +1939,15 @@
       if (event.key === "Escape") closeMenu();
     });
 
-    // Earlier messages stay as written. The page's own text and later replies use the new language.
+    // Earlier messages stay on screen as written; the page's own text and later replies use the new language.
+    // The chat isn't fetched again: that wiped it while a slow or failed request was under way, so it looked lost.
+    // A chat that hasn't started yet only has the greeting, which is shown again in the new language.
     languageSelect.addEventListener("change", () => {
       cancelMic();
       stopSpeaking();
       saveLanguage();
       applyLabels();
-      loadHistory();
+      if (!starters.hidden) showGreeting();
     });
 
     newChat.addEventListener("click", async () => {
@@ -1753,7 +1955,7 @@
       stopSpeaking();
       await saraFetch("/chat", { method: "DELETE" }).catch(() => {});
       showGreeting();
-      input.value = "";
+      setInput("");
       input.focus();
     });
 
