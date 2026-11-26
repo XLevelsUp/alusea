@@ -33,7 +33,6 @@ def fake_providers(monkeypatch, gemini_status=200):
         return Answer(200, {"audios": [base64.b64encode(b"sarvam").decode()]})
 
     monkeypatch.setattr(httpx, "post", post)
-    monkeypatch.setattr(voice, "gemini_paused_until", 0.0)
     return asked
 
 

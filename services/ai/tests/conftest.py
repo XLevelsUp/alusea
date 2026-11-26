@@ -29,6 +29,7 @@ os.environ.update(
 
 import alusea_ai_service.agent as agent  # noqa: E402
 import alusea_ai_service.call as call  # noqa: E402
+import alusea_ai_service.keys as keys  # noqa: E402
 import alusea_ai_service.limits as limits  # noqa: E402
 import alusea_ai_service.main as main  # noqa: E402
 import alusea_ai_service.store as store  # noqa: E402
@@ -52,10 +53,13 @@ def isolated(tmp_path, monkeypatch):
     monkeypatch.setattr(voice, "CACHE_DIR", tmp_path / "voice_cache")
     monkeypatch.setattr(httpx, "post", blocked)
     monkeypatch.setattr(httpx, "get", blocked)
-    monkeypatch.setattr(agent, "client", fake_groq(blocked))
+    monkeypatch.setattr(agent, "groq_client", lambda key, fake=fake_groq(blocked): fake)
     monkeypatch.setattr(main, "COOKIE_SECURE", False)
     store.init_db()
     call.turn_locks.clear()
+    for ring in keys.ALL_RINGS:
+        ring.reset()
+    agent.last_limit_errors.clear()
     yield
 
 

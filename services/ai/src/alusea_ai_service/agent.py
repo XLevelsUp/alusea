@@ -5,10 +5,11 @@ import time
 from urllib.parse import urlparse
 
 from dotenv import load_dotenv
-from groq import APIConnectionError, BadRequestError, Groq, InternalServerError, RateLimitError
+from groq import APIConnectionError, AuthenticationError, BadRequestError, Groq, InternalServerError, PermissionDeniedError, RateLimitError
 
 from alusea_ai_service.backup_model import ask_backup
 from alusea_ai_service.cards import set_cards
+from alusea_ai_service.keys import GROQ_KEYS, wait_from
 from alusea_ai_service.meter import count
 from alusea_ai_service.safe_log import clean_error
 from alusea_ai_service.prompt import (
@@ -56,8 +57,17 @@ TOOL_NAME_REMINDER = "Your last tool call used a wrong name. The tools are named
 NO_TOOLS_REMINDER = "The catalogue can't be reached for this reply. Answer in words, without naming a product detail or saying anything is on the screen. If they gave a size, say it back and say you'll work out the estimate when they ask again."
 WRONG_TOOL_NAME = re.compile(r"call tool '([^']+)'")
 
-# No automatic retries, because they can sit silently for a minute at Groq's rate limit while a customer waits.
-client = Groq(api_key=os.environ["GROQ_API_KEY"], timeout=GROQ_TIMEOUT_SECONDS, max_retries=0)
+groq_clients: dict[str, Groq] = {}
+# A model's last rate-limit error, raised again while every key rests, so a call can still say "one moment".
+last_limit_errors: dict[str, RateLimitError] = {}
+
+
+def groq_client(key: str) -> Groq:
+    """One client for each key. No automatic retries, because they can sit silently for a minute at Groq's rate limit
+    while a customer waits."""
+    if key not in groq_clients:
+        groq_clients[key] = Groq(api_key=key, timeout=GROQ_TIMEOUT_SECONDS, max_retries=0)
+    return groq_clients[key]
 
 TOOLS = [
     {
@@ -254,23 +264,35 @@ def filtered_matches(name: str, raw_arguments: str | None, result: dict) -> list
 
 
 def send_to_model(messages: list[dict], request: dict):
-    """Ask Groq's main model, then its backup model, then the free backup. If none can help, Groq's last error stands."""
+    """Ask Groq's main model on each key in turn, then its backup model on each key, then the free backup.
+    The same model is tried on every key first, so answers stay as good as they can be. Groq's limits are per model,
+    so a key resting on one model can still answer on the other. If none can help, Groq's last error stands."""
+    last_error: Exception = RuntimeError("No Groq key could be used.")
     for model in (request["model"], GROQ_BACKUP_MODEL):
-        started = time.perf_counter()
-        try:
-            answer = client.chat.completions.create(messages=messages, **{**request, "model": model})
-            count(ai_wait=time.perf_counter() - started)
-            count(ai_requests=1, ai_tokens=getattr(getattr(answer, "usage", None), "total_tokens", 0))
-            return answer
-        except RateLimitError as error:
-            count(ai_wait=time.perf_counter() - started)
-            print(f"Groq's rate limit was reached on {model}.")
-            last_error = error
-        except (APIConnectionError, InternalServerError) as error:
-            count(ai_wait=time.perf_counter() - started)
-            # This includes timeouts and Groq's own server errors.
-            print(f"Groq couldn't answer on {model}: {clean_error(error)}")
-            last_error = error
+        keys = GROQ_KEYS.available(model)
+        if not keys and model in last_limit_errors:
+            last_error = last_limit_errors[model]
+        for number, key in keys:
+            started = time.perf_counter()
+            try:
+                answer = groq_client(key).chat.completions.create(messages=messages, **{**request, "model": model})
+                count(ai_wait=time.perf_counter() - started)
+                count(ai_requests=1, ai_tokens=getattr(getattr(answer, "usage", None), "total_tokens", 0))
+                return answer
+            except RateLimitError as error:
+                count(ai_wait=time.perf_counter() - started)
+                GROQ_KEYS.rest(number, key, wait_from(getattr(getattr(error, "response", None), "headers", {})), "reached Groq's rate limit", model)
+                last_limit_errors[model] = last_error = error
+            except (AuthenticationError, PermissionDeniedError) as error:
+                count(ai_wait=time.perf_counter() - started)
+                GROQ_KEYS.drop(number, key, f"was refused ({error.status_code})")
+                last_error = error
+            except (APIConnectionError, InternalServerError) as error:
+                count(ai_wait=time.perf_counter() - started)
+                # This includes timeouts and Groq's own server errors, which another key won't fix, so the next model is tried.
+                print(f"Groq couldn't answer on {model}: {clean_error(error)}")
+                last_error = error
+                break
     print("Asking the free backup model.")
     started = time.perf_counter()
     answer = ask_backup(messages, request)

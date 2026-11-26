@@ -13,6 +13,7 @@ from pathlib import Path
 import httpx
 from dotenv import load_dotenv
 
+from alusea_ai_service.keys import GEMINI_KEYS, SARVAM_KEYS, post_with_keys
 from alusea_ai_service.meter import count, in_threads
 from alusea_ai_service.store import DATA_DIR
 
@@ -57,9 +58,6 @@ GEMINI_VOICE = os.getenv("GEMINI_TTS_VOICE", "Kore")
 GEMINI_VOICE_STYLE = "Say this warmly and clearly, like a friendly showroom advisor in India:"
 GEMINI_TIMEOUT_SECONDS = 15
 GEMINI_SAMPLE_RATE = 24000
-# After Gemini's limit is hit, Sarvam speaks for a while, so each turn doesn't first wait for another refusal.
-GEMINI_PAUSE_SECONDS = 60
-gemini_paused_until = 0.0
 
 
 def quietest_point(samples: array, start: int, end: int, window: int) -> int:
@@ -162,9 +160,10 @@ def write_part(audio: bytes, content_type: str, language_code: str, terms_langua
     for _ in range(LISTEN_TRIES):
         started = time.perf_counter()
         try:
-            response = httpx.post(
+            response = post_with_keys(
+                SARVAM_KEYS,
                 SARVAM_LISTEN_URL,
-                headers={"api-subscription-key": os.environ["SARVAM_API_KEY"]},
+                "api-subscription-key",
                 data={
                     "model": LISTEN_MODEL,
                     "mode": "transcribe",
@@ -186,11 +185,6 @@ def write_part(audio: bytes, content_type: str, language_code: str, terms_langua
     return None
 
 
-def gemini_key() -> str:
-    # GEMINI_AI_API_KEY is the name used in earlier local .env files.
-    return os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_AI_API_KEY") or ""
-
-
 def as_wav(pcm: bytes, rate: int) -> bytes:
     out = io.BytesIO()
     with wave.open(out, "wb") as writer:
@@ -205,7 +199,8 @@ def speak(text: str, language: str) -> str | None:
     """Return the spoken text as base64 WAV audio, or None so the call can carry on as text."""
     text = text[:MAX_SPOKEN_CHARACTERS]
     audio = None
-    if gemini_key() and time.time() >= gemini_paused_until:
+    # A Gemini key at its limit rests (keys.py), so while every key rests Sarvam speaks without asking Gemini first.
+    if GEMINI_KEYS.available():
         audio = saved_or_new(f"gemini|{GEMINI_VOICE_MODEL}|{GEMINI_VOICE}", language, text, speak_with_gemini)
     return audio or saved_or_new(f"{VOICE_MODEL}|{VOICE_SPEAKER}", language, text, speak_with_sarvam)
 
@@ -229,12 +224,12 @@ def saved_or_new(voice: str, language: str, text: str, make) -> str | None:
 
 def speak_with_gemini(text: str, language: str) -> str | None:
     """Gemini finds the language from the text, so it needs no language code."""
-    global gemini_paused_until
     started = time.perf_counter()
     try:
-        response = httpx.post(
+        response = post_with_keys(
+            GEMINI_KEYS,
             GEMINI_VOICE_URL.format(model=GEMINI_VOICE_MODEL),
-            headers={"x-goog-api-key": gemini_key()},
+            "x-goog-api-key",
             json={
                 "contents": [{"parts": [{"text": f"{GEMINI_VOICE_STYLE}\n{text}"}]}],
                 "generationConfig": {
@@ -245,10 +240,6 @@ def speak_with_gemini(text: str, language: str) -> str | None:
             timeout=GEMINI_TIMEOUT_SECONDS,
         )
         count(voice_wait=time.perf_counter() - started)
-        if response.status_code == 429:
-            gemini_paused_until = time.time() + GEMINI_PAUSE_SECONDS
-            print(f"Gemini's voice limit was reached, so Sarvam speaks for the next {GEMINI_PAUSE_SECONDS} seconds.")
-            return None
         response.raise_for_status()
         part = response.json()["candidates"][0]["content"]["parts"][0]["inlineData"]
         rate = int((re.search(r"rate=(\d+)", part.get("mimeType", "")) or [0, GEMINI_SAMPLE_RATE])[1])
@@ -265,9 +256,10 @@ def speak_with_gemini(text: str, language: str) -> str | None:
 def speak_with_sarvam(text: str, language: str) -> str | None:
     started = time.perf_counter()
     try:
-        response = httpx.post(
+        response = post_with_keys(
+            SARVAM_KEYS,
             SARVAM_URL,
-            headers={"api-subscription-key": os.environ["SARVAM_API_KEY"]},
+            "api-subscription-key",
             json={"text": text, "language_code": language, "model": VOICE_MODEL, "speaker": VOICE_SPEAKER},
             timeout=30,
         )

@@ -70,7 +70,11 @@ The Supabase migration for Sara's tables is at `../../supabase/migrations/202611
    both, and add an `ALTER TABLE` for existing databases. `tests/test_migration.py` checks they match.
 5. **Sara's tables live in the `ai` schema**, owned by the limited login `ai_service`, which can't reach `public`
    (employees, payroll, invoices). Never move them to `public`, and never make Sara connect as `postgres`.
-6. **No secrets in Git.** `.env`, `chat.db`, `limits.secret` and `voice_cache/` stay local. Only `.env.example` is
+6. **Keys go through `keys.py`.** Groq, Sarvam and Gemini can each have several keys (`GROQ_API_KEYS=k1,k2`), used
+   in order. A key at its limit (429) rests, one out of Sarvam credit (402) rests an hour, a refused one (401/403) is
+   left out until restart. Groq rests are per model. Call providers through `post_with_keys` or `groq_client`, never
+   with a key read straight from the environment, and log keys by number only.
+7. **No secrets in Git.** `.env`, `chat.db`, `limits.secret` and `voice_cache/` stay local. Only `.env.example` is
    committed, with empty values. Never print keys, `DATABASE_URL` or customers' phone numbers in logs.
 
 ## How the main parts work

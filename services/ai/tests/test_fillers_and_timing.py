@@ -14,7 +14,7 @@ def test_the_meter_line_shows_how_long_each_step_took():
 
 
 def test_the_time_waiting_for_the_ai_is_counted(monkeypatch):
-    monkeypatch.setattr(agent, "client", fake_groq(lambda **request: ai_answer("Hello", tokens=10)))
+    monkeypatch.setattr(agent, "groq_client", lambda key, fake=fake_groq(lambda **request: ai_answer("Hello", tokens=10)): fake)
     meter = Meter()
     with metering(meter):
         agent.send_to_model([{"role": "user", "content": "Hi"}], {"model": agent.MODEL})

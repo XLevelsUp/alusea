@@ -1,4 +1,3 @@
-import os
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -8,6 +7,7 @@ from dotenv import load_dotenv
 
 from alusea_ai_service.agent import REPEATING_WORDS
 from alusea_ai_service.cards import markers_in, remove_markers
+from alusea_ai_service.keys import SARVAM_KEYS, post_with_keys
 from alusea_ai_service.meter import count, in_threads
 from alusea_ai_service.prompt import LANGUAGES
 
@@ -116,9 +116,10 @@ def keeps_facts(english: str, translated: str) -> bool:
 def ask_sarvam(text: str, source: str, target: str, mode: str, script: str | None = None) -> str | None:
     started = time.perf_counter()
     try:
-        response = httpx.post(
+        response = post_with_keys(
+            SARVAM_KEYS,
             SARVAM_TRANSLATE_URL,
-            headers={"api-subscription-key": os.environ["SARVAM_API_KEY"]},
+            "api-subscription-key",
             json={
                 "input": text,
                 "source_language_code": source,
@@ -188,9 +189,10 @@ def checked_language(message: str, menu: str) -> str:
     if not re.search(r"[^\W\d_]", words):
         return "en-IN"
     try:
-        response = httpx.post(
+        response = post_with_keys(
+            SARVAM_KEYS,
             SARVAM_CHECK_URL,
-            headers={"api-subscription-key": os.environ["SARVAM_API_KEY"]},
+            "api-subscription-key",
             json={"input": words[:MAX_CHECK_CHARACTERS]},
             timeout=CHECK_TIMEOUT_SECONDS,
         )
