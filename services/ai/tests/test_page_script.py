@@ -54,3 +54,20 @@ def test_the_call_orb_ripples_only_while_a_voice_is_heard():
     page = PAGE.read_text(encoding="utf-8")
     assert '#call-bar[data-state="hearing"].voice-now .call-orb::after { animation: ripple' in page
     assert "onFrameProcessed: showVoiceNow" in page
+
+
+def test_a_wide_screen_shows_the_call_as_a_fixed_card_beside_the_conversation():
+    """In the expanded panel on a laptop, the call is a small upright card fixed in the corner, and the chat keeps clear of it."""
+    page = PAGE.read_text(encoding="utf-8")
+    wide = page[page.index("@media (min-width: 900px)"):page.index("@keyframes card-in")]
+    assert "position: fixed;" in wide and "width: 220px;" in wide and "height: 372px;" in wide
+    assert ".chat-scroll { padding-right: 250px; }" in wide
+    assert '<div id="call-wave" aria-hidden="true"></div>' in page and "if (frame) addCallWaveLevel(frame);" in page
+
+
+def test_a_call_greeting_never_shows_a_second_introduction():
+    """Starting a call added "Hi, this is Sara from Alusea!..." under the chat's own "Hi, I'm Sara..." every time."""
+    page = PAGE.read_text(encoding="utf-8")
+    start = re.search(r"async function startCall\(\) \{(.*?)\n    \}\n", page, re.S).group(1)
+    assert "greetingMessage.replaceWith(spoken);" in start
+    assert "showCallReply(data, false);" in start

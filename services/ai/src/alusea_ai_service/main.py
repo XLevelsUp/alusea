@@ -26,7 +26,7 @@ from alusea_ai_service.meter import Meter, call_meter, metering, summary
 from alusea_ai_service.prompt import LANGUAGES as LANGUAGE_NAMES
 from alusea_ai_service.store import ON_VERCEL, database_ok, delete_messages, delete_old_messages, init_db, last_language, load_for_model, load_leads, load_messages, save_exchange
 from alusea_ai_service.sheet import as_text, in_india, resend_unsent_leads
-from alusea_ai_service.translation import ENGLISH_LETTERS, language_in_letters, translate_reply
+from alusea_ai_service.translation import ENGLISH_LETTERS, language_in_letters, to_english, translate_reply
 from alusea_ai_service.voice import MAX_SPOKEN_CHARACTERS, listen, speak
 
 COOKIE_NAME = "alusea_chat_id"
@@ -257,14 +257,22 @@ def post_chat(
         # The ready-made small talk is in each language's script, so Tanglish starts from the English and gets translated.
         reply = ready or small_talk(message, "en-IN" if script else language)
         english = None
+        understood = None
         if reply is None:
             history = load_for_model(visitor_id, limit=HISTORY_SENT_TO_MODEL)
-            english = generate_reply(history, message, request.language, visitor_id=visitor_id)
+            asked = message
+            if script:
+                # Tanglish and the others in English letters are easy for the AI to misread ("sukhamaano" became
+                # "comfortable"), so it also gets Sarvam's English, as calls do. If that fails, it reads them as typed.
+                understood = to_english(message, language)
+                if understood and understood != message:
+                    asked = f"{understood}\n(Their own words: {message})"
+            english = generate_reply(history, asked, request.language, visitor_id=visitor_id)
             reply = translate_reply(english, language, script)
         elif script:
             english = reply
             reply = translate_reply(english, language, script)
-        save_exchange(visitor_id, message, reply, english, language=language)
+        save_exchange(visitor_id, message, reply, english, understood if understood != message else None, language=language)
     except Exception as error:
         # Only the error itself: visitors' messages stay out of the logs.
         print(f"Chat failed: {clean_error(error)}")

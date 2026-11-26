@@ -301,7 +301,6 @@
       transition: border-color 0.3s;
     }
     .starter:hover { border-color: var(--blueberry); }
-    #voice-status { margin: 0; padding: 8px var(--gutter) 0; color: var(--berry-bloom); font-size: 12px; }
     form { display: flex; align-items: flex-end; gap: 8px; padding: 12px var(--gutter) 6px; }
     /* The voice message bar: same size and place as the message box, with a sound wave that follows the voice. */
     #voice-bar {
@@ -450,6 +449,8 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes pulse { 50% { transform: scale(1.1); } }
     .call-text { min-width: 0; }
+    /* Only the wide call screen shows Sara's name; the bar and the phone screen have no room for it. */
+    .call-name { display: none; }
     .call-title { color: rgb(245 246 243 / 0.75); }
     #call-status { display: block; margin-top: 2px; overflow-wrap: anywhere; font: 500 20px/1.3 var(--heading-font); letter-spacing: -0.02em; }
     .call-hint { display: block; color: rgb(245 246 243 / 0.75); font-size: 12px; }
@@ -554,8 +555,55 @@
       #call-status { margin-top: 4px; font-size: 24px; }
       .call-hint { margin-top: 2px; }
       #end-call { width: 100%; min-height: 52px; justify-content: center; font-size: 15px; }
-      .dock:has(#call-bar:not([hidden])) #voice-status { order: 2; padding: 0 var(--gutter) 14px; background: var(--blueberry); color: rgb(245 246 243 / 0.7); text-align: center; font-size: 11px; }
     }
+    /* A wide screen, such as the expanded panel on a laptop, shows the call as a small upright card fixed in the
+       bottom-right corner. The conversation and product cards carry on beside it, full size. */
+    #call-wave { display: none; }
+    @media (min-width: 900px) {
+      .chat:has(#call-bar:not([hidden])) { max-width: none; }
+      .chat:has(#call-bar:not([hidden])) .chat-scroll { padding-right: 250px; }
+      .dock:has(#call-bar:not([hidden])) { border-top: 0; background: transparent; }
+      #call-bar {
+        position: fixed;
+        right: 26px;
+        bottom: 22px;
+        z-index: 20;
+        width: 220px;
+        height: 372px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: 18px 16px;
+        border-radius: 24px;
+        text-align: center;
+        box-shadow: 0 1px 2px rgb(15 20 35 / 0.2), 0 28px 56px -22px rgb(15 20 35 / 0.65);
+        animation: card-in 0.5s var(--ease-out);
+      }
+      #call-bar::before, #call-bar::after { display: none; }
+      /* The text's parts take their own places in the card: the title on top, then Sara, the stage and the timer. */
+      .call-text { display: contents; }
+      .call-title { order: 0; justify-content: center; font-size: 10.5px; letter-spacing: 0.18em; }
+      .call-title::before { display: none; }
+      .call-orb { order: 1; width: 84px; height: 84px; margin-top: 8px; }
+      .call-orb img { border: 3px solid rgb(245 246 243 / 0.9); }
+      .call-name { order: 2; display: block; margin-top: 4px; font: 500 22px/1.1 var(--heading-font); letter-spacing: -0.02em; }
+      #call-status { order: 3; margin: 0; min-height: 38px; font-size: 14px; line-height: 1.35; }
+      .call-hint { display: none; }
+      #call-timer { order: 4; font-size: 14px; }
+      #call-wave { order: 5; display: flex; justify-content: space-between; align-items: center; width: 100%; height: 30px; margin-top: auto; color: var(--champagne); }
+      #end-call { order: 6; flex-direction: column; gap: 5px; margin-top: 8px; padding: 0; background: none; color: var(--plate-white); font-size: 11.5px; font-weight: 500; }
+      #end-call svg { width: 50px; height: 50px; padding: 16px; border-radius: 9999px; background: var(--stop); color: var(--surface); transition: background-color 0.2s; }
+      #end-call:hover svg { background: #c9372e; }
+    }
+    /* The card's waveform: the customer's voice moves it while they speak, and a steady pattern while Sara speaks. */
+    #call-wave i { flex: none; width: 3px; height: 4px; border-radius: 3px; background: currentColor; opacity: 0.4; transition: height 0.08s; }
+    #call-bar[data-state="hearing"] #call-wave i { opacity: 0.95; }
+    #call-bar[data-state="speaking"] #call-wave i { opacity: 0.95; animation: call-level 0.9s ease-in-out infinite; animation-delay: calc(var(--n) * -0.07s); }
+    #call-bar[data-state="thinking"] #call-wave i { animation: call-think 1.4s ease-in-out infinite; animation-delay: calc(var(--n) * 0.05s); }
+    @keyframes call-level { 0%, 100% { height: 4px; } 30% { height: calc(6px + var(--h) * 1px); } 60% { height: calc(4px + var(--h) * 0.5px); } }
+    @keyframes call-think { 50% { opacity: 0.9; } }
+    @keyframes card-in { from { opacity: 0; transform: translateY(16px) scale(0.97); } }
     /* In the alusea.in panel, the panel's header already names Sara, so the welcome is kept short. */
     .embedded .welcome { padding: 2px 0 0; }
     .embedded .welcome .eyebrow-line { display: none; }
@@ -619,7 +667,6 @@
       <div id="starters" role="group"></div>
     </div>
     <div class="dock">
-      <p id="voice-status" role="status" hidden>Listening… Your browser may send your speech to its provider to turn it into text.</p>
       <form id="form">
         <button id="call" class="round-button" type="button" aria-label="Start a voice call">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -659,11 +706,13 @@
       <div id="call-bar" data-state="connecting" hidden>
         <div class="call-orb" aria-hidden="true"><img src="/sara.webp" alt="" width="54" height="54"></div>
         <div class="call-text">
+          <span class="call-name">Sara</span>
           <span class="call-title eyebrow-line" id="call-title">On a call with Sara</span>
           <span id="call-status" role="status"></span>
           <span class="call-hint" id="call-hint">Just speak. Sara stops when you talk.</span>
         </div>
         <span id="call-timer"></span>
+        <div id="call-wave" aria-hidden="true"></div>
         <button id="end-call" type="button">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M10.7 13.3a16 16 0 0 0 3.4 2.6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-3.3-2.6m-2.6-3.3A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9"></path>
@@ -707,7 +756,6 @@
         budgetCovers: (amount, area) => `${amount} could cover about ${area} sq ft`,
         cardIntro: "Here are a few that could work well for you.",
         priceNote: "Your final price depends on the size, glass and hardware, and our team will confirm it after measuring.",
-        callPrivacy: "Your voice goes to our speech provider so Sara can understand you.",
         callStart: "Start a voice call",
         endCall: "End call",
         callConnecting: "Connecting…",
@@ -758,7 +806,6 @@
         budgetCovers: (amount, area) => `${amount}-க்கு சுமார் ${area} சதுர அடி வரை கிடைக்கலாம்`,
         cardIntro: "உங்களுக்குப் பொருத்தமான சில தேர்வுகள் இதோ.",
         priceNote: "உங்கள் இறுதி விலை அளவு, கண்ணாடி மற்றும் ஹார்ட்வேரைப் பொறுத்தது. அளவீடு செய்த பிறகு எங்கள் குழு அதை உறுதிப்படுத்தும்.",
-        callPrivacy: "சாரா உங்களைப் புரிந்துகொள்ள, உங்கள் குரல் எங்கள் பேச்சு சேவை வழங்குநருக்கு அனுப்பப்படும்.",
         callStart: "குரல் அழைப்பைத் தொடங்கு",
         endCall: "அழைப்பை முடி",
         callConnecting: "இணைக்கிறது…",
@@ -809,7 +856,6 @@
         budgetCovers: (amount, area) => `${amount}-ന് ഏകദേശം ${area} ചതുരശ്ര അടി വരെ ലഭിച്ചേക്കാം`,
         cardIntro: "നിങ്ങൾക്ക് അനുയോജ്യമായ ചില ഓപ്ഷനുകൾ ഇതാ.",
         priceNote: "നിങ്ങളുടെ അന്തിമ വില വലുപ്പം, ഗ്ലാസ്, ഹാർഡ്‌വെയർ എന്നിവയെ ആശ്രയിച്ചിരിക്കും. അളവെടുത്ത ശേഷം ഞങ്ങളുടെ ടീം അത് സ്ഥിരീകരിക്കും.",
-        callPrivacy: "സാറായ്ക്ക് നിങ്ങളെ മനസ്സിലാക്കാൻ, നിങ്ങളുടെ ശബ്ദം ഞങ്ങളുടെ സ്പീച്ച് സേവനദാതാവിന് അയയ്ക്കും.",
         callStart: "വോയ്സ് കോൾ തുടങ്ങുക",
         endCall: "കോൾ നിർത്തുക",
         callConnecting: "കണക്റ്റ് ചെയ്യുന്നു…",
@@ -860,7 +906,6 @@
         budgetCovers: (amount, area) => `${amount}కు సుమారు ${area} చదరపు అడుగుల వరకు రావచ్చు`,
         cardIntro: "మీకు సరిపోయే కొన్ని ఎంపికలు ఇవి.",
         priceNote: "మీ తుది ధర పరిమాణం, గాజు మరియు హార్డ్‌వేర్‌పై ఆధారపడి ఉంటుంది. కొలతలు తీసుకున్న తర్వాత మా బృందం దాన్ని నిర్ధారిస్తుంది.",
-        callPrivacy: "సారా మిమ్మల్ని అర్థం చేసుకోవడానికి, మీ వాయిస్ మా స్పీచ్ సేవా ప్రదాతకు పంపబడుతుంది.",
         callStart: "వాయిస్ కాల్ ప్రారంభించండి",
         endCall: "కాల్ ముగించండి",
         callConnecting: "కనెక్ట్ అవుతోంది…",
@@ -911,7 +956,6 @@
         budgetCovers: (amount, area) => `${amount}ಗೆ ಸುಮಾರು ${area} ಚದರ ಅಡಿ ವರೆಗೆ ಸಿಗಬಹುದು`,
         cardIntro: "ನಿಮಗೆ ಹೊಂದುವ ಕೆಲವು ಆಯ್ಕೆಗಳು ಇಲ್ಲಿವೆ.",
         priceNote: "ನಿಮ್ಮ ಅಂತಿಮ ಬೆಲೆ ಗಾತ್ರ, ಗಾಜು ಮತ್ತು ಹಾರ್ಡ್‌ವೇರ್ ಮೇಲೆ ಅವಲಂಬಿತವಾಗಿರುತ್ತದೆ. ಅಳತೆ ಮಾಡಿದ ನಂತರ ನಮ್ಮ ತಂಡ ಅದನ್ನು ದೃಢಪಡಿಸುತ್ತದೆ.",
-        callPrivacy: "ಸಾರಾ ನಿಮ್ಮನ್ನು ಅರ್ಥಮಾಡಿಕೊಳ್ಳಲು, ನಿಮ್ಮ ಧ್ವನಿ ನಮ್ಮ ಸ್ಪೀಚ್ ಸೇವಾದಾರರಿಗೆ ಕಳುಹಿಸಲಾಗುತ್ತದೆ.",
         callStart: "ವಾಯ್ಸ್ ಕರೆ ಆರಂಭಿಸಿ",
         endCall: "ಕರೆ ಮುಗಿಸಿ",
         callConnecting: "ಸಂಪರ್ಕಿಸಲಾಗುತ್ತಿದೆ…",
@@ -946,8 +990,14 @@
     const CALL_MIN_SPEECH_MS = 600;
     // A call waits this long in silence before sending, so a short pause doesn't split one sentence into two paid turns.
     const CALL_PAUSE_MS = 1300;
+    // Speech that starts this soon after the last ended (about 2.5 s after the last word, as the end is noticed
+    // CALL_PAUSE_MS later) is the same sentence carrying on. Later speech is a new question.
+    const JOIN_WITHIN_MS = 1200;
+    // The most speech sent again when a sentence carries on, so a long wait can't grow it to minutes.
+    const MAX_JOINED_SECONDS = 30;
     // Short gaps between words don't stop the ripple, so it doesn't flicker.
     const VOICE_NOW_HOLD_MS = 250;
+    const CALL_WAVE_BARS = 30;
     // If a reply isn't back by then, the call screen shows a short "let me check" line. Nothing is spoken.
     const FILLER_DELAY_MS = 1500;
     // The server reads up to this much aloud.
@@ -974,7 +1024,6 @@
     const mic = document.getElementById("mic");
     const languageSelect = document.getElementById("language");
     const newChat = document.getElementById("new-chat");
-    const voiceStatus = document.getElementById("voice-status");
     const voiceBar = document.getElementById("voice-bar");
     const voiceWave = document.getElementById("voice-wave");
     const voiceTime = document.getElementById("voice-time");
@@ -985,6 +1034,7 @@
     const callBar = document.getElementById("call-bar");
     const callStatus = document.getElementById("call-status");
     const callTimer = document.getElementById("call-timer");
+    const callWave = document.getElementById("call-wave");
     const endCallButton = document.getElementById("end-call");
     const callBackButton = document.getElementById("call-back");
     const starters = document.getElementById("starters");
@@ -1021,6 +1071,16 @@
     // Between real speech starting and ending. An answer arriving then is held, as the customer may be carrying on.
     let callerTalking = false;
     let heldReply = null;
+    // When the customer's last speech ended and the current one started, to tell a pause mid-sentence from a new question.
+    let lastSpeechEndAt = 0;
+    let speechStartedAt = 0;
+    // The speech request waiting for an answer, marked carried when a newer request asks its speech again.
+    let pendingSpeech = null;
+    // Speech requests are numbered, so an older answer arriving after a newer one can't take the call's language back.
+    let speechRequests = 0;
+    let languageFromRequest = 0;
+    // Sara's first message, so a call's spoken greeting can take its place instead of a second introduction.
+    let greetingMessage = null;
     let voiceNowTimer = null;
     let saraSpeaking = false;
     let lastFiller = -1;
@@ -1061,7 +1121,6 @@
       document.getElementById("call-title").textContent = text.callTitle;
       document.getElementById("call-hint").textContent = text.callHint;
       languageSelect.setAttribute("aria-label", text.chooseLanguage);
-      voiceStatus.textContent = text.callPrivacy;
       document.getElementById("privacy-text").textContent = text.privacyNote;
       starters.setAttribute("aria-label", text.welcomeText);
       starters.replaceChildren(
@@ -1368,7 +1427,6 @@
       micListener = null;
       micActive = false;
       clearInterval(micClock);
-      voiceStatus.hidden = true;
       await closeListener(listener);
     }
 
@@ -1457,7 +1515,6 @@
       // Enough bars to fill the space the bar has, so the wide laptop view isn't half empty.
       const bars = Math.max(12, Math.floor((voiceWave.clientWidth + 3) / VOICE_BAR_STEP));
       voiceWave.replaceChildren(...Array.from({ length: bars }, () => document.createElement("i")));
-      voiceStatus.hidden = false;
       voiceCancel.focus();
       try {
         const listener = await createSpeechListener({
@@ -1489,6 +1546,8 @@
       unansweredSpeech = [];
       callerTalking = false;
       heldReply = null;
+      pendingSpeech = null;
+      lastSpeechEndAt = 0;
       clearTimeout(voiceNowTimer);
       callBar.classList.remove("voice-now");
       stopFiller();
@@ -1500,7 +1559,6 @@
       callListener = null;
       if (callAudio) callAudio.pause();
       callBar.hidden = true;
-      voiceStatus.hidden = true;
       form.hidden = false;
       languageSelect.disabled = false;
       newChat.disabled = false;
@@ -1557,10 +1615,12 @@
       fillerTimer = null;
     }
 
-    function showCallReply(data) {
+    function showCallReply(data, onScreen = true) {
       clearTimeout(fillerTimer);
-      addMessage("assistant", data.content || labels().cardIntro);
-      addCards(data.products);
+      if (onScreen) {
+        addMessage("assistant", data.content || labels().cardIntro);
+        addCards(data.products);
+      }
       saraInterrupted = false;
       // The customer said goodbye, so Sara hangs up once hers has been said, instead of waiting for more speech.
       if (!data.audio) {
@@ -1584,8 +1644,30 @@
       if (inCall && saraSpeaking && !saraInterrupted) callAudio.play().catch(finishSpeaking);
     }
 
+    // Each bar gets a fixed height for the pattern shown while Sara speaks; the customer's voice sets them live.
+    function buildCallWave() {
+      callWave.replaceChildren(...Array.from({ length: CALL_WAVE_BARS }, (_, number) => {
+        const bar = document.createElement("i");
+        bar.style.setProperty("--n", number);
+        bar.style.setProperty("--h", Math.round(6 + 16 * Math.abs(Math.sin(number * 1.7))));
+        return bar;
+      }));
+    }
+
+    // While the customer speaks, the newest level goes in on the right and the oldest drops off the left.
+    function addCallWaveLevel(frame) {
+      if (callBar.dataset.state !== "hearing" || !callWave.firstChild) return;
+      let total = 0;
+      for (const sample of frame) total += sample * sample;
+      const loudness = Math.min(1, Math.sqrt(Math.sqrt(total / frame.length)) * 2.2);
+      const bar = callWave.firstChild;
+      bar.style.height = `${Math.round(4 + loudness * 24)}px`;
+      callWave.append(bar);
+    }
+
     // Each 32 ms of sound says whether it's speech. The orb ripples while it is, and stops a moment after it isn't.
-    function showVoiceNow(probabilities) {
+    function showVoiceNow(probabilities, frame) {
+      if (frame) addCallWaveLevel(frame);
       if (probabilities.isSpeech < CALL_SILENCE_CONFIDENCE) return;
       callBar.classList.add("voice-now");
       clearTimeout(voiceNowTimer);
@@ -1622,46 +1704,77 @@
       showCallState();
     }
 
-    // An answer overtaken by a newer request is dropped: the newer one carries the same speech, so nothing is lost.
-    async function sendCallRequest(path, options) {
+    // An answer overtaken by a newer request comes back marked late, so it can still be shown, though not spoken.
+    async function sendCallRequest(path, options, keepLate = false) {
       const turn = ++callTurn;
       try {
         const response = await saraFetch(path, { method: "POST", ...options });
-        if (!inCall || turn !== callTurn) return null;
+        const current = turn === callTurn;
+        if (!inCall || (!current && !keepLate)) return null;
         if (response.status === 429) {
-          endCall(labels().callLimit);
+          if (current) endCall(labels().callLimit);
           return null;
         }
         if (!response.ok) throw new Error("The call request failed.");
         const data = await response.json();
-        return inCall && turn === callTurn ? data : null;
+        if (!inCall) return null;
+        return turn === callTurn ? data : { ...data, late: true };
       } catch {
         if (inCall && turn === callTurn) endCall(labels().error);
         return null;
       }
     }
 
-    // A pause ends a turn, but a customer who carries on before the answer comes back hasn't finished. Their new words
-    // are added to the unanswered ones and all of it is sent as one question, so a long sentence gets one answer.
-    // continues=1 tells Sara the earlier, partial question is asked again, so she doesn't keep its answer.
+    // A pause ends a turn. If the customer carries on within a moment, before the answer comes back, they hadn't
+    // finished: the new words join the unanswered ones and all of it goes as one question (continues=1, so Sara doesn't
+    // keep the partial one). If they speak after a longer silence, it's a new question: the earlier answer is still
+    // shown when it comes, without being spoken, and Sara speaks the answer to the newest question.
     async function sendCallerSpeech(samples) {
       callerTalking = false;
+      const continues = unansweredSpeech.length > 0 && speechStartedAt - lastSpeechEndAt <= JOIN_WITHIN_MS;
+      lastSpeechEndAt = Date.now();
+      const held = heldReply;
       heldReply = null;
-      const continues = unansweredSpeech.length > 0;
+      if (continues) {
+        if (pendingSpeech) pendingSpeech.carried = true;
+      } else {
+        if (held) showAsText(held);
+        unansweredSpeech = [];
+      }
       unansweredSpeech.push(samples);
+      const request = { carried: false, number: ++speechRequests };
+      pendingSpeech = request;
       waitingForReply = true;
       showCallState();
       planFiller(callTurn + 1);
       const data = await sendCallRequest(`/call/speech?language=${encodeURIComponent(callLanguage)}${continues ? "&continues=1" : ""}`, {
         headers: { "Content-Type": "audio/wav" },
-        body: encodeWav(joinSpeech(unansweredSpeech)),
-      });
+        body: encodeWav(joinSpeech(unansweredSpeech).slice(-MAX_JOINED_SECONDS * SPEECH_SAMPLE_RATE)),
+      }, true);
       if (!data) return;
+      // The call follows the language just spoken, even when this answer isn't the one Sara speaks.
+      if (data.language && request.number > languageFromRequest) {
+        callLanguage = data.language;
+        languageFromRequest = request.number;
+      }
+      if (data.late) {
+        if (!request.carried) showAsText(data);
+        return;
+      }
       if (callerTalking) {
         heldReply = data;
         return;
       }
       useCallReply(data);
+    }
+
+    // An answer to an earlier question, shown in the chat without being spoken.
+    function showAsText(data) {
+      if (!data.heard && !data.content) return;
+      if (data.heard) addMessage("user", data.heard);
+      addMessage("assistant", data.content || labels().cardIntro);
+      addCards(data.products);
+      showStarters(false);
     }
 
     function useCallReply(data) {
@@ -1704,7 +1817,10 @@
         negativeSpeechThreshold: CALL_SILENCE_CONFIDENCE,
         minSpeechMs: CALL_MIN_SPEECH_MS,
         redemptionMs: CALL_PAUSE_MS,
-        onSpeechStart: () => setCallState("hearing"),
+        onSpeechStart: () => {
+          speechStartedAt = Date.now();
+          setCallState("hearing");
+        },
         onSpeechRealStart: pauseSaraForCaller,
         onVADMisfire: ignoreShortSound,
         onSpeechEnd: sendCallerSpeech,
@@ -1731,8 +1847,8 @@
       callAudio.src = silentClip();
       callAudio.play().catch(() => {});
       setCallState("connecting");
-      voiceStatus.hidden = false;
       callTimer.textContent = "";
+      buildCallWave();
 
       try {
         await startCallListener();
@@ -1753,7 +1869,15 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ language: languageSelect.value }),
       });
-      if (data) showCallReply(data);
+      if (!data) return;
+      // The greeting is spoken, but Sara never introduces herself twice on screen. In a chat that hasn't started, it
+      // takes the place of the chat's greeting; under a conversation, nothing is added.
+      if (!starters.hidden && greetingMessage?.isConnected) {
+        const spoken = addMessage("assistant", data.content);
+        greetingMessage.replaceWith(spoken);
+        greetingMessage = spoken;
+      }
+      showCallReply(data, false);
     }
 
     function addMessage(type, text) {
@@ -1836,7 +1960,7 @@
     function showGreeting() {
       messages.replaceChildren();
       addWelcome();
-      addMessage("assistant", labels().greeting);
+      greetingMessage = addMessage("assistant", labels().greeting);
       showStarters(true);
     }
 

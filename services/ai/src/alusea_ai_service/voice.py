@@ -39,8 +39,9 @@ LANGUAGE_KEY_TERMS = {
     "kn-IN": ["ಬಾಗಿಲು", "ಕಿಟಕಿ", "ಶೋರೂಮ್", "ಕೊಯಮತ್ತೂರು", "ಸ್ಲೈಡಿಂಗ್", "ಅಲ್ಯೂಮಿನಿಯಂ", "ಬಾಲ್ಕನಿ", "ಅಡಿ"],
 }
 SURE_OF_LANGUAGE = 0.9
-# A short answer like "yes" or "8 feet" is English in any language, so it doesn't change the language.
-MIN_WORDS_TO_SWITCH_TO_ENGLISH = 3
+# A short answer like "yes", "ok" or "8 feet" sounds the same in any language, and detection guesses on a word or two,
+# so it takes this many words to move the call into English or from one Indian language to another.
+MIN_WORDS_TO_SWITCH = 3
 # Saved audio means a repeated sentence is only paid for once.
 CACHE_DIR = DATA_DIR / "voice_cache"
 MAX_SPOKEN_CHARACTERS = 1500
@@ -103,12 +104,12 @@ def split_speech(audio: bytes) -> list[bytes]:
 
 
 def chosen_language(found: str | None, sure: float | None, word_count: int, current: str) -> str:
-    """Decide the language of what was said. Detection can mix up Indian languages even when it's sure, so it never moves between them."""
-    if found == current or (sure or 0) < SURE_OF_LANGUAGE:
+    """Decide the language Sara answers in: the one the customer just spoke, when detection is sure of it.
+    Any Indian language moves an English call straight away. Moving into English, or between Indian languages, also
+    needs a few words, as short answers are the same in every language."""
+    if found == current or found not in LANGUAGE_KEY_TERMS or (sure or 0) < SURE_OF_LANGUAGE:
         return current
-    if current == "en-IN" and found in LANGUAGE_KEY_TERMS:
-        return found
-    if found == "en-IN" and word_count >= MIN_WORDS_TO_SWITCH_TO_ENGLISH:
+    if current == "en-IN" or word_count >= MIN_WORDS_TO_SWITCH:
         return found
     return current
 
@@ -125,6 +126,8 @@ def listen(audio: bytes, content_type: str, language: str) -> tuple[str, str] | 
     first = next(part for part in heard if part["transcript"])
     # Only words with letters count, so a phone number or a short name can't switch the call to English.
     spoken = chosen_language(first.get("language_code"), first.get("language_probability"), len(re.findall(r"[^\W\d_]{2,}", text)), language)
+    if spoken != language:
+        print(f"The call moved from {language} to {spoken}.")
     if spoken == first.get("language_code"):
         return text, spoken
     # Detection picked a language we don't trust, so its words are wrong too. This time Sarvam is told the language.

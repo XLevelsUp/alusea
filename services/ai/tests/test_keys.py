@@ -135,3 +135,17 @@ def test_groq_tries_the_same_model_on_the_next_key_before_the_backup_model(monke
     # Groq's limits are per model, so key 1 rests on the main model only.
     assert [key for _, key in keys.GROQ_KEYS.available(agent.MODEL)] == ["k2"]
     assert [key for _, key in keys.GROQ_KEYS.available(agent.GROQ_BACKUP_MODEL)] == ["k1", "k2"]
+
+
+def test_a_key_at_its_daily_limit_rests_an_hour(monkeypatch, capsys):
+    """Gemini's free tier ran out for the day, and Sara tried it again every minute."""
+    only_keys(monkeypatch, "GEMINI", "g1")
+    clock = {"now": 1000.0}
+    monkeypatch.setattr(keys.time, "time", lambda: clock["now"])
+    daily = Answer(429)
+    daily.text = '{"error": {"details": [{"quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier"}]}}'
+    monkeypatch.setattr(httpx, "post", lambda url, headers, **request: daily)
+    keys.post_with_keys(keys.GEMINI_KEYS, "https://gemini", "x-goog-api-key")
+    assert "reached its daily limit, so it rests for 3600 seconds" in capsys.readouterr().out
+    clock["now"] += 30 * 60
+    assert keys.GEMINI_KEYS.available() == []

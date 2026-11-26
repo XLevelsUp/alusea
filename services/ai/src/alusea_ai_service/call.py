@@ -15,9 +15,9 @@ from alusea_ai_service.tools import get_products
 from alusea_ai_service.translation import to_english, translate_reply
 from alusea_ai_service.voice import speak
 
-# A call lasts at most 5 minutes, about 10 back-and-forths, so this is the whole call. With only 8 messages, a size
-# given early fell out of what the AI saw and it asked for it again. More messages cost more tokens per turn.
-CALL_HISTORY_SENT_TO_MODEL = 20
+# Six back-and-forths: enough that a size given early isn't asked for again (8 messages lost it), without using up
+# Groq's per-minute tokens on every turn, which 20 did on one key.
+CALL_HISTORY_SENT_TO_MODEL = 12
 # Turns are kept in order within one server process, so Sara runs as a single process.
 MAX_TURN_LOCKS = 1000
 turn_locks: OrderedDict[str, threading.Lock] = OrderedDict()

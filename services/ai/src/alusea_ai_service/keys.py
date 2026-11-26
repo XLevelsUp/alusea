@@ -10,6 +10,8 @@ import time
 import httpx
 
 LIMIT_REST_SECONDS = 60
+# A daily limit won't lift in a minute, so a key that reached one rests an hour before it's tried again.
+DAILY_LIMIT_REST_SECONDS = 60 * 60
 # Sarvam answers 402 when an account's credit has run out, which a short rest won't fix.
 NO_CREDIT_REST_SECONDS = 60 * 60
 MAX_REST_SECONDS = 24 * 60 * 60
@@ -70,6 +72,12 @@ def wait_from(headers) -> float:
         return LIMIT_REST_SECONDS
 
 
+def daily_limit(answer) -> bool:
+    """Whether a refusal is for the day, as Gemini's free tier says with a quota named "...PerDay"."""
+    text = getattr(answer, "text", "") or ""
+    return "perday" in text.replace(" ", "").lower()
+
+
 def post_with_keys(ring: KeyRing, url: str, key_header: str, **request) -> httpx.Response:
     """POST with the first usable key, moving to the next when one is out of limit, credit or validity.
     Returns the last answer, so callers check it as before. Raises httpx.HTTPError if no key could be used."""
@@ -82,7 +90,9 @@ def post_with_keys(ring: KeyRing, url: str, key_header: str, **request) -> httpx
             # The provider couldn't be reached. Another key won't help with a timeout, but may with a refused connection.
             continue
         status = getattr(answer, "status_code", 200)
-        if status == 429:
+        if status == 429 and daily_limit(answer):
+            ring.rest(number, key, DAILY_LIMIT_REST_SECONDS, "reached its daily limit")
+        elif status == 429:
             ring.rest(number, key, wait_from(getattr(answer, "headers", {})), "reached its limit")
         elif status == 402:
             ring.rest(number, key, NO_CREDIT_REST_SECONDS, "has run out of credit")

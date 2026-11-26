@@ -95,7 +95,9 @@ The Supabase migration for Sara's tables is at `../../supabase/migrations/202611
    chat keeps its language. This stops a name like "Logesh" switching the chat.
 4. Otherwise Sarvam's `text-lid` decides, and the menu still wins over a different Indian language.
 
-Voice calls use Sarvam speech-to-text's own language detection instead (`voice.py`).
+Voice calls use Sarvam speech-to-text's own language detection instead (`voice.chosen_language`). Sara answers in the
+language just spoken when detection is at least 90% sure. An English call moves to an Indian language on any turn;
+moving into English or between Indian languages also needs 3+ words, since "ok" or "8 feet" fit every language.
 
 ### Voice calls
 - Speech-to-text: Sarvam `saaras:v4` with `KEY_TERMS` (English words, sent for **every** language) plus
@@ -108,9 +110,10 @@ Voice calls use Sarvam speech-to-text's own language detection instead (`voice.p
 - `call.is_noise()` ignores turns with no real words, but keeps short answers such as "hmm" and "ok".
 - `call.is_goodbye()` spots "bye" in any of the five languages. Sara then says a short goodbye, the reply carries
   `end_call`, and the page hangs up once it has been spoken.
-- A pause of `CALL_PAUSE_MS` ends a turn. If the customer carries on before the answer comes back, the page sends all
-  their unanswered speech again with `continues=1`, so a long sentence gets one answer. `call.SpokenTurn` then skips
-  the older turn, or deletes its answer if it was already saved, so the AI never keeps half a question.
+- A pause of `CALL_PAUSE_MS` ends a turn. If the customer carries on within `JOIN_WITHIN_MS` of that, before the answer
+  comes back, the page sends their unanswered speech again (at most `MAX_JOINED_SECONDS`) with `continues=1`, so a long
+  sentence gets one answer. `call.SpokenTurn` then skips the older turn, or deletes its answer if it was already saved.
+  Speech after a longer silence is a new question: the earlier answer is shown when it arrives, without being spoken.
 
 ### Database (`store.py`)
 - Queries use `?` for values and `{s}` before table names; `Database.run` converts them for Postgres (`%s`, `ai.`).

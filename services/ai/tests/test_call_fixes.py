@@ -78,7 +78,8 @@ def test_the_customers_own_words_go_to_the_ai_with_the_english(fake_services, mo
 
 
 def test_the_ai_sees_enough_history_to_remember_a_size_given_early():
-    assert call.CALL_HISTORY_SENT_TO_MODEL == 20 and main.HISTORY_SENT_TO_MODEL == 24
+    """20 call messages used up Groq's per-minute tokens on one key; 12 still holds sizes and rooms given early."""
+    assert call.CALL_HISTORY_SENT_TO_MODEL == 12 and main.HISTORY_SENT_TO_MODEL == 24
 
 
 def test_a_corrected_name_updates_the_same_lead():
@@ -152,10 +153,17 @@ def test_the_instructions_cover_the_call_fixes():
     assert "about 70 days" in instructions and "about 70 days" in prompt.SYSTEM_PROMPT
 
 
-def test_the_page_sends_a_paused_sentence_as_one_question_and_waits_longer_in_a_pause(client):
+def test_the_page_joins_only_a_short_pause_and_shows_an_earlier_answer_as_text(client):
+    """Speech joined to every unanswered turn grew to 104 seconds while Sara was slow, and she never got to answer.
+    Only a pause of a moment joins now; later speech is a new question, and the earlier answer shows without being spoken."""
     page = client.get("/").text
-    assert "encodeWav(joinSpeech(unansweredSpeech))" in page and '"&continues=1"' in page
-    assert "data.late" not in page and "keepLate" not in page
+    assert "speechStartedAt - lastSpeechEndAt <= JOIN_WITHIN_MS" in page and '"&continues=1"' in page
+    assert "joinSpeech(unansweredSpeech).slice(-MAX_JOINED_SECONDS * SPEECH_SAMPLE_RATE)" in page
+    assert "if (!request.carried) showAsText(data);" in page
+    # The call follows the language just spoken even when the answer comes back late and isn't spoken.
+    assert page.index("if (data.language && request.number > languageFromRequest) {") < page.index("if (data.late) {")
+    # An older answer arriving after a newer one doesn't take the language back.
+    assert "const request = { carried: false, number: ++speechRequests };" in page
     assert "redemptionMs: CALL_PAUSE_MS" in page and "CALL_PAUSE_MS = 1300" in page
 
 
