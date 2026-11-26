@@ -52,10 +52,10 @@ MAX_VOICE_CACHE_BYTES = int(os.getenv("MAX_VOICE_CACHE_MB", "500")) * 1_000_000
 VOICE_MODEL = "bulbul:v3"
 VOICE_SPEAKER = "ritu"
 GEMINI_VOICE_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-GEMINI_VOICE_MODEL = os.getenv("GEMINI_TTS_MODEL", "gemini-3.1-flash-tts-preview")
+# 3.8 is a finished model, not a preview, at less than half the price of 3.1 ($9 per million audio tokens in 2026).
+GEMINI_VOICE_MODEL = os.getenv("GEMINI_TTS_MODEL", "gemini-3.8-flash-tts")
 GEMINI_VOICE = os.getenv("GEMINI_TTS_VOICE", "Kore")
-# Gemini reads this as how to speak, not as words to say.
-GEMINI_VOICE_STYLE = "Say this warmly and clearly, like a friendly showroom advisor in India:"
+# Only Sara's words are sent. A tone line such as "Say this warmly:" steered Gemini 3.1, but 3.8 reads it out loud.
 GEMINI_TIMEOUT_SECONDS = 15
 GEMINI_SAMPLE_RATE = 24000
 
@@ -201,7 +201,8 @@ def speak(text: str, language: str) -> str | None:
     audio = None
     # A Gemini key at its limit rests (keys.py), so while every key rests Sarvam speaks without asking Gemini first.
     if GEMINI_KEYS.available():
-        audio = saved_or_new(f"gemini|{GEMINI_VOICE_MODEL}|{GEMINI_VOICE}", language, text, speak_with_gemini)
+        # "words only" keeps clips saved with the spoken tone line from being played again.
+        audio = saved_or_new(f"gemini|{GEMINI_VOICE_MODEL}|{GEMINI_VOICE}|words only", language, text, speak_with_gemini)
     return audio or saved_or_new(f"{VOICE_MODEL}|{VOICE_SPEAKER}", language, text, speak_with_sarvam)
 
 
@@ -231,7 +232,7 @@ def speak_with_gemini(text: str, language: str) -> str | None:
             GEMINI_VOICE_URL.format(model=GEMINI_VOICE_MODEL),
             "x-goog-api-key",
             json={
-                "contents": [{"parts": [{"text": f"{GEMINI_VOICE_STYLE}\n{text}"}]}],
+                "contents": [{"parts": [{"text": text}]}],
                 "generationConfig": {
                     "responseModalities": ["AUDIO"],
                     "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": GEMINI_VOICE}}},

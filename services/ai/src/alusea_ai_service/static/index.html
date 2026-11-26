@@ -440,7 +440,9 @@
       border-radius: 9999px;
     }
     #call-bar[data-state="connecting"] .call-orb::after { animation: breathe 1.4s ease-in-out infinite; }
-    #call-bar[data-state="hearing"] .call-orb::after { border-color: var(--plate-white); animation: ripple 0.9s ease-out infinite; }
+    /* Ripples only while the customer's voice is heard right now (voice-now), not through their pauses. */
+    #call-bar[data-state="hearing"] .call-orb::after { border-color: var(--plate-white); }
+    #call-bar[data-state="hearing"].voice-now .call-orb::after { animation: ripple 0.9s ease-out infinite; }
     #call-bar[data-state="thinking"] .call-orb::after { border-style: dashed; border-color: rgb(245 246 243 / 0.7); animation: spin 2.4s linear infinite; }
     #call-bar[data-state="speaking"] .call-orb::after { border-color: var(--plate-white); animation: pulse 1.1s ease-in-out infinite; }
     @keyframes breathe { 50% { opacity: 0.3; } }
@@ -944,6 +946,8 @@
     const CALL_MIN_SPEECH_MS = 600;
     // A call waits this long in silence before sending, so a short pause doesn't split one sentence into two paid turns.
     const CALL_PAUSE_MS = 1300;
+    // Short gaps between words don't stop the ripple, so it doesn't flicker.
+    const VOICE_NOW_HOLD_MS = 250;
     // If a reply isn't back by then, the call screen shows a short "let me check" line. Nothing is spoken.
     const FILLER_DELAY_MS = 1500;
     // The server reads up to this much aloud.
@@ -1017,6 +1021,7 @@
     // Between real speech starting and ending. An answer arriving then is held, as the customer may be carrying on.
     let callerTalking = false;
     let heldReply = null;
+    let voiceNowTimer = null;
     let saraSpeaking = false;
     let lastFiller = -1;
     let fillerTimer = null;
@@ -1484,6 +1489,8 @@
       unansweredSpeech = [];
       callerTalking = false;
       heldReply = null;
+      clearTimeout(voiceNowTimer);
+      callBar.classList.remove("voice-now");
       stopFiller();
       saraSpeaking = false;
       waitingForReply = false;
@@ -1575,6 +1582,14 @@
       callAudio.onerror = finishSpeaking;
       callAudio.src = `data:audio/wav;base64,${data.audio}`;
       if (inCall && saraSpeaking && !saraInterrupted) callAudio.play().catch(finishSpeaking);
+    }
+
+    // Each 32 ms of sound says whether it's speech. The orb ripples while it is, and stops a moment after it isn't.
+    function showVoiceNow(probabilities) {
+      if (probabilities.isSpeech < CALL_SILENCE_CONFIDENCE) return;
+      callBar.classList.add("voice-now");
+      clearTimeout(voiceNowTimer);
+      voiceNowTimer = setTimeout(() => callBar.classList.remove("voice-now"), VOICE_NOW_HOLD_MS);
     }
 
     // If the customer starts talking, Sara pauses straight away so it feels like a real call.
@@ -1693,6 +1708,7 @@
         onSpeechRealStart: pauseSaraForCaller,
         onVADMisfire: ignoreShortSound,
         onSpeechEnd: sendCallerSpeech,
+        onFrameProcessed: showVoiceNow,
       });
       await callListener.start();
     }

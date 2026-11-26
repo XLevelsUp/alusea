@@ -61,3 +61,18 @@ def test_after_geminis_limit_sarvam_speaks_for_a_while_without_asking_gemini_fir
     voice.speak("First sentence", "en-IN")
     voice.speak("Second sentence", "en-IN")
     assert asked == ["gemini", "sarvam", "sarvam"]
+
+
+def test_only_saras_words_go_to_gemini(monkeypatch):
+    """Gemini 3.8 read a tone line ("Say this warmly...") out loud at the start of every reply."""
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    sent = []
+
+    def post(url, json=None, **request):
+        sent.append(json["contents"][0]["parts"][0]["text"])
+        data = {"inlineData": {"mimeType": "audio/L16;rate=24000", "data": base64.b64encode(PCM).decode()}}
+        return Answer(200, {"candidates": [{"content": {"parts": [data]}}]})
+
+    monkeypatch.setattr(httpx, "post", post)
+    voice.speak("Which room is this for?", "en-IN")
+    assert sent == ["Which room is this for?"]

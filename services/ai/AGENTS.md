@@ -100,7 +100,7 @@ Voice calls use Sarvam speech-to-text's own language detection instead (`voice.p
 ### Voice calls
 - Speech-to-text: Sarvam `saaras:v4` with `KEY_TERMS` (English words, sent for **every** language) plus
   `LANGUAGE_KEY_TERMS[language]` (extra words in that language's script; English has none).
-- Text-to-speech: Gemini (`GEMINI_TTS_MODEL`, default `gemini-3.1-flash-tts-preview`, voice `GEMINI_TTS_VOICE`, default
+- Text-to-speech: Gemini (`GEMINI_TTS_MODEL`, default `gemini-3.8-flash-tts`, voice `GEMINI_TTS_VOICE`, default
   `Kore`) when `GEMINI_API_KEY` is set. Sarvam `bulbul:v3`, speaker `ritu`, takes over when Gemini has no key or fails,
   and for 60 seconds after Gemini's limit is hit. Each is one voice for all five languages.
 - "Thinking" fillers are shown **on screen only**, in the call's language (`callFillers` in `index.html`); they are

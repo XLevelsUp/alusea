@@ -48,3 +48,9 @@ def test_changing_language_keeps_the_chat_on_screen():
     handler = re.search(r'languageSelect\.addEventListener\("change", \(\) => \{(.*?)\n    \}\);', page, re.S).group(1)
     assert "loadHistory" not in handler
     assert "if (!starters.hidden) showGreeting();" in handler
+
+
+def test_the_call_orb_ripples_only_while_a_voice_is_heard():
+    page = PAGE.read_text(encoding="utf-8")
+    assert '#call-bar[data-state="hearing"].voice-now .call-orb::after { animation: ripple' in page
+    assert "onFrameProcessed: showVoiceNow" in page
