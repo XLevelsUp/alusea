@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Script from "next/script";
 import WhatsAppButton from "@/components/ad/WhatsAppButton";
 import WhatsAppPrompt from "@/components/ad/WhatsAppPrompt";
 
@@ -57,6 +58,25 @@ const Check = () => (
 export default function AdLandingPage() {
   return (
     <div data-ad-landing className="bg-plate-white text-blueberry">
+      {/* Google tags for the ad campaign (GTM-K89B3V6W and the analytics container GTM-PJ4LM276), on this page only; they load as soon as the page is interactive so ad clicks and conversions are not missed. */}
+      <Script
+        id="ad-google-tag"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-K89B3V6W');
+            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-PJ4LM276');
+          `,
+        }}
+      />
+      <noscript>
+        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K89B3V6W" height="0" width="0" style={{ display: "none", visibility: "hidden" }} title="Google Tag Manager" />
+        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PJ4LM276" height="0" width="0" style={{ display: "none", visibility: "hidden" }} title="Google Tag Manager analytics" />
+      </noscript>
+
       {/* Top bar: the logo is not a link, so the visitor stays on this page. */}
       <div className="sticky top-0 z-40 border-b border-stem-grey/30 bg-plate-white/90 backdrop-blur-md">
         <div className="shell flex h-16 items-center justify-between gap-4">
