@@ -14,7 +14,7 @@ def answering(monkeypatch, *replies):
         sent.append(messages)
         return ai_answer(next(answers))
 
-    monkeypatch.setattr(agent, "client", fake_groq(create))
+    monkeypatch.setattr(agent, "groq_client", lambda key, fake=fake_groq(create): fake)
     return sent
 
 

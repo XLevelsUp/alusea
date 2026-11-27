@@ -1,4 +1,3 @@
-import os
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -8,6 +7,7 @@ from dotenv import load_dotenv
 
 from alusea_ai_service.agent import REPEATING_WORDS
 from alusea_ai_service.cards import markers_in, remove_markers
+from alusea_ai_service.keys import SARVAM_KEYS, post_with_keys
 from alusea_ai_service.meter import count, in_threads
 from alusea_ai_service.prompt import LANGUAGES
 
@@ -44,6 +44,9 @@ ROMAN_WORDS = {
         "vendaam", "nandri", "vanakkam", "aama", "aamaa", "idhu", "adhu", "inga", "anga", "apram", "appuram",
         "kudunga", "kodunga", "paarunga", "vilai", "kathavu", "jannal", "neenga", "nenga", "innaikku", "naalaikku",
         "veetuku", "veettukku", "veettula", "panreenga", "panringa", "irukkanga", "irukkeenga", "mattum", "thaan",
+        "panra", "pannra", "pannala", "pannla", "pannalam", "panrom", "kette", "ketten", "kekkuren", "kekuren", "vera",
+        "sollala", "theriyuma", "puriyutha", "eppadi", "epdi", "irukkingala", "irukeengala", "saptiya",
+        "saapteengala", "seekiram", "periya", "chinna", "kudukkalaam", "paakalaam", "vaanganum", "vangalaam",
     },
     "ml-IN": {
         "njan", "njaan", "ente", "enikku", "enikk", "ningal", "ningalude", "ningalkku", "venam", "venda", "undo",
@@ -51,25 +54,54 @@ ROMAN_WORDS = {
         "paranju", "cheyyam", "cheyyan", "sheri", "illallo", "kittum", "vila", "vathil", "vaathil", "janala",
         "veettil", "tharumo", "kurachu", "valare", "nannayi", "thaangal", "thaangalude", "kodukkam",
         "ariyilla", "manassilayilla", "vilikkam", "vilikku",
+        "sukhamaano", "sughamaano", "sukhamano", "sukham", "naale", "engottaanu", "engottu", "varunnathu", "varunnu",
+        "cheyyunnu", "cheyyano", "ningalkk", "parayamo", "kaanam", "kanam", "ivide", "avide",
+        "pinne", "ille", "ethra", "ethrayaanu", "kaanaan", "vannu", "pokunnu", "venamo", "undallo", "aayirikkum",
+        "cheyyumo", "tharam", "nokkatte", "sughamano",
     },
     "te-IN": {
         "nenu", "naaku", "naku", "meeru", "meeku", "kavali", "kaavali", "kavalanu", "undi", "ledu", "ledhu", "enti",
         "emiti", "cheppandi", "cheyandi", "chesthara", "ivvandi", "dhara", "ekkada", "ippudu", "bagundi", "manchidi",
         "thalupu", "thalupulu", "kitiki", "kitikilu", "intlo", "intiki", "memu", "andi", "garu", "avunu", "kaadu",
         "chudandi", "telusu", "teliyadu", "cheyyandi", "mee",
+        "enduku", "ela", "elaa", "unnaru", "unnava", "cheppu", "chestanu", "kavalante", "emaina", "ekkuva", "takkuva",
+        "bagunnara", "bagunnava", "chestharu", "vastanu", "vachi", "chupinchandi",
     },
     "kn-IN": {
         "naanu", "nanage", "nange", "neevu", "nimma", "nimage", "beku", "bekagide", "beda", "ide", "yenu", "hege",
         "hegide", "yaavdu", "yavudu", "bagilu", "kitaki", "mane", "maneya", "manege", "maadi", "heli", "helri", "ondu",
         "eshtu", "estu", "chennagide", "banni", "houdu", "illri", "swalpa", "svalpa", "gottilla", "artha",
+        "hegiddira", "hegidiya", "yaake", "yelli", "maadbeku", "kodi", "gottu", "barthini", "beko", "idya", "illva",
+        "torisi", "hogbeku", "maadthini",
     },
 }
 
 
+def squashed(word: str) -> str:
+    """The word with doubled letters made single, so spellings people mix up match: "ena" and "enna", "pannra" and
+    "panra", "sukhamaano" and "sukhamano"."""
+    return re.sub(r"(.)\1+", r"\1", word)
+
+
+SQUASHED_WORDS = {language: {squashed(word) for word in words} for language, words in ROMAN_WORDS.items()}
+# Everyday English a customer might type in a short message. A short message with none of these, and not written as a
+# name, is checked by Sarvam instead of being taken as English: "vera ena pannla" was answered in English.
+COMMON_ENGLISH = {
+    "hi", "hello", "hey", "ok", "okay", "yes", "yeah", "no", "not", "thanks", "thank", "you", "please", "sure", "fine",
+    "good", "great", "nice", "cool", "bye", "morning", "evening", "what", "how", "why", "where", "when", "who", "which",
+    "is", "are", "am", "the", "a", "an", "i", "my", "me", "it", "this", "that", "for", "of", "to", "in", "on", "and",
+    "or", "need", "want", "show", "call", "back", "price", "prices", "cost", "door", "doors", "window", "windows",
+    "sliding", "glass", "aluminium", "aluminum", "upvc", "frame", "size", "quote", "visit", "showroom", "can", "do",
+    "help", "more", "details", "detail", "other", "options", "send", "tell", "about", "kitchen", "bedroom", "balcony",
+    "hall", "room", "bathroom", "office", "home", "house", "partition", "estimate", "budget", "delivery", "time",
+}
+SHORTEST_CHECKED_MESSAGE = 2
+
+
 def language_from_words(message: str) -> str | None:
     """The language whose everyday words the message uses most, or None if there are none or it's a tie."""
-    words = re.findall(r"[a-z]+", message.lower())
-    hits = {language: sum(word in listed for word in words) for language, listed in ROMAN_WORDS.items()}
+    words = [squashed(word) for word in re.findall(r"[a-z]+", message.lower())]
+    hits = {language: sum(word in listed for word in words) for language, listed in SQUASHED_WORDS.items()}
     best = max(hits.values())
     winners = [language for language, count in hits.items() if count == best]
     return winners[0] if best and len(winners) == 1 else None
@@ -116,9 +148,10 @@ def keeps_facts(english: str, translated: str) -> bool:
 def ask_sarvam(text: str, source: str, target: str, mode: str, script: str | None = None) -> str | None:
     started = time.perf_counter()
     try:
-        response = httpx.post(
+        response = post_with_keys(
+            SARVAM_KEYS,
             SARVAM_TRANSLATE_URL,
-            headers={"api-subscription-key": os.environ["SARVAM_API_KEY"]},
+            "api-subscription-key",
             json={
                 "input": text,
                 "source_language_code": source,
@@ -168,9 +201,23 @@ def language_in_letters(message: str, menu: str, earlier: str | None = None) -> 
     if found:
         return menu if menu != "en-IN" else found
     # Sizes and names don't count: "8 x 10 ft sliding door price" leaves three words, too few for Sarvam to judge.
-    if len(re.findall(r"[^\W\d_]+", language_words(message))) < MIN_WORDS_TO_CHANGE_LANGUAGE:
+    words = re.findall(r"[^\W\d_]+", language_words(message))
+    if len(words) < MIN_WORDS_TO_CHANGE_LANGUAGE and not short_but_not_english(words):
         return earlier or menu
     return checked_language(message, menu)
+
+
+def short_but_not_english(words: list[str]) -> bool:
+    """Whether a short message is worth Sarvam's check: two or three words, none of them everyday English, and not
+    written like a name ("Logesh Kumar"), which Sarvam once read as Malayalam."""
+    # A message with listed words from two languages is a tie, which stays with the chat's language.
+    listed = any(squashed(word.lower()) in language_words for word in words for language_words in SQUASHED_WORDS.values())
+    return (
+        len(words) >= SHORTEST_CHECKED_MESSAGE
+        and not listed
+        and not any(word.lower() in COMMON_ENGLISH for word in words)
+        and not all(word[:1].isupper() for word in words)
+    )
 
 
 def language_words(message: str) -> str:
@@ -188,9 +235,10 @@ def checked_language(message: str, menu: str) -> str:
     if not re.search(r"[^\W\d_]", words):
         return "en-IN"
     try:
-        response = httpx.post(
+        response = post_with_keys(
+            SARVAM_KEYS,
             SARVAM_CHECK_URL,
-            headers={"api-subscription-key": os.environ["SARVAM_API_KEY"]},
+            "api-subscription-key",
             json={"input": words[:MAX_CHECK_CHARACTERS]},
             timeout=CHECK_TIMEOUT_SECONDS,
         )

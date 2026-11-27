@@ -57,7 +57,7 @@ def test_language_rules_for_speech():
     assert choose("ta-IN", 1.0, 2, "en-IN") == "ta-IN"
     assert choose("en-IN", 1.0, 5, "ta-IN") == "en-IN"
     assert choose("en-IN", 1.0, 2, "ta-IN") == "ta-IN"
-    assert choose("ta-IN", 1.0, 6, "ml-IN") == "ml-IN"
+    assert choose("ta-IN", 1.0, 6, "ml-IN") == "ta-IN"
     assert choose("hi-IN", 1.0, 6, "en-IN") == "en-IN"
     assert choose("en-IN", 0.5, 6, "ta-IN") == "ta-IN"
 
@@ -106,3 +106,24 @@ def test_only_hours_questions_get_the_hours_line():
         assert "8 am" in (call.quick_reply(question, "en-IN", False) or ""), question
     for question in ("can this door open fully", "does the window open outwards"):
         assert call.quick_reply(question, "en-IN", False) is None, question
+
+
+def test_sara_answers_in_the_language_just_spoken(monkeypatch):
+    """Whatever the customer speaks, Sara answers in it from that turn, when detection is sure."""
+    def sarvam(detected):
+        def write_part(audio, content_type, language_code, terms_language):
+            code = detected if language_code == "unknown" else language_code
+            return {"transcript": "naan oru balcony door vaanganum please", "language_code": code, "language_probability": 0.97}
+        return write_part
+
+    for current, spoken in (("ta-IN", "ml-IN"), ("ml-IN", "te-IN"), ("en-IN", "kn-IN"), ("te-IN", "en-IN")):
+        monkeypatch.setattr(voice, "write_part", sarvam(spoken))
+        assert voice.listen(b"x", "audio/wav", current)[1] == spoken
+
+
+def test_short_or_unsure_speech_keeps_the_calls_language():
+    choose = voice.chosen_language
+    assert choose("ml-IN", 1.0, 2, "ta-IN") == "ta-IN"
+    assert choose("en-IN", 1.0, 2, "ta-IN") == "ta-IN"
+    assert choose("ml-IN", 0.6, 6, "ta-IN") == "ta-IN"
+    assert choose("ta-IN", 1.0, 1, "en-IN") == "ta-IN"

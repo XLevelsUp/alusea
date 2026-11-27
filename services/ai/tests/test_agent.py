@@ -25,7 +25,7 @@ def failing_models(monkeypatch, problems):
             raise problems[request["model"]]()
         return ai_answer(f"from {request['model']}")
 
-    monkeypatch.setattr(agent, "client", fake_groq(create))
+    monkeypatch.setattr(agent, "groq_client", lambda key, fake=fake_groq(create): fake)
     return tried
 
 
@@ -55,12 +55,12 @@ def test_all_models_down_raises_the_limit_with_its_wait(monkeypatch):
 
 def test_an_empty_reply_is_asked_for_once_more(monkeypatch):
     answers = iter([ai_answer(None), ai_answer("Which room is this for?")])
-    monkeypatch.setattr(agent, "client", fake_groq(lambda **request: next(answers)))
+    monkeypatch.setattr(agent, "groq_client", lambda key, fake=fake_groq(lambda **request: next(answers)): fake)
     assert agent.generate_reply([], "kitchen ku paakanu") == "Which room is this for?"
 
 
 def test_two_empty_replies_fail(monkeypatch):
-    monkeypatch.setattr(agent, "client", fake_groq(lambda **request: ai_answer("")))
+    monkeypatch.setattr(agent, "groq_client", lambda key, fake=fake_groq(lambda **request: ai_answer("")): fake)
     with pytest.raises(RuntimeError):
         agent.generate_reply([], "kitchen ku paakanu")
 

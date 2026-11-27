@@ -38,10 +38,34 @@ def test_an_overtaken_reply_is_shown_but_not_voiced(client, fake_services, monke
 
 
 def test_only_the_newest_spoken_turn_is_voiced():
-    first = main.newest_turn_check("visitor")
-    assert first()
-    second = main.newest_turn_check("visitor")
-    assert not first() and second()
+    first = call.SpokenTurn("visitor")
+    assert first.still_wanted()
+    second = call.SpokenTurn("visitor")
+    assert not first.still_wanted() and second.still_wanted()
+
+
+def test_a_turn_carried_on_by_a_newer_one_is_neither_answered_nor_kept(client, fake_services):
+    """The customer paused mid-sentence and carried on, so the newer turn asks the whole sentence. One answer is kept."""
+    first = call.SpokenTurn("v-carry")
+    call.SpokenTurn("v-carry", continues=True)
+    assert call.call_turn("v-carry", "I want a door", "en-IN", turn=first) == call.CARRIED_ON
+    assert store.load_messages("v-carry") == []
+
+
+def test_an_answer_saved_before_the_customer_carried_on_is_removed(client, fake_services):
+    first = call.SpokenTurn("v-late")
+    call.call_turn("v-late", "Hello there I want a door", "en-IN", turn=first)
+    assert len(store.load_messages("v-late")) == 2
+    whole = call.SpokenTurn("v-late", continues=True)
+    call.call_turn("v-late", "Hello there I want a door for my balcony please", "en-IN", turn=whole)
+    saved = store.load_messages("v-late")
+    assert [item["content"] for item in saved if item["role"] == "user"] == ["Hello there I want a door for my balcony please"]
+
+
+def test_a_new_question_after_an_answer_keeps_the_earlier_one(client, fake_services):
+    call.call_turn("v-next", "Hello there I want a door", "en-IN", turn=call.SpokenTurn("v-next"))
+    call.call_turn("v-next", "Show me a window for my kitchen please", "en-IN", turn=call.SpokenTurn("v-next"))
+    assert len(store.load_messages("v-next")) == 4
 
 
 def test_the_customers_own_words_go_to_the_ai_with_the_english(fake_services, monkeypatch):
@@ -53,8 +77,9 @@ def test_the_customers_own_words_go_to_the_ai_with_the_english(fake_services, mo
     assert store.load_for_model("v1", 2)[0]["content"] == "Is the sliding door in good condition?"
 
 
-def test_calls_send_less_history_to_the_ai():
-    assert call.CALL_HISTORY_SENT_TO_MODEL == 8
+def test_the_ai_sees_enough_history_to_remember_a_size_given_early():
+    """20 call messages used up Groq's per-minute tokens on one key; 12 still holds sizes and rooms given early."""
+    assert call.CALL_HISTORY_SENT_TO_MODEL == 12 and main.HISTORY_SENT_TO_MODEL == 24
 
 
 def test_a_corrected_name_updates_the_same_lead():
@@ -128,7 +153,50 @@ def test_the_instructions_cover_the_call_fixes():
     assert "about 70 days" in instructions and "about 70 days" in prompt.SYSTEM_PROMPT
 
 
-def test_the_page_shows_an_overtaken_reply_and_waits_longer_in_a_pause(client):
+def test_the_page_joins_only_a_short_pause_and_shows_an_earlier_answer_as_text(client):
+    """Speech joined to every unanswered turn grew to 104 seconds while Sara was slow, and she never got to answer.
+    Only a pause of a moment joins now; later speech is a new question, and the earlier answer shows without being spoken."""
     page = client.get("/").text
-    assert "if (data.late)" in page and "keepLate = false" in page
+    assert "speechStartedAt - lastSpeechEndAt <= JOIN_WITHIN_MS" in page and '"&continues=1"' in page
+    assert "joinSpeech(unansweredSpeech).slice(-MAX_JOINED_SECONDS * SPEECH_SAMPLE_RATE)" in page
+    assert "if (!request.carried) showAsText(data);" in page
+    # The call follows the language just spoken even when the answer comes back late and isn't spoken.
+    assert page.index("if (data.language && request.number > languageFromRequest) {") < page.index("if (data.late) {")
+    # An older answer arriving after a newer one doesn't take the language back.
+    assert "const request = { carried: false, number: ++speechRequests };" in page
     assert "redemptionMs: CALL_PAUSE_MS" in page and "CALL_PAUSE_MS = 1300" in page
+
+
+def test_a_sentence_sent_again_with_continues_keeps_one_question_and_answer(client, fake_services, monkeypatch):
+    heard = iter([("I want a door", "en-IN"), ("I want a door for my balcony please", "en-IN")])
+    monkeypatch.setattr(main, "listen", lambda speech, content_type, language: next(heard))
+    client.post("/call/speech?language=en-IN", content=b"x", **WAV)
+    data = client.post("/call/speech?language=en-IN&continues=1", content=b"xy", **WAV).json()
+    assert data["heard"] == "I want a door for my balcony please" and data["audio"] == "audio"
+    visitor = client.cookies.get(main.COOKIE_NAME)
+    assert [item["content"] for item in store.load_messages(visitor) if item["role"] == "user"] == ["I want a door for my balcony please"]
+
+
+def test_a_note_the_ai_wrote_to_itself_is_taken_out_of_its_reply():
+    reply = "Could you tell me the width and height? Once they give the size, we should continue. Tell me and I'll find the door."
+    assert agent.drop_planning_notes(reply) == "Could you tell me the width and height? Tell me and I'll find the door."
+    for kept in ("Our team will call you once they confirm the slot.", "Which room is this for? It helps me pick the right door."):
+        assert agent.drop_planning_notes(kept) == kept
+
+
+def test_a_goodbye_ends_the_call_after_saras_reply(client, fake_services, monkeypatch):
+    """The customer said "bye bye" and Sara said goodbye, but the call stayed open waiting for more speech."""
+    asked = []
+    monkeypatch.setattr(call, "generate_reply", lambda history, message, language, call=False, visitor_id=None: asked.append(message) or "Thank you, see you at the showroom. Bye!")
+    reply = call.call_turn("v-bye", "I don't need anything else. Bye bye.", "en-IN")
+    assert reply["end_call"] is True and "the call ends after your reply" in asked[0]
+    assert call.call_turn("v-bye", "I want a door for my bike shed please", "en-IN")["end_call"] is False
+    for spoken in ("சரி பை பை", "ok బై", "ಸರಿ ಬೈ ಬೈ", "goodbye Sara"):
+        assert call.is_goodbye(spoken), spoken
+    for other in ("பை எடுத்துட்டு வரேன்", "ബൈക്ക് വെക്കാൻ", "nearby showroom", "buy a door"):
+        assert not call.is_goodbye(other), other
+
+
+def test_the_page_hangs_up_after_saras_goodbye(client):
+    page = client.get("/").text
+    assert page.count("if (data.end_call) return endCall();") == 2

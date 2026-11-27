@@ -13,6 +13,7 @@ from pathlib import Path
 import httpx
 from dotenv import load_dotenv
 
+from alusea_ai_service.keys import GEMINI_KEYS, SARVAM_KEYS, post_with_keys
 from alusea_ai_service.meter import count, in_threads
 from alusea_ai_service.store import DATA_DIR
 
@@ -38,17 +39,26 @@ LANGUAGE_KEY_TERMS = {
     "kn-IN": ["ಬಾಗಿಲು", "ಕಿಟಕಿ", "ಶೋರೂಮ್", "ಕೊಯಮತ್ತೂರು", "ಸ್ಲೈಡಿಂಗ್", "ಅಲ್ಯೂಮಿನಿಯಂ", "ಬಾಲ್ಕನಿ", "ಅಡಿ"],
 }
 SURE_OF_LANGUAGE = 0.9
-# A short answer like "yes" or "8 feet" is English in any language, so it doesn't change the language.
-MIN_WORDS_TO_SWITCH_TO_ENGLISH = 3
+# A short answer like "yes", "ok" or "8 feet" sounds the same in any language, and detection guesses on a word or two,
+# so it takes this many words to move the call into English or from one Indian language to another.
+MIN_WORDS_TO_SWITCH = 3
 # Saved audio means a repeated sentence is only paid for once.
 CACHE_DIR = DATA_DIR / "voice_cache"
 MAX_SPOKEN_CHARACTERS = 1500
 # When the saved audio passes this size, the clips not played for longest are deleted.
 MAX_VOICE_CACHE_BYTES = int(os.getenv("MAX_VOICE_CACHE_MB", "500")) * 1_000_000
 
-# The only file that knows the voice provider. Sara sounds the same in every language.
+# The only file that knows the voice providers. Sara speaks with Gemini, and Sarvam's ritu takes over when Gemini has
+# no key, fails or hits its limit, so a call never goes silent. Each sounds the same in every language.
 VOICE_MODEL = "bulbul:v3"
 VOICE_SPEAKER = "ritu"
+GEMINI_VOICE_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+# 3.8 is a finished model, not a preview, at less than half the price of 3.1 ($9 per million audio tokens in 2026).
+GEMINI_VOICE_MODEL = os.getenv("GEMINI_TTS_MODEL", "gemini-3.8-flash-tts")
+GEMINI_VOICE = os.getenv("GEMINI_TTS_VOICE", "Kore")
+# Only Sara's words are sent. A tone line such as "Say this warmly:" steered Gemini 3.1, but 3.8 reads it out loud.
+GEMINI_TIMEOUT_SECONDS = 15
+GEMINI_SAMPLE_RATE = 24000
 
 
 def quietest_point(samples: array, start: int, end: int, window: int) -> int:
@@ -94,12 +104,12 @@ def split_speech(audio: bytes) -> list[bytes]:
 
 
 def chosen_language(found: str | None, sure: float | None, word_count: int, current: str) -> str:
-    """Decide the language of what was said. Detection can mix up Indian languages even when it's sure, so it never moves between them."""
-    if found == current or (sure or 0) < SURE_OF_LANGUAGE:
+    """Decide the language Sara answers in: the one the customer just spoke, when detection is sure of it.
+    Any Indian language moves an English call straight away. Moving into English, or between Indian languages, also
+    needs a few words, as short answers are the same in every language."""
+    if found == current or found not in LANGUAGE_KEY_TERMS or (sure or 0) < SURE_OF_LANGUAGE:
         return current
-    if current == "en-IN" and found in LANGUAGE_KEY_TERMS:
-        return found
-    if found == "en-IN" and word_count >= MIN_WORDS_TO_SWITCH_TO_ENGLISH:
+    if current == "en-IN" or word_count >= MIN_WORDS_TO_SWITCH:
         return found
     return current
 
@@ -116,6 +126,8 @@ def listen(audio: bytes, content_type: str, language: str) -> tuple[str, str] | 
     first = next(part for part in heard if part["transcript"])
     # Only words with letters count, so a phone number or a short name can't switch the call to English.
     spoken = chosen_language(first.get("language_code"), first.get("language_probability"), len(re.findall(r"[^\W\d_]{2,}", text)), language)
+    if spoken != language:
+        print(f"The call moved from {language} to {spoken}.")
     if spoken == first.get("language_code"):
         return text, spoken
     # Detection picked a language we don't trust, so its words are wrong too. This time Sarvam is told the language.
@@ -151,9 +163,10 @@ def write_part(audio: bytes, content_type: str, language_code: str, terms_langua
     for _ in range(LISTEN_TRIES):
         started = time.perf_counter()
         try:
-            response = httpx.post(
+            response = post_with_keys(
+                SARVAM_KEYS,
                 SARVAM_LISTEN_URL,
-                headers={"api-subscription-key": os.environ["SARVAM_API_KEY"]},
+                "api-subscription-key",
                 data={
                     "model": LISTEN_MODEL,
                     "mode": "transcribe",
@@ -175,21 +188,82 @@ def write_part(audio: bytes, content_type: str, language_code: str, terms_langua
     return None
 
 
+def as_wav(pcm: bytes, rate: int) -> bytes:
+    out = io.BytesIO()
+    with wave.open(out, "wb") as writer:
+        writer.setnchannels(1)
+        writer.setsampwidth(2)
+        writer.setframerate(rate)
+        writer.writeframes(pcm)
+    return out.getvalue()
+
+
 def speak(text: str, language: str) -> str | None:
     """Return the spoken text as base64 WAV audio, or None so the call can carry on as text."""
     text = text[:MAX_SPOKEN_CHARACTERS]
-    name = hashlib.sha256(f"{VOICE_MODEL}|{VOICE_SPEAKER}|{language}|{text}".encode()).hexdigest()
+    audio = None
+    # A Gemini key at its limit rests (keys.py), so while every key rests Sarvam speaks without asking Gemini first.
+    if GEMINI_KEYS.available():
+        # "words only" keeps clips saved with the spoken tone line from being played again.
+        audio = saved_or_new(f"gemini|{GEMINI_VOICE_MODEL}|{GEMINI_VOICE}|words only", language, text, speak_with_gemini)
+    return audio or saved_or_new(f"{VOICE_MODEL}|{VOICE_SPEAKER}", language, text, speak_with_sarvam)
+
+
+def saved_or_new(voice: str, language: str, text: str, make) -> str | None:
+    """Saved audio means a repeated sentence is only paid for once. Each voice keeps its own copies."""
+    name = hashlib.sha256(f"{voice}|{language}|{text}".encode()).hexdigest()
     saved = CACHE_DIR / f"{name}.txt"
     if saved.exists():
         count(cached_voice_characters=len(text))
         saved.touch()
         return saved.read_text(encoding="ascii")
+    audio = make(text, language)
+    if audio is None:
+        return None
+    CACHE_DIR.mkdir(exist_ok=True)
+    saved.write_text(audio, encoding="ascii")
+    trim_voice_cache()
+    return audio
 
+
+def speak_with_gemini(text: str, language: str) -> str | None:
+    """Gemini finds the language from the text, so it needs no language code."""
     started = time.perf_counter()
     try:
-        response = httpx.post(
+        response = post_with_keys(
+            GEMINI_KEYS,
+            GEMINI_VOICE_URL.format(model=GEMINI_VOICE_MODEL),
+            "x-goog-api-key",
+            json={
+                "contents": [{"parts": [{"text": text}]}],
+                "generationConfig": {
+                    "responseModalities": ["AUDIO"],
+                    "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": GEMINI_VOICE}}},
+                },
+            },
+            timeout=GEMINI_TIMEOUT_SECONDS,
+        )
+        count(voice_wait=time.perf_counter() - started)
+        response.raise_for_status()
+        part = response.json()["candidates"][0]["content"]["parts"][0]["inlineData"]
+        rate = int((re.search(r"rate=(\d+)", part.get("mimeType", "")) or [0, GEMINI_SAMPLE_RATE])[1])
+        audio = base64.b64encode(as_wav(base64.b64decode(part["data"]), rate)).decode("ascii")
+    except (httpx.HTTPError, KeyError, IndexError, ValueError) as error:
+        # Only the status, as the error text can include the request.
+        status = getattr(getattr(error, "response", None), "status_code", type(error).__name__)
+        print(f"Gemini's voice failed ({status}), so Sarvam speaks instead.")
+        return None
+    count(gemini_voice_characters=len(text))
+    return audio
+
+
+def speak_with_sarvam(text: str, language: str) -> str | None:
+    started = time.perf_counter()
+    try:
+        response = post_with_keys(
+            SARVAM_KEYS,
             SARVAM_URL,
-            headers={"api-subscription-key": os.environ["SARVAM_API_KEY"]},
+            "api-subscription-key",
             json={"text": text, "language_code": language, "model": VOICE_MODEL, "speaker": VOICE_SPEAKER},
             timeout=30,
         )
@@ -200,11 +274,7 @@ def speak(text: str, language: str) -> str | None:
     except (httpx.HTTPError, KeyError, ValueError) as error:
         print(f"Voice failed: {error}")
         return None
-
     count(voice_characters=len(text))
-    CACHE_DIR.mkdir(exist_ok=True)
-    saved.write_text(audio, encoding="ascii")
-    trim_voice_cache()
     return audio
 
 

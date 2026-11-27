@@ -413,6 +413,15 @@ def save_exchange(
         )
 
 
+def delete_last_exchange(visitor_id: str) -> None:
+    """Remove a visitor's newest question and answer, in one trip, when a newer call turn has asked it again in full."""
+    with database() as db:
+        db.run(
+            "DELETE FROM {s}messages WHERE id IN (SELECT id FROM {s}messages WHERE visitor_id = ? ORDER BY id DESC LIMIT 2)",
+            (visitor_id,),
+        )
+
+
 def delete_messages(visitor_id: str) -> None:
     """Remove a visitor's chat when they start a new one."""
     with database() as db:

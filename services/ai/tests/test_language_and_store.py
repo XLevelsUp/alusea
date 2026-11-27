@@ -10,6 +10,7 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
+import alusea_ai_service.main as main
 import alusea_ai_service.store as store
 import alusea_ai_service.translation as translation
 import alusea_ai_service.voice as voice
@@ -52,7 +53,7 @@ def test_a_failed_check_means_english(monkeypatch):
         raise httpx.ConnectError("down")
 
     monkeypatch.setattr(httpx, "post", down)
-    assert translation.language_in_letters("sundara baagilu bekaagittu nodi", "en-IN") == "en-IN"  # No listed words, so Sarvam would decide.
+    assert translation.language_in_letters("sundara chitra bandu nodi", "en-IN") == "en-IN"  # No listed words, so Sarvam would decide.
 
 
 def test_the_name_is_written_in_each_script():
@@ -205,3 +206,32 @@ def test_the_chosen_menu_language_still_wins(monkeypatch):
 def test_a_tie_between_languages_is_left_to_the_chat_language(monkeypatch):
     no_language_check(monkeypatch)
     assert translation.language_in_letters("naan nenu", "en-IN", "en-IN") == "en-IN"
+
+
+def test_tanglish_spelt_any_way_finds_its_language(monkeypatch):
+    """"ena pannra", "vera ena pannla" and Manglish like "sukhamaano" were answered in English."""
+    no_language_check(monkeypatch)
+    for message, language in (
+        ("ena pannra", "ta-IN"), ("vera ena pannla", "ta-IN"), ("enna panra", "ta-IN"),
+        ("sukhamaano", "ml-IN"), ("sughamano", "ml-IN"), ("naale engottaanu varunnathu?", "ml-IN"),
+    ):
+        assert translation.language_in_letters(message, "en-IN", "en-IN") == language, message
+
+
+def test_a_short_message_with_no_english_words_is_checked(monkeypatch):
+    checked = []
+    monkeypatch.setattr(translation, "checked_language", lambda message, menu: checked.append(message) or "te-IN")
+    assert translation.language_in_letters("emi chesthunnav ra", "en-IN", "en-IN") == "te-IN"
+    for kept in ("ok thanks", "door price", "Logesh Kumar", "Logesh"):
+        assert translation.language_in_letters(kept, "en-IN", "en-IN") == "en-IN", kept
+    assert checked == ["emi chesthunnav ra"]
+
+
+def test_typed_tanglish_reaches_the_ai_with_its_english(client, fake_services, monkeypatch):
+    """"sukhamaano" was read by the AI as "comfortable". It now gets Sarvam's English too, as calls do."""
+    asked = []
+    monkeypatch.setattr(main, "language_in_letters", lambda message, menu, earlier=None: "ml-IN")
+    monkeypatch.setattr(main, "to_english", lambda text, language: "Are you well?")
+    monkeypatch.setattr(main, "generate_reply", lambda history, message, language, **context: asked.append(message) or "I'm well, thank you!")
+    client.post("/chat", json={"message": "sukhamaano", "language": "en-IN"})
+    assert asked == ["Are you well?\n(Their own words: sukhamaano)"]

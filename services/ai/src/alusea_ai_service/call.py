@@ -1,3 +1,4 @@
+import itertools
 import re
 import threading
 from collections.abc import Callable
@@ -9,18 +10,29 @@ from alusea_ai_service.agent import generate_reply
 from alusea_ai_service.cards import present, set_cards
 from alusea_ai_service.safe_log import clean_error
 from alusea_ai_service.small_talk import not_heard_message, small_talk, sorry_message, wait_message
-from alusea_ai_service.store import load_for_model, save_exchange
+from alusea_ai_service.store import delete_last_exchange, load_for_model, save_exchange
 from alusea_ai_service.tools import get_products
 from alusea_ai_service.translation import to_english, translate_reply
 from alusea_ai_service.voice import speak
 
-# Fewer earlier messages means fewer AI tokens on every turn, which keeps calls within Groq's limits.
-CALL_HISTORY_SENT_TO_MODEL = 8
+# Six back-and-forths: enough that a size given early isn't asked for again (8 messages lost it), without using up
+# Groq's per-minute tokens on every turn, which 20 did on one key.
+CALL_HISTORY_SENT_TO_MODEL = 12
 # Turns are kept in order within one server process, so Sara runs as a single process.
 MAX_TURN_LOCKS = 1000
 turn_locks: OrderedDict[str, threading.Lock] = OrderedDict()
 turn_locks_guard = threading.Lock()
 SHORT_QUESTION_WORDS = 12
+# "Bye" in English letters, as most callers say it, or written in a script. Script words must stand alone, as "bye" is
+# also the start of "bike", and a single Tamil "பை" means "bag".
+GOODBYE = re.compile(
+    r"\b(?:good ?bye|bye(?:[- ]?bye)*)\b|(?<!\S)(?:பை பை|குட் ?பை|பாய்|ബൈ|ബൈ ബൈ|బై|బై బై|ಬೈ|ಬೈ ಬೈ)(?![^\s.,!?])",
+    re.IGNORECASE,
+)
+GOODBYE_NOTE = (
+    "(They are saying goodbye, and the call ends after your reply. If they asked for anything else, such as a callback, "
+    "do that first. Then say a short, warm goodbye with no question.)"
+)
 ENDING_QUESTION = re.compile(r"^(.*[.!])\s+([^.!?]+\?)$", re.DOTALL)
 RETRY_WAIT = re.compile(r"try again in (?:(\d+)m)?([\d.]+)(ms|s)\b")
 # Past the minute limit a call can still wait. A longer wait means the daily limit, so it gets the apology.
@@ -214,6 +226,52 @@ def turn_lock(visitor_id: str) -> threading.Lock:
         return lock
 
 
+class SpokenTurn:
+    """One spoken turn in a call. A customer who pauses mid-sentence and carries on is sent again as a newer turn with
+    all their unanswered speech (continues=True), so the older turn's answer is never used and isn't kept.
+    Like the turn locks, this is kept within one server process."""
+
+    MAX_TRACKED_VISITORS = 1000
+    numbers = itertools.count(1)
+    newest: dict[str, int] = {}
+    # Turns whose speech a newer turn carries again, and the turn whose answer was saved last, for each visitor.
+    carried: dict[str, set[int]] = {}
+    saved: dict[str, int] = {}
+
+    def __init__(self, visitor_id: str, continues: bool = False):
+        self.visitor_id = visitor_id
+        self.number = next(SpokenTurn.numbers)
+        previous = SpokenTurn.newest.get(visitor_id)
+        SpokenTurn.newest[visitor_id] = self.number
+        if continues and previous is not None:
+            SpokenTurn.carried.setdefault(visitor_id, set()).add(previous)
+        for table in (SpokenTurn.newest, SpokenTurn.carried, SpokenTurn.saved):
+            while len(table) > SpokenTurn.MAX_TRACKED_VISITORS:
+                table.pop(next(iter(table)))
+
+    def still_wanted(self) -> bool:
+        """Whether this is still the visitor's newest turn, so its answer is spoken."""
+        return SpokenTurn.newest.get(self.visitor_id) == self.number
+
+    def carried_on(self) -> bool:
+        """Whether a newer turn carries this turn's speech, so answering or saving it would be wasted."""
+        return self.number in SpokenTurn.carried.get(self.visitor_id, ())
+
+    def forget_carried_answer(self) -> None:
+        """An older turn may have saved its answer before this one carried its speech on. Remove it, so the AI and the
+        chat don't keep half a question."""
+        saved = SpokenTurn.saved.get(self.visitor_id)
+        if saved is not None and saved in SpokenTurn.carried.get(self.visitor_id, ()):
+            delete_last_exchange(self.visitor_id)
+            SpokenTurn.saved.pop(self.visitor_id, None)
+
+    def mark_saved(self) -> None:
+        SpokenTurn.saved[self.visitor_id] = self.number
+
+
+CARRIED_ON = {"content": "", "products": [], "audio": None}
+
+
 def call_turn(
     visitor_id: str,
     message: str,
@@ -221,14 +279,25 @@ def call_turn(
     can_wait: bool = True,
     understood: str | None = None,
     still_wanted: Callable[[], bool] = lambda: True,
+    turn: SpokenTurn | None = None,
 ) -> dict:
     """Answer one spoken message at a time for each visitor, so overlapping turns are saved in order."""
     with turn_lock(visitor_id):
-        return answer_turn(visitor_id, message, language, can_wait, understood, still_wanted)
+        if turn:
+            turn.forget_carried_answer()
+            if turn.carried_on():
+                return CARRIED_ON
+        return answer_turn(visitor_id, message, language, can_wait, understood, turn.still_wanted if turn else still_wanted, turn)
 
 
 def answer_turn(
-    visitor_id: str, message: str, language: str, can_wait: bool, understood: str | None, still_wanted: Callable[[], bool]
+    visitor_id: str,
+    message: str,
+    language: str,
+    can_wait: bool,
+    understood: str | None,
+    still_wanted: Callable[[], bool],
+    turn: SpokenTurn | None = None,
 ) -> dict:
     """Answer one spoken message, written in the customer's own script. A failed answer is spoken too, so the call can carry on."""
     try:
@@ -242,9 +311,16 @@ def answer_turn(
         if reply is None:
             # Their own words go with the translation, so a mistranslated sentence can still be understood.
             asked = understood if understood == message else f"{understood}\n(Their own words: {message})"
+            if is_goodbye(message, understood):
+                asked = f"{asked}\n{GOODBYE_NOTE}"
             english = generate_reply(history, asked, language, call=True, visitor_id=visitor_id)
             reply = translate_reply(english, language)
+        # The customer carried on talking while this was answered, and the newer turn asks it all again.
+        if turn and turn.carried_on():
+            return CARRIED_ON
         save_exchange(visitor_id, message, reply, english, understood)
+        if turn:
+            turn.mark_saved()
     except RateLimitError as error:
         print(f"Call turn hit the AI's rate limit: {clean_error(error)}")
         seconds = retry_seconds(error)
@@ -262,4 +338,10 @@ def answer_turn(
         print(f"Call turn failed: {clean_error(error)}")
         return voiced({"content": sorry_message(language), "products": []}, language)
     # If the customer has already said something newer, this reply is still shown, but not spoken or paid to voice.
-    return voiced(present(reply), language, speak_it=still_wanted())
+    # After a goodbye, the page hangs up once Sara's reply has been spoken, instead of waiting for more speech.
+    return {**voiced(present(reply), language, speak_it=still_wanted()), "end_call": is_goodbye(message, understood)}
+
+
+def is_goodbye(message: str, understood: str | None = None) -> bool:
+    """Whether the customer is saying goodbye, in their own words or in the English translation."""
+    return any(GOODBYE.search(text) for text in (message, understood) if text)

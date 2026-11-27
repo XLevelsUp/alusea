@@ -1,5 +1,5 @@
 """Counts what each call spends, so the server log shows where the money goes.
-Rupee amounts use Sarvam's pay-as-you-go prices. Groq's free tier costs nothing, so the AI shows tokens only."""
+Rupee amounts use Sarvam's pay-as-you-go prices. Groq's and Gemini's free tiers cost nothing, so they show amounts only."""
 import threading
 from collections import OrderedDict
 from contextlib import contextmanager
@@ -22,6 +22,7 @@ COUNTS = (
     "translate_characters",
     "translate_requests",
     "voice_characters",
+    "gemini_voice_characters",
     "cached_voice_characters",
     "check_characters",
     "ai_requests",
@@ -68,7 +69,8 @@ def summary(before: dict, after: dict) -> str:
         f" | listening {after['listen_seconds']:.0f}s in {after['listen_requests']} requests ₹{total['listening']:.2f}"
         f" ({after['empty_listens']} heard no words, {after['noise_turns']} only noise, {after['failed_listens']} failed)"
         f" | translating {after['translate_characters']:,} characters in {after['translate_requests']} requests ₹{total['translating']:.2f}"
-        f" | voice {after['voice_characters']:,} characters ₹{total['voice']:.2f} (+{after['cached_voice_characters']:,} from saved audio, free)"
+        f" | voice: Gemini {after['gemini_voice_characters']:,} characters (free tier), Sarvam {after['voice_characters']:,} characters"
+        f" ₹{total['voice']:.2f} (+{after['cached_voice_characters']:,} from saved audio, free)"
         f" | AI {after['ai_requests']} requests, {after['ai_tokens']:,} tokens"
         f" | this turn took {after['turn_wait'] - before['turn_wait']:.1f}s: listening {after['listen_wait'] - before['listen_wait']:.1f}s,"
         f" translating {after['translate_wait'] - before['translate_wait']:.1f}s, AI {after['ai_wait'] - before['ai_wait']:.1f}s,"
