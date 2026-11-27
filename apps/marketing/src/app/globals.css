@@ -669,6 +669,53 @@ body:has([data-not-found]) section[aria-label="Instagram reels"] {
   display: none;
 }
 
+/* The Google Ads page stands alone: the site's header, footer, Instagram band, back button and Sara chat are left out so the visitor stays on the page; the WhatsApp button stays. */
+body:has([data-ad-landing]) header,
+body:has([data-ad-landing]) footer,
+body:has([data-ad-landing]) section[aria-label="Instagram reels"],
+body:has([data-ad-landing]) [aria-label="Go Back"],
+body:has([data-ad-landing]) [aria-label="Chat with Sara"] {
+  display: none;
+}
+
+/* The ad page's WhatsApp prompt: the blur fades in, the card rises, and a soft ring pulses around the WhatsApp mark. */
+.wa-prompt {
+  animation: wa-prompt-fade 0.35s ease-out both;
+}
+
+.wa-prompt-card {
+  animation: wa-prompt-rise 0.45s var(--ease-out) both;
+}
+
+.wa-prompt-ring::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 0 rgb(31 168 85 / 0.55);
+  animation: wa-prompt-pulse 1.8s ease-out infinite;
+}
+
+@keyframes wa-prompt-fade {
+  from { opacity: 0; }
+}
+
+@keyframes wa-prompt-rise {
+  from { opacity: 0; transform: translateY(24px) scale(0.98); }
+}
+
+@keyframes wa-prompt-pulse {
+  to { box-shadow: 0 0 0 18px rgb(31 168 85 / 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-prompt,
+  .wa-prompt-card,
+  .wa-prompt-ring::after {
+    animation: none;
+  }
+}
+
 /* The virtual showroom page fills the screen on its own: the site's header, footer, Instagram band and floating buttons are left out, and the page does not scroll. */
 body:has([data-vr-room]) {
   overflow: hidden;
